@@ -60,11 +60,11 @@
         .dot-red { background-color: #da3633; }
         .dot-purple { background-color: #8957e5; }
 
-        /* Card Grid for Menu */
+        /* --- UPDATED CARD GRID (Matching Moderation/QA) --- */
         .selection-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
             margin-top: 20px;
         }
 
@@ -72,23 +72,34 @@
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 25px;
+            padding: 32px;
             cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
             justify-content: center;
-            height: 180px;
+            align-items: flex-start;
+            height: 220px;
+            position: relative;
+            text-decoration: none;
         }
 
         .selection-card:hover {
-            transform: translateY(-3px);
             border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
         }
 
-        .card-icon { width: 40px; height: 40px; margin-bottom: 15px; fill: var(--accent-blue); }
-        .selection-title { font-weight: 700; color: var(--text-header); margin-bottom: 5px; font-size: 1.1rem; }
-        .selection-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.4; }
+        .card-icon { 
+            width: 48px; 
+            height: 48px; 
+            margin-bottom: 20px; 
+            fill: var(--accent-blue); 
+        }
+        
+        .selection-title { font-weight: 700; color: var(--text-header); margin-bottom: 8px; font-size: 1.2rem; }
+        .selection-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
 
         .back-nav { cursor: pointer; color: var(--text-muted); margin-bottom: 20px; display: inline-block; }
         .back-nav:hover { color: var(--accent-blue); }
@@ -107,7 +118,7 @@
             <div class="header">
                 <h1 id="txt-main-title">User Management</h1>
             </div>
-            <p style="color: var(--text-muted);">Manage users, track status, and configure permissions.</p>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Manage users, track status, and configure permissions.</p>
 
             <div class="selection-grid">
                 <div class="selection-card" onclick="switchSection('view-status')">
