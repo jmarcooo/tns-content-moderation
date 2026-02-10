@@ -27,7 +27,7 @@
         .btn-sm { padding: 4px 10px; font-size: 0.8rem; border: 1px solid var(--border-color); background: var(--bg-body); border-radius: 4px; cursor: pointer; white-space: nowrap; }
         .btn-sm:hover { background: var(--hover-bg); border-color: var(--accent-blue); color: var(--accent-blue); }
 
-        /* Card Styles */
+        /* --- NEW CARD STYLES (Matching Moderation Dashboard) --- */
         .selection-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -67,13 +67,25 @@
             fill: var(--accent-blue);
         }
         
+        /* Specific colors for icons */
         .icon-blue { fill: #0969da; background-color: rgba(9, 105, 218, 0.1); }
         .icon-green { fill: #238636; background-color: rgba(35, 134, 54, 0.1); }
         .icon-purple { fill: #8957e5; background-color: rgba(137, 87, 229, 0.1); }
 
-        .selection-title { font-size: 1.2rem; font-weight: 700; color: var(--text-header); margin-bottom: 8px; }
-        .selection-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+        .selection-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 8px;
+        }
 
+        .selection-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Back Link Styling */
         .back-nav {
             margin-bottom: 15px;
             color: var(--text-muted);
@@ -84,6 +96,21 @@
             font-size: 0.9rem;
         }
         .back-nav:hover { color: var(--accent-blue); }
+        
+        /* Placeholder Container */
+        .placeholder-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -99,23 +126,31 @@
             <p style="color: var(--text-muted); margin-bottom: 30px;">Manage users, track status, and configure permissions.</p>
 
             <div class="selection-grid">
+                
                 <div class="selection-card" onclick="switchSection('view-status')">
-                    <svg class="card-icon icon-blue" viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+                    <svg class="card-icon icon-blue" viewBox="0 0 24 24">
+                        <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                    </svg>
                     <h3 id="txt-card-status-title" class="selection-title">User Status</h3>
                     <p id="txt-card-status-desc" class="selection-desc">Real-time status monitoring of moderators.</p>
                 </div>
 
                 <div class="selection-card" onclick="switchSection('view-accounts')">
-                    <svg class="card-icon icon-green" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    <svg class="card-icon icon-green" viewBox="0 0 24 24">
+                         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
                     <h3 id="txt-card-acc-title" class="selection-title">Accounts</h3>
                     <p id="txt-card-acc-desc" class="selection-desc">Manage registered users and edit details.</p>
                 </div>
 
                 <div class="selection-card" onclick="switchSection('view-roles')">
-                    <svg class="card-icon icon-purple" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                    <svg class="card-icon icon-purple" viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                    </svg>
                     <h3 class="selection-title">Roles & Permissions</h3>
                     <p class="selection-desc">Configure access levels and platform privileges.</p>
                 </div>
+
             </div>
         </div>
 
@@ -125,9 +160,12 @@
                 <h1 id="txt-acc-header">Accounts</h1>
                 <button class="btn-primary" onclick="openAddModal()" id="txt-btn-add">+ Add User</button>
             </div>
+
             <div class="table-container">
                 <table>
-                    <thead><tr id="table-head-accounts"></tr></thead>
+                    <thead>
+                        <tr id="table-head-accounts"></tr>
+                    </thead>
                     <tbody id="userTableBody"></tbody>
                 </table>
             </div>
@@ -138,9 +176,12 @@
             <div class="header">
                 <h1 id="txt-mod-header">Moderator Status Monitor</h1>
             </div>
+
             <div class="table-container">
                 <table id="modStatusTable" class="mod-table">
-                    <thead><tr id="table-head-status"></tr></thead>
+                    <thead>
+                        <tr id="table-head-status"></tr>
+                    </thead>
                     <tbody id="modStatusBody"></tbody>
                 </table>
             </div>
@@ -148,13 +189,17 @@
 
         <div id="view-roles" style="display: none;">
             <div onclick="switchSection('view-dashboard')" class="back-nav">← Back to Dashboard</div>
-            <div class="header"><h1>Roles & Permissions</h1></div>
-            <div class="placeholder-container" style="text-align:center; padding:50px;">
+            <div class="header">
+                <h1>Roles & Permissions</h1>
+            </div>
+            
+            <div class="placeholder-container">
                 <div style="font-size: 3rem; margin-bottom: 20px;">🛡️</div>
                 <h2>Role Configuration</h2>
                 <p>This module will allow admins to define granular permissions.</p>
             </div>
         </div>
+
     </main>
 
     <div id="addModal" class="modal-overlay">
@@ -162,8 +207,8 @@
             <div class="modal-header" id="txt-modal-add-title">Register New User</div>
             <form id="addForm">
                 <div class="form-group"><label id="lbl-fullname">Full Name</label><input type="text" id="addName" required placeholder="e.g. Jon Odono"></div>
-                <div class="form-group"><label id="lbl-email">Email</label><input type="email" id="addEmail" required placeholder="e.g. jon.odono@digiplus.com.ph"></div>
-                <div class="form-group"><label id="lbl-username">Username</label><input type="text" id="addUsername" required placeholder="e.g. jon.odono"></div>
+                <div class="form-group"><label id="lbl-email">Email</label><input type="email" id="addEmail" required placeholder="e.g. jon@contentmod.com"></div>
+                <div class="form-group"><label id="lbl-username">Username</label><input type="text" id="addUsername" required placeholder="e.g. jodono"></div>
                 <div class="form-group">
                     <label id="lbl-role">Role</label>
                     <select id="addRole"><option>User</option><option>Moderator</option><option>Admin</option></select>
@@ -189,7 +234,10 @@
                 </div>
                 <div class="form-group">
                     <label>Account Status</label>
-                    <select id="editAccountStatus"><option value="Active">Active</option><option value="Banned">Banned</option></select>
+                    <select id="editAccountStatus">
+                        <option value="Active">Active</option>
+                        <option value="Banned">Banned</option>
+                    </select>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
@@ -200,75 +248,100 @@
     </div>
 
     <script>
+        // --- ICONS & VARIABLES ---
         const SVG_EDIT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
         const SVG_DELETE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-
         let users = [];
 
+        // --- INITIALIZATION ---
         async function init() {
             applyTranslations();
+            await fetchUsers();
+        }
+
+        // --- API INTEGRATION ---
+        async function fetchUsers() {
             try {
-                const res = await fetch('users.json');
-                if (!res.ok) throw new Error('Failed to load users.json');
+                // Fetch from your Vercel API Route
+                const res = await fetch('/api/users');
+                if (!res.ok) throw new Error('Failed to fetch from /api/users');
                 users = await res.json();
                 render();
             } catch (err) {
                 console.error(err);
-                // Fallback initial data
-                users = [
-                    { id: "46048000000001", username: "jon.odono", role: "Admin", name: "Marco", email: "jon.odono@digiplus.com.ph", status: "Online", account_status: "Active", createdAt: "1/26/2026, 4:39:00 PM" }
-                ];
-                render();
+                const tbody = document.getElementById('userTableBody');
+                if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Failed to load data. Is the API route connected?</td></tr>';
             }
         }
 
+        async function addUser(userData) {
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                if(res.ok) await fetchUsers();
+            } catch (e) { console.error("Add failed", e); }
+        }
+
+        async function updateUser(userData) {
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                if(res.ok) await fetchUsers();
+            } catch (e) { console.error("Update failed", e); }
+        }
+
+        async function deleteUser(id) {
+            try {
+                const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+                if(res.ok) await fetchUsers();
+            } catch (e) { console.error("Delete failed", e); }
+        }
+
+        // --- UI LOGIC ---
         function switchSection(id) {
-            ['view-dashboard', 'view-accounts', 'view-status', 'view-roles'].forEach(s => {
-                document.getElementById(s).style.display = 'none';
-            });
+            document.getElementById('view-dashboard').style.display = 'none';
+            document.getElementById('view-accounts').style.display = 'none';
+            document.getElementById('view-status').style.display = 'none';
+            document.getElementById('view-roles').style.display = 'none';
+            
             document.getElementById(id).style.display = 'block';
             if(id === 'view-status') renderModStatus();
         }
 
-        function render() {
-            const tbody = document.getElementById('userTableBody');
-            if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; }
-            tbody.innerHTML = users.map(u => `
-                <tr>
-                    <td style="font-family:monospace; color:#8b949e; font-size:0.85rem;">${u.id}</td>
-                    <td><strong>${u.name}</strong><br><span style="font-size:0.8em; color:#8b949e">@${u.username}</span></td>
-                    <td>${u.role}</td>
-                    <td><span class="badge ${u.account_status === 'Banned' ? 'status-Banned' : 'status-Active'}">${u.account_status || 'Active'}</span></td>
-                    <td style="font-size:0.85rem;">${u.createdAt || 'N/A'}</td>
-                    <td>
-                        <button onclick="openEdit('${u.id}')" class="action-btn" title="Edit">${SVG_EDIT}</button>
-                        <button onclick="delUser('${u.id}')" class="action-btn" title="Delete">${SVG_DELETE}</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+        function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // Functional Add User
-        document.getElementById('addForm').addEventListener('submit', (e) => {
+        // --- FORM SUBMISSION HANDLERS ---
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const now = new Date().toLocaleString();
-            const newId = Date.now().toString().slice(-14); // Simple unique ID
-            users.push({
-                id: newId,
+            const btn = document.getElementById('btn-create');
+            btn.innerText = "Creating...";
+            
+            const newUser = {
+                id: Date.now().toString(),
                 name: document.getElementById('addName').value,
                 email: document.getElementById('addEmail').value,
                 username: document.getElementById('addUsername').value,
                 role: document.getElementById('addRole').value,
-                status: 'Offline', account_status: 'Active',
-                last_status_update: new Date().toISOString(),
-                password: 'password123', createdAt: now
-            });
-            render();
+                status: 'Offline',
+                account_status: 'Active', 
+                password: 'password123', // Default
+                created_at: new Date().toLocaleString()
+            };
+            
+            await addUser(newUser);
+            
+            btn.innerText = "Create";
             closeModal('addModal');
             document.getElementById('addForm').reset();
         });
 
-        // Functional Edit
         function openEdit(id) {
             const u = users.find(u => u.id.toString() === id.toString());
             if (!u) return;
@@ -280,43 +353,80 @@
             document.getElementById('editModal').style.display = 'flex';
         }
 
-        document.getElementById('editForm').addEventListener('submit', (e) => {
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('editId').value;
-            const idx = users.findIndex(u => u.id.toString() === id.toString());
-            if (idx > -1) {
-                users[idx].name = document.getElementById('editName').value;
-                users[idx].email = document.getElementById('editEmail').value;
-                users[idx].role = document.getElementById('editRole').value;
-                users[idx].account_status = document.getElementById('editAccountStatus').value;
-                render();
-                closeModal('editModal');
-            }
+            const updatedData = {
+                id: document.getElementById('editId').value,
+                name: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                role: document.getElementById('editRole').value,
+                account_status: document.getElementById('editAccountStatus').value
+            };
+            
+            await updateUser(updatedData);
+            closeModal('editModal');
         });
 
-        // Functional Delete
         function delUser(id) {
-            if(confirm('Delete user?')) {
-                users = users.filter(u => u.id.toString() !== id.toString());
-                render();
+            if(confirm('Are you sure you want to delete this user from the database?')) { 
+                deleteUser(id);
             }
         }
 
-        function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // Mandatory setup for existing translations and status monitoring
-        function applyTranslations() {
-            const T_PAGE = { thId: "ID", thName: "Name", thRole: "Role", thStatus: "Status", thCreated: "Created At", thActions: "Actions", thEmail: "Email", thTasks: "Tasks", thAht: "AHT", thDuration: "Duration", thChange: "Change" };
-            document.getElementById('table-head-accounts').innerHTML = `<th>${T_PAGE.thId}</th><th>${T_PAGE.thName}</th><th>${T_PAGE.thRole}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thCreated}</th><th>${T_PAGE.thActions}</th>`;
-            document.getElementById('table-head-status').innerHTML = `<th>${T_PAGE.thEmail}</th><th>${T_PAGE.thTasks}</th><th>${T_PAGE.thAht}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thDuration}</th><th>${T_PAGE.thChange}</th>`;
+        // --- RENDER FUNCTIONS ---
+        function render() {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody) return;
+            if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; }
+            
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td style="font-family:monospace; color:#8b949e; font-size:0.85rem;">${u.id}</td>
+                    <td><strong>${u.name}</strong><br><span style="font-size:0.8em; color:#8b949e">@${u.username}</span></td>
+                    <td>${u.role}</td>
+                    <td><span class="badge ${u.account_status === 'Banned' ? 'status-Banned' : 'status-Active'}">${u.account_status || 'Active'}</span></td>
+                    <td style="font-size:0.85rem;">${u.created_at || 'N/A'}</td>
+                    <td>
+                        <button onclick="openEdit('${u.id}')" class="action-btn" title="Edit">${SVG_EDIT}</button>
+                        <button onclick="delUser('${u.id}')" class="action-btn" title="Delete">${SVG_DELETE}</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function renderModStatus() {
             const tbody = document.getElementById('modStatusBody');
-            const mods = users.filter(u => u.role === 'Moderator');
-            if (mods.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No moderators online.</td></tr>'; return; }
-            tbody.innerHTML = mods.map(u => `<tr><td>${u.email}</td><td>0</td><td>0s</td><td>${u.status}</td><td>0h 0m</td><td><button class="btn-sm">Change ▼</button></td></tr>`).join('');
+            const moderators = users.filter(u => u.role === 'Moderator');
+            if (moderators.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No users with role "Moderator" found.</td></tr>'; return; }
+
+            tbody.innerHTML = moderators.map(u => {
+                let dotColor = 'dot-gray';
+                const s = u.status || 'Offline'; 
+                if(s === 'Online') dotColor = 'dot-green';
+                
+                return `
+                <tr>
+                    <td><div style="font-weight:600; color:var(--text-header);">${u.email || u.username + '@contentmod.com'}</div></td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td><div style="display:flex; align-items:center;"><span class="status-dot ${dotColor}"></span>${s}</div></td>
+                    <td style="font-family:monospace; color:var(--text-main);">--</td>
+                    <td><button class="btn-sm" onclick="alert('Status change simulation')">Change ▼</button></td>
+                </tr>
+            `}).join('');
+        }
+
+        function applyTranslations() {
+            const T_PAGE = { 
+                thId: "ID", thName: "Name", thRole: "Role", thStatus: "Status", thCreated: "Created At", 
+                thActions: "Actions", thEmail: "Email", thTasks: "Tasks", thAht: "AHT", thDuration: "Duration", thChange: "Change" 
+            };
+            document.getElementById('table-head-accounts').innerHTML = `
+                <th>${T_PAGE.thId}</th><th>${T_PAGE.thName}</th><th>${T_PAGE.thRole}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thCreated}</th><th>${T_PAGE.thActions}</th>
+            `;
+            document.getElementById('table-head-status').innerHTML = `
+                <th>${T_PAGE.thEmail}</th><th>${T_PAGE.thTasks}</th><th>${T_PAGE.thAht}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thDuration}</th><th>${T_PAGE.thChange}</th>
+            `;
         }
 
         init();
