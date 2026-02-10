@@ -49,7 +49,7 @@ body {
 }
 
 /* =========================================
-   3. SIDEBAR (Full Width Fix)
+   3. SIDEBAR (Dark Mode Fix & Role Add)
    ========================================= */
 .sidebar {
     width: var(--sidebar-width);
@@ -97,23 +97,15 @@ body {
 
 .sidebar-spacer { margin-top: auto; }
 
-/* --- FULL WIDTH USER PROFILE LAYOUT --- */
+/* --- TWO-COLUMN LAYOUT WITH STACKED DETAILS --- */
 .user-profile { 
     border-top: 1px solid var(--border-color); 
     padding-top: 15px; 
     margin-top: 10px;
     display: flex; 
-    flex-direction: column; /* Vertical Stacking for Full Width */
+    flex-direction: row; /* Avatar Left, Details Right */
     gap: 12px;
-    width: 100%;
-}
-
-/* Header: Avatar + Info Row */
-.profile-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
+    align-items: flex-start;
 }
 
 .avatar { 
@@ -125,14 +117,16 @@ body {
     font-weight: bold; color: white; 
     font-size: 1.1rem;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
-.profile-identity {
+/* Right Column Container */
+.profile-details {
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
-    justify-content: center;
-    flex-grow: 1;
+    gap: 4px; /* Default spacing */
+    width: 100%;
+    min-width: 0; /* Prevents text overflow issues */
 }
 
 .profile-name { 
@@ -149,13 +143,21 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.4;
-    max-width: 100%;
 }
 
-/* --- FULL WIDTH STATUS DROPDOWN --- */
+.profile-role {
+    font-size: 0.75rem;
+    color: var(--accent-blue); /* Highlight role color */
+    font-weight: 600;
+    margin-bottom: 6px; /* Spacing before status */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- STATUS DROPDOWN (Dark Mode Compatible) --- */
 .status-dropdown { 
     position: relative; 
-    width: 100%; /* Forces full width */
+    width: 100%;
 }
 
 .status-trigger { 
@@ -163,24 +165,26 @@ body {
     align-items: center; 
     justify-content: space-between; 
     gap: 8px; 
-    padding: 8px 10px; 
+    padding: 5px 8px; 
     border-radius: 6px; 
     cursor: pointer; 
     font-size: 0.8rem; 
     font-weight: 500;
-    color: var(--text-main); 
     
-    border: 1px solid #d0d7de; 
-    background-color: #f6f8fa; 
+    /* Variables for Dark Mode Support */
+    color: var(--text-main); 
+    border: 1px solid var(--border-color); 
+    background-color: var(--bg-input); 
+    
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     transition: all 0.2s; 
-    width: 100%; /* Forces button to stretch */
-    box-sizing: border-box; /* Includes padding in width calculation */
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .status-trigger:hover { 
-    background-color: #ffffff; 
     border-color: var(--accent-blue); 
+    background-color: var(--bg-card); /* Brighten slightly on hover */
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -217,18 +221,19 @@ body {
 }
 .status-menu li:hover { background-color: var(--hover-bg); }
 
-/* --- FULL WIDTH LOGOUT BUTTON --- */
+/* --- LOGOUT BUTTON --- */
 .logout-link { 
-    display: block; /* Allows width to work */
-    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--danger-red); 
     text-decoration: none; 
     font-size: 0.8rem; 
     font-weight: 600; 
-    padding: 8px 2px; /* Add padding for clickable area */
+    padding: 4px 0;
     opacity: 0.9;
     transition: opacity 0.2s;
-    box-sizing: border-box;
+    margin-top: 4px;
 }
 .logout-link:hover { opacity: 1; text-decoration: underline; }
 
