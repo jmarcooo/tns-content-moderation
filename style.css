@@ -97,34 +97,137 @@ body {
 
 .sidebar-spacer { margin-top: auto; }
 
+/* --- UPDATED USER PROFILE LAYOUT --- */
 .user-profile { 
     border-top: 1px solid var(--border-color); 
-    padding-top: 15px; 
+    padding-top: 20px; 
     margin-top: 10px;
     display: flex; 
-    gap: 12px;
-    align-items: center; 
+    gap: 15px; /* Increased gap between avatar and text */
+    align-items: flex-start; /* Align to top so avatar doesn't float middle if list is long */
     position: relative; 
 }
 
 .avatar { 
-    width: 48px; height: 48px; min-width: 48px; min-height: 48px;
+    width: 42px; height: 42px; /* Slightly smaller for better proportion */
+    min-width: 42px; min-height: 42px;
     background-color: #238636; 
     border-radius: 50%; 
     display: flex; align-items: center; justify-content: center; 
     font-weight: bold; color: white; 
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
+    margin-top: 2px; /* Visual alignment fix with name */
 }
 
-.profile-info { display: flex; flex-direction: column; justify-content: center; font-size: 0.85rem; width: 100%; }
-.profile-name { font-weight: 600; color: var(--text-header); margin-bottom: 4px; }
-.profile-status { display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; margin-bottom: 4px; user-select: none; padding: 2px 0; }
-.profile-status:hover { color: var(--text-main); }
-.status-caret { font-size: 0.7rem; opacity: 0.7; }
+.profile-info { 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    font-size: 0.85rem; 
+    width: 100%; 
+    gap: 8px; /* Adds consistent spacing between Name, Status, and Logout */
+}
 
-.logout-link { display: flex; align-items: center; gap: 6px; color: var(--danger-red); text-decoration: none; font-size: 0.8rem; font-weight: 500; }
-.logout-link:hover { text-decoration: underline; }
+.profile-name { 
+    font-weight: 600; 
+    color: var(--text-header); 
+    margin: 0; /* Reset margin, rely on gap */
+    font-size: 0.95rem;
+}
+
+/* --- UPDATED STATUS DROPDOWN --- */
+.status-dropdown { 
+    position: relative; 
+    width: 100%;
+}
+
+.status-trigger { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* Pushes arrow to the right */
+    gap: 8px; 
+    padding: 6px 10px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 0.8rem; 
+    color: var(--text-main); 
+    transition: all 0.2s; 
+    border: 1px solid var(--border-color); /* Defined border */
+    background-color: var(--bg-input);
+    width: 100%; /* Full width of parent */
+}
+
+.status-trigger:hover { 
+    background-color: var(--hover-bg); 
+    border-color: var(--accent-blue); 
+}
+
+.status-menu { 
+    display: none; 
+    position: absolute; 
+    bottom: 100%; 
+    left: 0; 
+    width: 100%; /* Matches trigger width */
+    min-width: 160px;
+    background-color: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    border-radius: 6px; 
+    padding: 6px; 
+    margin-bottom: 6px; 
+    z-index: 9999; 
+}
+
+.status-menu.active { 
+    display: block; 
+    animation: popUp 0.15s ease-out; 
+}
+
+.status-menu li { 
+    list-style: none; 
+    padding: 8px 10px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    font-size: 0.85rem; 
+    color: var(--text-main); 
+    transition: background 0.2s; 
+}
+.status-menu li:hover { background-color: var(--hover-bg); }
+
+/* --- UPDATED LOGOUT LINK --- */
+.logout-link { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    color: var(--danger-red); 
+    text-decoration: none; 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    padding-left: 2px; /* Slight indent to align with text above */
+    margin-top: 4px; /* Extra separation from status box */
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+.logout-link:hover { 
+    text-decoration: none; 
+    opacity: 1;
+}
+
+/* Status Dots */
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot-online   { background-color: #238636; }
+.dot-break    { background-color: #d29922; }
+.dot-lunch    { background-color: #f0883e; }
+.dot-meeting  { background-color: #0969da; }
+.dot-idle     { background-color: #f85149; }
+.dot-training { background-color: #8957e5; }
+.dot-offline  { background-color: #6e7681; }
+
+@keyframes popUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 /* =========================================
    4. CONTENT & LAYOUT
