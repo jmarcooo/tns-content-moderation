@@ -49,7 +49,7 @@ body {
 }
 
 /* =========================================
-   3. SIDEBAR (Updated Profile Section)
+   3. SIDEBAR (Fixed Layout)
    ========================================= */
 .sidebar {
     width: var(--sidebar-width);
@@ -97,47 +97,55 @@ body {
 
 .sidebar-spacer { margin-top: auto; }
 
-/* --- COMPACT USER PROFILE --- */
+/* --- TWO-COLUMN USER PROFILE LAYOUT --- */
 .user-profile { 
     border-top: 1px solid var(--border-color); 
     padding-top: 15px; 
     margin-top: 10px;
     display: flex; 
-    gap: 12px; /* Tighter spacing between avatar and text */
-    align-items: flex-start; 
-    position: relative; 
+    flex-direction: row; /* Forces 2 columns: Avatar | Details */
+    gap: 12px;
+    align-items: flex-start;
 }
 
 .avatar { 
-    width: 40px; height: 40px; /* Slightly smaller avatar */
-    min-width: 40px; min-height: 40px;
+    width: 42px; height: 42px;
+    min-width: 42px; min-height: 42px;
     background-color: #238636; 
     border-radius: 50%; 
     display: flex; align-items: center; justify-content: center; 
     font-weight: bold; color: white; 
     font-size: 1.1rem;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 2px; /* Slight visual adjustment */
 }
 
-.profile-info { 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    font-size: 0.85rem; 
-    width: 100%; 
-    gap: 4px; /* TIGHTER: Brings Name, Status, Logout closer together */
+/* Right Column Container */
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Spacing between Name/Email/Status/Logout */
+    width: 100%;
+    min-width: 0; /* Important for text truncation to work */
 }
 
 .profile-name { 
     font-weight: 700; 
     color: var(--text-header); 
-    margin: 0; 
     font-size: 0.9rem;
-    margin-bottom: 2px;
+    line-height: 1.2;
 }
 
-/* --- HIGH VISIBILITY STATUS BOX --- */
+.profile-email {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* --- VISIBLE STATUS DROPDOWN --- */
 .status-dropdown { 
     position: relative; 
     width: 100%;
@@ -155,10 +163,9 @@ body {
     font-weight: 500;
     color: var(--text-main); 
     
-    /* VISIBILITY UPGRADE */
-    border: 1px solid #b1b9c0; /* Darker border for visibility */
-    background-color: #f6f8fa; /* Light grey bg to stand out */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06); /* Subtle shadow */
+    border: 1px solid #d0d7de; 
+    background-color: #f6f8fa; /* Light grey for visibility */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     transition: all 0.2s; 
     width: 100%; 
 }
@@ -201,18 +208,19 @@ body {
 }
 .status-menu li:hover { background-color: var(--hover-bg); }
 
+/* --- LOGOUT BUTTON --- */
 .logout-link { 
     display: flex; 
     align-items: center; 
     gap: 6px; 
     color: var(--danger-red); 
     text-decoration: none; 
-    font-size: 0.75rem; 
+    font-size: 0.8rem; 
     font-weight: 600; 
     padding-left: 2px; 
-    margin-top: 2px; /* Slight separation */
     opacity: 0.9;
     transition: opacity 0.2s;
+    margin-top: 2px;
 }
 .logout-link:hover { opacity: 1; text-decoration: underline; }
 
