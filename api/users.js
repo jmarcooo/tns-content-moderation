@@ -1,17 +1,14 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// Connect using the connection string
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: true,
-  },
+  ssl: { rejectUnauthorized: true },
 });
 
 export default async function handler(request, response) {
   try {
-    // 1. GET: Fetch all users
+    // --- GET: Fetch all users ---
     if (request.method === 'GET') {
       const client = await pool.connect();
       const { rows } = await client.query('SELECT * FROM users ORDER BY created_at DESC');
@@ -19,7 +16,7 @@ export default async function handler(request, response) {
       return response.status(200).json(rows);
     }
 
-    // 2. POST: Add a new user
+    // --- POST: Add a new user ---
     if (request.method === 'POST') {
       const { id, name, username, email, role, account_status, status, password, created_at } = request.body;
       const client = await pool.connect();
@@ -32,19 +29,40 @@ export default async function handler(request, response) {
       return response.status(200).json({ message: 'User created' });
     }
 
-    // 3. PUT: Edit a user
+    // --- PUT: Dynamic Update (Fixes Status Change) ---
     if (request.method === 'PUT') {
-      const { id, name, email, role, account_status } = request.body;
+      const { id, ...updates } = request.body; // Separate ID from fields to update
+
+      if (!id || Object.keys(updates).length === 0) {
+        return response.status(400).json({ error: "Missing ID or update fields" });
+      }
+
+      // Dynamically build SQL query based on fields sent
+      const setClauses = [];
+      const values = [];
+      let paramIndex = 1;
+
+      for (const [key, value] of Object.entries(updates)) {
+        // Allowed fields for security check
+        if (['name', 'email', 'role', 'account_status', 'status', 'last_status_update'].includes(key)) {
+            setClauses.push(`${key} = $${paramIndex}`);
+            values.push(value);
+            paramIndex++;
+        }
+      }
+
+      values.push(id); // Add ID as the last parameter for WHERE clause
+
+      const query = `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex}`;
+
       const client = await pool.connect();
-      await client.query(
-        `UPDATE users SET name = $1, email = $2, role = $3, account_status = $4 WHERE id = $5`,
-        [name, email, role, account_status, id]
-      );
+      await client.query(query, values);
       client.release();
-      return response.status(200).json({ message: 'User updated' });
+
+      return response.status(200).json({ message: 'User updated successfully' });
     }
 
-    // 4. DELETE: Remove a user
+    // --- DELETE: Remove a user ---
     if (request.method === 'DELETE') {
       const { id } = request.query;
       const client = await pool.connect();
