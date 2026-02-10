@@ -27,7 +27,7 @@
             align-items: flex-start;
             height: 220px;
             position: relative;
-            text-decoration: none; /* Ensure link style doesn't break layout */
+            text-decoration: none;
         }
 
         .selection-card:hover {
@@ -65,9 +65,10 @@
     <script src="sidebar.js"></script>
 
     <main class="main-content">
-        <div class="header" style="border-bottom: none; padding-bottom: 0;">
+        <div class="header">
             <h1>Moderation</h1>
         </div>
+        
         <p style="color: var(--text-muted); margin-bottom: 30px;">Select a moderation tool to proceed.</p>
 
         <div class="selection-grid">
