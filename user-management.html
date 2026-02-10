@@ -33,6 +33,7 @@
         .styled-table th, .styled-table td {
             padding: 15px 20px; /* Adds breathing room */
             border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
         }
 
         .styled-table tbody tr:last-of-type {
@@ -44,7 +45,7 @@
         }
 
         /* Column Specifics */
-        .col-id { width: 120px; font-family: monospace; color: var(--text-muted); }
+        .col-id { width: 15%; color: var(--text-muted); } /* Removed monospace font */
         .col-user { width: 25%; font-weight: 600; }
         .col-role { width: 15%; }
         .col-status { width: 15%; }
@@ -57,6 +58,7 @@
         .dot-gray { background-color: #6e7681; }
         .dot-blue { background-color: #0969da; }
         .dot-red { background-color: #da3633; }
+        .dot-purple { background-color: #8957e5; }
 
         /* Card Grid for Menu */
         .selection-grid {
@@ -90,6 +92,9 @@
 
         .back-nav { cursor: pointer; color: var(--text-muted); margin-bottom: 20px; display: inline-block; }
         .back-nav:hover { color: var(--accent-blue); }
+        
+        /* Hidden elements class */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -100,21 +105,21 @@
         
         <div id="view-dashboard">
             <div class="header">
-                <h1>User Management</h1>
+                <h1 id="txt-main-title">User Management</h1>
             </div>
             <p style="color: var(--text-muted);">Manage users, track status, and configure permissions.</p>
 
             <div class="selection-grid">
                 <div class="selection-card" onclick="switchSection('view-status')">
                     <svg class="card-icon" viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
-                    <div class="selection-title">User Status</div>
-                    <div class="selection-desc">Real-time status monitoring of moderators.</div>
+                    <div class="selection-title" id="txt-card-status-title">User Status</div>
+                    <div class="selection-desc" id="txt-card-status-desc">Real-time status monitoring of moderators.</div>
                 </div>
 
                 <div class="selection-card" onclick="switchSection('view-accounts')">
                     <svg class="card-icon" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                    <div class="selection-title">Accounts</div>
-                    <div class="selection-desc">Manage registered users and edit details.</div>
+                    <div class="selection-title" id="txt-card-acc-title">Accounts</div>
+                    <div class="selection-desc" id="txt-card-acc-desc">Manage registered users and edit details.</div>
                 </div>
 
                 <div class="selection-card" onclick="switchSection('view-roles')">
@@ -126,23 +131,17 @@
         </div>
 
         <div id="view-accounts" style="display: none;">
-            <div onclick="switchSection('view-dashboard')" class="back-nav">← Back to Dashboard</div>
+            <div onclick="switchSection('view-dashboard')" class="back-nav" id="txt-back-link-1">← Back to Dashboard</div>
             <div class="header">
-                <h1>Accounts</h1>
-                <button class="btn-primary" onclick="openAddModal()">+ Add User</button>
+                <h1 id="txt-acc-header">Accounts</h1>
+                <button class="btn-primary admin-only" onclick="openAddModal()" id="txt-btn-add">+ Add User</button>
             </div>
 
             <div class="table-container">
                 <table class="styled-table">
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
+                        <tr id="table-head-accounts">
+                            </tr>
                     </thead>
                     <tbody id="userTableBody"></tbody>
                 </table>
@@ -150,22 +149,16 @@
         </div>
 
         <div id="view-status" style="display: none;">
-            <div onclick="switchSection('view-dashboard')" class="back-nav">← Back to Dashboard</div>
+            <div onclick="switchSection('view-dashboard')" class="back-nav" id="txt-back-link-2">← Back to Dashboard</div>
             <div class="header">
-                <h1>Moderator Status Monitor</h1>
+                <h1 id="txt-mod-header">Moderator Status Monitor</h1>
             </div>
 
             <div class="table-container">
                 <table class="styled-table">
                     <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Tasks</th>
-                            <th>AHT</th>
-                            <th>Current Status</th>
-                            <th>Duration</th>
-                            <th style="text-align: right;">Action</th>
-                        </tr>
+                        <tr id="table-head-status">
+                           </tr>
                     </thead>
                     <tbody id="modStatusBody"></tbody>
                 </table>
@@ -184,31 +177,78 @@
 
     <div id="addModal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header">Register New User</div>
+            <div class="modal-header" id="txt-modal-add-title">Register New User</div>
             <form id="addForm">
-                <div class="form-group"><label>Full Name</label><input type="text" id="addName" required placeholder="e.g. Jon Odono"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="addEmail" required placeholder="e.g. jon@digiplus.com.ph"></div>
-                <div class="form-group"><label>Username</label><input type="text" id="addUsername" required placeholder="e.g. jodono"></div>
+                <div class="form-group"><label id="lbl-fullname">Full Name</label><input type="text" id="addName" required placeholder="e.g. Jon Odono"></div>
+                <div class="form-group"><label id="lbl-email">Email</label><input type="email" id="addEmail" required placeholder="e.g. jon@digiplus.com.ph"></div>
+                <div class="form-group"><label id="lbl-username">Username</label><input type="text" id="addUsername" required placeholder="e.g. jodono"></div>
                 <div class="form-group">
-                    <label>Role</label>
+                    <label id="lbl-role">Role</label>
                     <select id="addRole"><option>User</option><option>Moderator</option><option>Admin</option></select>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('addModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('addModal')" id="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-create">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">Edit User</div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group"><label>Full Name</label><input type="text" id="editName" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="editEmail" required></div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="editRole"><option>User</option><option>Moderator</option><option>Admin</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <select id="editAccountStatus">
+                        <option value="Active">Active</option>
+                        <option value="Banned">Banned</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // --- ICONS ---
+        // --- ICONS & VARIABLES ---
         const SVG_EDIT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
         const SVG_DELETE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
+        const APP_LANG_PAGE = localStorage.getItem('appLang') || 'en';
+        const PAGE_TEXT = {
+            en: { mainTitle: "User Management", cardStatusTitle: "User Status", cardStatusDesc: "Real-time status monitoring of moderators.", cardAccTitle: "Accounts", cardAccDesc: "Manage registered users and edit details.", backDashboard: "← Back to Dashboard", accHeader: "Accounts", btnAdd: "+ Add User", modHeader: "Moderator Status Monitor", thId: "ID", thName: "Name", thRole: "Role", thStatus: "Status", thCreated: "Created At", thActions: "Actions", thEmail: "Email", thTasks: "Tasks", thAht: "AHT", thDuration: "Duration", thChange: "Change", modalAddTitle: "Register New User", lblName: "Full Name", lblEmail: "Email", lblUser: "Username", lblRole: "Role", btnCancel: "Cancel", btnCreate: "Create" },
+            zh: { mainTitle: "用户管理", cardStatusTitle: "用户状态", cardStatusDesc: "实时监控审核员状态。", cardAccTitle: "账号管理", cardAccDesc: "管理注册用户及编辑详情。", backDashboard: "← 返回面板", accHeader: "账号列表", btnAdd: "+ 添加用户", modHeader: "审核员状态监控", thId: "ID", thName: "姓名", thRole: "角色", thStatus: "状态", thCreated: "创建时间", thActions: "操作", thEmail: "邮箱", thTasks: "审核任务数", thAht: "平均处理时长", thDuration: "状态持续时间", thChange: "更改状态", modalAddTitle: "注册新用户", lblName: "全名", lblEmail: "邮箱", lblUser: "用户名", lblRole: "角色", btnCancel: "取消", btnCreate: "创建" }
+        };
+        const T_PAGE = PAGE_TEXT[APP_LANG_PAGE];
+
         let users = [];
+        let isAdmin = false;
 
         async function init() {
+            // 1. Check Auth & Role
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) window.location.href = 'login.html';
+            
+            // Check if user is Admin
+            isAdmin = (currentUser.role === 'Admin');
+
+            // Hide Admin-Only Buttons immediately
+            if (!isAdmin) {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+
+            applyTranslations();
             await fetchUsers();
         }
 
@@ -234,9 +274,19 @@
             const tbody = document.getElementById('userTableBody');
             if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No users found.</td></tr>'; return; }
             
-            tbody.innerHTML = users.map(u => `
+            tbody.innerHTML = users.map(u => {
+                // Determine actions column content based on role
+                const actionButtons = isAdmin 
+                    ? `
+                        <button class="action-btn" title="Edit" onclick="openEdit('${u.id}')">${SVG_EDIT}</button>
+                        <button class="action-btn" title="Delete" onclick="deleteUser('${u.id}')">${SVG_DELETE}</button>
+                      `
+                    : `<span style="color:var(--text-muted); font-size:0.8rem;">Read Only</span>`;
+
+                return `
                 <tr>
-                    <td class="col-id" title="${u.id}">${u.id.substring(0, 8)}...</td>
+                    <td class="col-id" title="${u.id}">${u.id}</td>
+                    
                     <td>
                         <div style="font-weight:600; color:var(--text-header);">${u.name}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">@${u.username}</div>
@@ -244,12 +294,12 @@
                     <td><span style="background:var(--hover-bg); padding:4px 8px; border-radius:4px; font-size:0.85rem;">${u.role}</span></td>
                     <td><span class="badge ${u.account_status === 'Banned' ? 'status-Banned' : 'status-Active'}">${u.account_status || 'Active'}</span></td>
                     <td style="font-size:0.85rem;">${new Date(u.created_at || Date.now()).toLocaleDateString()}</td>
+                    
                     <td style="text-align:right;">
-                        <button class="action-btn" title="Edit">${SVG_EDIT}</button>
-                        <button class="action-btn" title="Delete" onclick="deleteUser('${u.id}')">${SVG_DELETE}</button>
+                        ${actionButtons}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function renderModStatus() {
@@ -273,6 +323,11 @@
                     duration = mins + "m";
                 }
 
+                // Only show Change button if Admin
+                const actionCell = isAdmin 
+                    ? `<button class="btn-sm" onclick="alert('Change Status feature coming soon via API')">Change ▼</button>` 
+                    : `<span style="color:var(--text-muted);">-</span>`;
+
                 return `
                 <tr>
                     <td>
@@ -283,7 +338,7 @@
                     <td>0s</td>
                     <td><div style="display:flex; align-items:center;"><span class="status-dot ${dotColor}"></span>${s}</div></td>
                     <td style="font-family:monospace;">${duration}</td>
-                    <td style="text-align:right;"><button class="btn-sm">Change ▼</button></td>
+                    <td style="text-align:right;">${actionCell}</td>
                 </tr>
             `}).join('');
         }
@@ -314,6 +369,64 @@
             closeModal('addModal');
             fetchUsers();
         });
+
+        // Edit Modal Logic
+        function openEdit(id) {
+            const u = users.find(u => u.id.toString() === id.toString());
+            if (!u) return;
+            document.getElementById('editId').value = u.id;
+            document.getElementById('editName').value = u.name;
+            document.getElementById('editEmail').value = u.email || "";
+            document.getElementById('editRole').value = u.role;
+            document.getElementById('editAccountStatus').value = u.account_status || 'Active';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const updatedData = {
+                id: document.getElementById('editId').value,
+                name: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                role: document.getElementById('editRole').value,
+                account_status: document.getElementById('editAccountStatus').value
+            };
+            
+            await fetch('/api/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+            closeModal('editModal');
+            fetchUsers();
+        });
+
+        function applyTranslations() {
+            document.getElementById('txt-main-title').innerText = T_PAGE.mainTitle;
+            document.getElementById('txt-card-status-title').innerText = T_PAGE.cardStatusTitle;
+            document.getElementById('txt-card-status-desc').innerText = T_PAGE.cardStatusDesc;
+            document.getElementById('txt-card-acc-title').innerText = T_PAGE.cardAccTitle;
+            document.getElementById('txt-card-acc-desc').innerText = T_PAGE.cardAccDesc;
+            document.getElementById('txt-back-link-1').innerText = T_PAGE.backDashboard;
+            document.getElementById('txt-back-link-2').innerText = T_PAGE.backDashboard;
+            document.getElementById('txt-acc-header').innerText = T_PAGE.accHeader;
+            document.getElementById('txt-btn-add').innerText = T_PAGE.btnAdd;
+            document.getElementById('txt-mod-header').innerText = T_PAGE.modHeader;
+            document.getElementById('txt-modal-add-title').innerText = T_PAGE.modalAddTitle;
+            document.getElementById('lbl-fullname').innerText = T_PAGE.lblName;
+            document.getElementById('lbl-email').innerText = T_PAGE.lblEmail;
+            document.getElementById('lbl-username').innerText = T_PAGE.lblUser;
+            document.getElementById('lbl-role').innerText = T_PAGE.lblRole;
+            document.getElementById('btn-cancel').innerText = T_PAGE.btnCancel;
+            document.getElementById('btn-create').innerText = T_PAGE.btnCreate;
+
+            document.getElementById('table-head-accounts').innerHTML = `
+                <th>${T_PAGE.thId}</th><th>${T_PAGE.thName}</th><th>${T_PAGE.thRole}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thCreated}</th><th style="text-align:right;">${T_PAGE.thActions}</th>
+            `;
+            document.getElementById('table-head-status').innerHTML = `
+                <th>${T_PAGE.thEmail}</th><th>${T_PAGE.thTasks}</th><th>${T_PAGE.thAht}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thDuration}</th><th style="text-align:right;">${T_PAGE.thChange}</th>
+            `;
+        }
 
         init();
     </script>
