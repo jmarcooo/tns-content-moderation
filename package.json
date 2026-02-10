@@ -1,7 +1,8 @@
 {
   "name": "tns-content-moderation",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "@vercel/postgres": "latest"
+    "pg": "^8.11.3"
   }
 }
