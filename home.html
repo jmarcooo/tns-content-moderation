@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Overview</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        /* Match the text style from the screenshot */
+        .header-welcome-msg {
+            font-size: 0.95rem;
+            color: var(--text-main); 
+            font-weight: 500;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Overview</h1>
+
+            <div class="header-actions">
+                <span id="welcome-text" class="header-welcome-msg"></span>
+
+                <div class="notification-wrapper" onclick="handleNotificationClick()" title="Notifications">
+                    <svg class="bell-icon" viewBox="0 0 16 16">
+                        <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+                    </svg>
+                    <span id="notif-dot" class="notification-dot"></span>
+                </div>
+
+                <div id="header-avatar" class="header-avatar">A</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3 id="stat-users-title">Total Users</h3>
+                <div class="number">1,204</div>
+                <div class="trend up">▲ 12% from last week</div>
+            </div>
+            <div class="card">
+                <h3 id="stat-flagged-title">Flagged Comments</h3>
+                <div class="number">42</div>
+                <div class="trend down">▼ 5% from yesterday</div>
+            </div>
+            <div class="card">
+                <h3 id="stat-pending-title">Pending Reviews</h3>
+                <div class="number">5</div>
+                <div class="trend" style="color: #d29922;">⚠ Requires attention</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Activity Log</h2>
+        <ul class="activity-list">
+            <li class="activity-item">
+                User <strong>@spambot_99</strong> was banned.
+                <span>2 mins ago</span>
+            </li>
+            <li class="activity-item">
+                New user <strong>@dev_marco</strong> registered.
+                <span>15 mins ago</span>
+            </li>
+            <li class="activity-item">
+                System flagged 3 comments as "Toxic".
+                <span>1 hour ago</span>
+            </li>
+        </ul>
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script>
+        // --- AUTH GUARD & USER INFO ---
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+
+        if(currentUser) {
+            // 3. UPDATED: Target the new span instead of the H1
+            const welcomeEl = document.getElementById('welcome-text');
+            welcomeEl.innerText = `Welcome back, ${currentUser.name}!`;
+
+            // Set Avatar Initial
+            const avatarEl = document.getElementById('header-avatar');
+            avatarEl.innerText = currentUser.name.charAt(0).toUpperCase();
+        }
+
+        // --- NOTIFICATION DOT LOGIC ---
+        let notificationCount = 3; 
+
+        function updateBadge() {
+            const dot = document.getElementById('notif-dot');
+            if (notificationCount > 0) {
+                dot.style.display = 'block';
+            } else {
+                dot.style.display = 'none';
+            }
+        }
+
+        function handleNotificationClick() {
+            if(notificationCount > 0) {
+                notificationCount = 0;
+                updateBadge();
+            }
+        }
+
+        // Initialize
+        updateBadge();
+    </script>
+</body>
+</html>

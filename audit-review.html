@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Review Task</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
+        
+        /* --- SIDEBAR STYLING --- */
+        .info-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .info-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        .info-row:last-child { margin-bottom: 0; }
+        .info-row .label { color: var(--text-muted); font-weight: 500; flex-shrink: 0; margin-right: 10px; font-size: 0.8rem; }
+        .info-row .value { color: var(--text-header); font-weight: 600; text-align: right; word-break: break-word; font-size: 0.85rem; }
+        .value.highlight { color: var(--accent-blue); }
+
+        /* Initial Moderation Status Box */
+        .initial-mod-status {
+            margin-top: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            background-color: #f6f8fa;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid var(--border-color);
+        }
+        .mod-approve { color: #238636; border-left: 3px solid #238636; }
+        .mod-reject { color: #da3633; border-left: 3px solid #da3633; }
+
+        /* Footer & Actions */
+        .audit-footer {
+            position: fixed;
+            bottom: 0; left: 260px; right: 0; height: 70px;
+            background: white; border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; padding: 0 30px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03); z-index: 100;
+        }
+        .audit-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-right: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-audit { display: flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 20px; font-size: 0.9rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.1s; border: none; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-audit:active { transform: translateY(1px); }
+        .btn-audit-agree { background-color: #238636; margin-right: 12px; }
+        .btn-audit-agree:hover { background-color: #1f732d; }
+        .btn-audit-disagree { background-color: #da3633; }
+        .btn-audit-disagree:hover { background-color: #b92b27; }
+        .btn-audit-exit { margin-left: auto; background: white; border: 1px solid var(--border-color); color: var(--text-muted); }
+        .btn-audit-exit:hover { background: var(--hover-bg); color: var(--text-main); border-color: #b0b8c1; }
+        
+        .btn-icon { width: 16px; height: 16px; fill: currentColor; }
+        .close-icon-svg { width: 24px; height: 24px; fill: currentColor; }
+        
+        /* Updated Label Styling */
+        .text-field-label { margin-bottom:4px; font-weight:bold; color:var(--text-header); font-size:0.85rem; }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content" style="padding-bottom: 90px;">
+        
+        <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
+            <div>
+                <a href="audit-queue.html" style="text-decoration: none; color: var(--text-muted); font-size: 0.85rem; display:inline-flex; align-items:center; gap:5px;">← Back to Audit Queues</a>
+                <h1 id="queue-title" style="margin-top: 5px; font-size: 1.3rem;">Loading...</h1>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="badge status-Active" style="font-size:0.85rem; padding: 4px 10px;">QA Time: <span id="timer" class="timer-badge">00:00:00</span></span>
+                <span class="badge" style="background-color: #f6f8fa; border: 1px solid var(--border-color); color: var(--text-main); font-size:0.85rem; padding: 4px 10px;">
+                    Audited: <span id="session-counter" style="font-weight:bold;">0</span>
+                </span>
+            </div>
+        </div>
+
+        <div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh; font-size: 1.2rem; color: var(--text-muted);">
+            <div>⚡ Fetching task for audit...</div>
+        </div>
+
+        <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 20px;">
+            
+            <div class="left-sidebar" style="width: 300px; flex-shrink:0;">
+                <div class="info-card">
+                    <div class="info-header">Content Info</div>
+                    <div class="info-row"><span class="label">Tenant:</span> <span class="value" id="info-tenant">--</span></div>
+                    <div class="info-row"><span class="label">Content ID:</span> <span class="value" id="info-id">--</span></div>
+                    <div class="info-row"><span class="label">Publisher:</span> <span class="value highlight" id="info-publisher">--</span></div>
+                    <div class="info-row"><span class="label">Account Type:</span> <span class="value" id="info-account">--</span></div>
+                    <div class="info-row"><span class="label">Publish Time:</span> <span class="value" id="info-time">--</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">User Info</div>
+                    <div class="info-row"><span class="label">User ID:</span> <span class="value" id="info-userid">--</span></div>
+                    <div class="info-row"><span class="label">Level:</span> <span class="value" id="info-level">--</span></div>
+                    <div class="info-row"><span class="label">Violations:</span> <span class="value" id="info-violations" style="color:#da3633">0</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">Moderation Info</div>
+                    <div class="info-row"><span class="label">Task ID:</span> <span class="value" id="info-taskid">--</span></div>
+                    <div class="info-row"><span class="label">Reviewer:</span> <span class="value" id="mod-name">--</span></div>
+                    <div class="info-row"><span class="label">Time Moderated:</span> <span class="value" id="mod-time">--</span></div>
+                </div>
+            </div>
+
+            <div class="content-canvas">
+                
+                <div id="module-content">
+                    <div class="section-header">CONTENT</div>
+                    <div id="image-container" class="image-grid"></div>
+                    <div class="initial-mod-status" id="status-display-images">
+                        Initial Moderation: <span id="mod-val-images">--</span>
+                    </div>
+                </div>
+
+                <div id="module-text" style="margin-top: 30px;">
+                    <div class="section-header">TEXT</div>
+                    
+                    <div id="text-wrapper-top" style="margin-bottom: 15px;">
+                        <div class="text-field-label">Title/Context</div>
+                        <div id="text-top" class="text-context-box"></div>
+                    </div>
+
+                    <div id="text-wrapper-bottom">
+                        <div class="text-field-label">Description</div>
+                        <div id="text-bottom" class="text-context-box"></div>
+                    </div>
+
+                    <div class="initial-mod-status" id="status-display-text" style="margin-top: 15px;">
+                        Initial Moderation: <span id="mod-val-text">--</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="audit-footer">
+            <span class="audit-label">AUDIT DECISION:</span>
+            <button class="btn-audit btn-audit-agree" onclick="AuditApp.submitAudit('agree')">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Agree (Correct)
+            </button>
+            <button class="btn-audit btn-audit-disagree" onclick="AuditApp.openErrorDrawer()">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Disagree (Error)
+            </button>
+            <button class="btn-audit btn-audit-exit" onclick="AuditApp.exit()">Exit</button>
+        </div>
+
+        <div id="violationDrawer" class="violation-drawer">
+            <div class="drawer-header">
+                <span>Select Error Type</span>
+                <span style="cursor:pointer;" onclick="AuditApp.closeDrawer()"><svg class="close-icon-svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></span>
+            </div>
+            <div class="drawer-content" id="errorList"></div>
+        </div>
+
+        <div id="imageViewer" class="viewer-overlay">
+            <span class="close-viewer" onclick="ImageViewer.close()"><svg class="close-icon-svg" style="fill: white; width:30px;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></span>
+            <div class="viewer-content"><img id="viewer-img-target" src="" class="viewer-image"></div>
+        </div>
+
+    </main>
+
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="audit-review-logic.js"></script>
+</body>
+</html>

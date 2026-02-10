@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Assurance</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .selection-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            height: 220px;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .selection-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: var(--hover-bg);
+            fill: var(--accent-blue);
+        }
+
+        /* Specific colors for icons */
+        .icon-orange { fill: #d29922; background-color: rgba(210, 153, 34, 0.1); }
+        .icon-red { fill: #f85149; background-color: rgba(248, 81, 73, 0.1); }
+        .icon-purple { fill: #8957e5; background-color: rgba(137, 87, 229, 0.1); }
+
+        .selection-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 8px;
+        }
+
+        .selection-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content">
+        <div class="header" style="border-bottom: none; padding-bottom: 0;">
+            <h1>Quality Assurance</h1>
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Monitor quality standards, review appeals, and track audit history.</p>
+
+        <div class="selection-grid">
+            
+            <a href="audit-queue.html" class="selection-card">
+                <svg class="card-icon icon-orange" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <div class="selection-title">Audit</div>
+                <div class="selection-desc">Perform quality checks on moderated content queues.</div>
+            </a>
+
+            <a href="appeal-center.html" class="selection-card">
+                <svg class="card-icon icon-red" viewBox="0 0 24 24">
+                    <path d="M1 21h12v2H1zM5.245 8.07l2.83-2.827 14.14 14.142-2.828 2.828zM12.317 1l5.657 5.656-2.83 2.83-5.654-5.66zM3.825 9.485l5.657 5.657-2.828 2.828-5.657-5.657z"/>
+                </svg>
+                <div class="selection-title">Appeal Center</div>
+                <div class="selection-desc">Review and adjudicate user appeals and escalations.</div>
+            </a>
+
+            <a href="audit-history.html" class="selection-card">
+                <svg class="card-icon icon-purple" viewBox="0 0 24 24">
+                     <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                <div class="selection-title">Audit History</div>
+                <div class="selection-desc">View logs of past quality audits and scores.</div>
+            </a>
+
+        </div>
+
+    </main>
+
+    <script src="auth.js"></script>
+    <script>
+        Auth.requireLogin();
+    </script>
+</body>
+</html>

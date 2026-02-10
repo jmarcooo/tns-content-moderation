@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Appeal Center</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .appeal-list { padding: 16px; max-width: 900px; margin: 24px auto; }
+    .appeal-card { border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; margin-bottom: 12px; background: var(--panel-bg); }
+    .appeal-meta { font-size: 0.85rem; color: var(--text-muted); }
+    .badge-pending { background: #d29922; color:white; padding: 3px 8px; border-radius: 4px; font-weight:600; }
+    
+    .back-nav {
+        margin-bottom: 15px;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+    .back-nav:hover { color: var(--accent-blue); }
+  </style>
+</head>
+<body>
+  <script src="sidebar.js"></script>
+  <main class="main-content">
+    
+    <a href="quality-assurance.html" class="back-nav">← Back to Quality Assurance</a>
+
+    <div class="header">
+      <h1>Appeal Center</h1>
+      <div style="color:var(--text-muted)">Tasks flagged by QA for review</div>
+    </div>
+
+    <div class="appeal-list" id="appealList">
+      </div>
+  </main>
+
+  <script>
+    function renderAppeals() {
+      const list = document.getElementById('appealList');
+      const appeals = JSON.parse(localStorage.getItem('appeals') || '[]');
+      if (appeals.length === 0) {
+        list.innerHTML = '<div style="color:var(--text-muted);">No pending appeals.</div>';
+        return;
+      }
+
+      list.innerHTML = appeals.map(a => {
+        return `<div class="appeal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700">Task-${a.taskId} <span style="font-weight:400; color:var(--text-muted)">(${a.queue})</span></div>
+              <div class="appeal-meta">Submitted: ${new Date(a.ts).toLocaleString()} — Reporter: ${a.reporter}</div>
+            </div>
+            <div>
+              <div class="badge-pending">${a.status.toUpperCase()}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div style="font-weight:600">Moderator Decision:</div>
+            <pre style="white-space:pre-wrap; background:transparent; border:none; padding:0; margin:6px 0;">${JSON.stringify(a.moderatorDecision, null, 2)}</pre>
+
+            <div style="font-weight:600; margin-top:6px;">QA Decision:</div>
+            <pre style="white-space:pre-wrap; background:transparent; border:none; padding:0; margin:6px 0;">${JSON.stringify(a.qaDecision, null, 2)}</pre>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    renderAppeals();
+  </script>
+</body>
+</html>

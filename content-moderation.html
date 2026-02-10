@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Moderation Queues</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .icon-svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            vertical-align: middle;
+            margin-right: 4px;
+            opacity: 0.7;
+        }
+        .back-nav {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        .back-nav:hover { color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content">
+        
+        <a href="moderation.html" class="back-nav">← Back to Dashboard</a>
+
+        <div class="header">
+            <h1>Content Moderation</h1>
+            
+            <div style="display: flex; align-items: center;">
+                
+                <select id="sortDropdown" class="sort-select" onchange="handleDropdownSort(this.value)">
+                    <option value="count-desc">Pending (Highest)</option>
+                    <option value="count-asc">Pending (Lowest)</option>
+                    <option value="latency-desc">Latency (Slowest)</option>
+                    <option value="latency-asc">Latency (Fastest)</option>
+                    <option value="aht-desc">AHT (Slowest)</option>
+                    <option value="aht-asc">AHT (Fastest)</option>
+                </select>
+
+                <div class="view-switcher">
+                    <button id="btn-card" class="view-btn" onclick="switchView('card')" title="Card View">
+                        ⊞
+                    </button>
+                    <button id="btn-list" class="view-btn" onclick="switchView('list')" title="List View">
+                        ☰
+                    </button>
+                </div>
+
+                <div style="text-align: right; margin-left: 20px;">
+                    <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
+                    <strong id="total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <div id="queue-container" class="queue-grid"></div>
+
+    </main>
+
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    
+    <script>
+        Auth.requireLogin();
+
+        // --- CONFIGURATION ---
+        let queueData = Config.queues.map(q => ({
+            ...q,
+            count: Math.floor(Math.random() * 500)
+        }));
+
+        // --- VIEW STATE & SORT LOGIC ---
+        let currentView = localStorage.getItem('modQueueView') || 'list'; // Default to list based on request style
+        let sortCol = 'count'; 
+        let sortAsc = false;
+
+        function switchView(viewType) {
+            currentView = viewType;
+            localStorage.setItem('modQueueView', viewType);
+            renderQueues();
+            updateViewButtons();
+        }
+
+        function updateViewButtons() {
+            document.getElementById('btn-card').classList.toggle('active', currentView === 'card');
+            document.getElementById('btn-list').classList.toggle('active', currentView === 'list');
+        }
+
+        function parseTime(timeStr) {
+            if (!timeStr) return 0;
+            let m = 0, s = 0;
+            const mMatch = timeStr.match(/(\d+)m/);
+            const sMatch = timeStr.match(/(\d+)s/);
+            if (mMatch) m = parseInt(mMatch[1]);
+            if (sMatch) s = parseInt(sMatch[1]);
+            return (m * 60) + s;
+        }
+
+        // --- SORTING ENGINE ---
+        function executeSort() {
+            queueData.sort((a, b) => {
+                let valA, valB;
+                if (sortCol === 'latency' || sortCol === 'aht') {
+                    valA = parseTime(a[sortCol]);
+                    valB = parseTime(b[sortCol]);
+                } else if (sortCol === 'count') {
+                    valA = a[sortCol];
+                    valB = b[sortCol];
+                } else {
+                    valA = a[sortCol].toLowerCase();
+                    valB = b[sortCol].toLowerCase();
+                }
+
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            renderQueues();
+        }
+
+        function handleHeaderSort(column) {
+            if (sortCol === column) {
+                sortAsc = !sortAsc;
+            } else {
+                sortCol = column;
+                sortAsc = true; 
+            }
+            syncDropdown();
+            executeSort();
+        }
+
+        function handleDropdownSort(value) {
+            const [col, dir] = value.split('-');
+            sortCol = col;
+            sortAsc = (dir === 'asc');
+            executeSort();
+        }
+
+        function syncDropdown() {
+            const dir = sortAsc ? 'asc' : 'desc';
+            const val = `${sortCol}-${dir}`;
+            const dropdown = document.getElementById('sortDropdown');
+            if (dropdown.querySelector(`option[value="${val}"]`)) {
+                dropdown.value = val;
+            }
+        }
+
+        function getSortIcon(column) {
+            if (sortCol !== column) return '<span class="sort-icon">⇅</span>';
+            return sortAsc ? '▲' : '▼';
+        }
+        function getSortClass(column) {
+            return sortCol === column ? 'active-sort' : '';
+        }
+
+        // --- RENDER FUNCTION ---
+        function renderQueues() {
+            const container = document.getElementById('queue-container');
+            let total = 0;
+            let html = '';
+
+            const ICON_CLOCK = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>`;
+            const ICON_BOLT  = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>`;
+
+            if (currentView === 'card') {
+                container.className = 'queue-grid';
+            } else {
+                container.className = 'queue-container list-mode';
+                html += `
+                <div class="list-header-row">
+                    <div class="col-tenant ${getSortClass('category')}" onclick="handleHeaderSort('category')">
+                        TENANT ${getSortIcon('category')}
+                    </div>
+                    <div class="col-name ${getSortClass('name')}" onclick="handleHeaderSort('name')">
+                        QUEUE NAME ${getSortIcon('name')}
+                    </div>
+                    <div class="col-pending ${getSortClass('count')}" onclick="handleHeaderSort('count')">
+                        PENDING ${getSortIcon('count')}
+                    </div>
+                    <div class="col-latency ${getSortClass('latency')}" onclick="handleHeaderSort('latency')">
+                        LATENCY ${getSortIcon('latency')}
+                    </div>
+                    <div class="col-aht ${getSortClass('aht')}" onclick="handleHeaderSort('aht')">
+                        AHT ${getSortIcon('aht')}
+                    </div>
+                    <div class="col-action" style="cursor:default">ACTION</div>
+                </div>
+                `;
+            }
+
+            html += queueData.map(queue => {
+                total += queue.count;
+                
+                if (currentView === 'card') {
+                    // CARD LAYOUT
+                    return `
+                    <div class="queue-card" onclick="openQueue('${queue.name}')">
+                        <div>
+                            <div class="queue-type">${queue.category}</div>
+                            <div class="queue-title">${queue.name}</div>
+                        </div>
+                        
+                        <div>
+                            <div class="count-number">${queue.count.toLocaleString()}</div>
+                            <div class="count-label">Pending Items</div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="card-stat-item" title="Average Latency">
+                                ${ICON_CLOCK} <span class="card-stat-val">${queue.latency}</span>
+                            </div>
+                            <div class="card-stat-item" title="Average Handle Time">
+                                ${ICON_BOLT} <span class="card-stat-val">${queue.aht}</span>
+                            </div>
+                            <button class="btn-review" style="padding: 2px 8px; font-size: 0.75rem;">Review</button>
+                        </div>
+                    </div>`;
+                } else {
+                    // LIST LAYOUT
+                    return `
+                    <div class="queue-list-item" onclick="openQueue('${queue.name}')">
+                        <div class="col-tenant"><span class="badge-tenant">${queue.category}</span></div>
+                        <div class="col-name">${queue.name}</div>
+                        <div class="col-pending">${queue.count.toLocaleString()} <span class="sub-text">Tasks</span></div>
+                        <div class="col-latency">${ICON_CLOCK} ${queue.latency}</div>
+                        <div class="col-aht">${ICON_BOLT} ${queue.aht}</div>
+                        <div class="col-action"><button class="btn-review">Review</button></div>
+                    </div>`;
+                }
+            }).join('');
+
+            container.innerHTML = html;
+            document.getElementById('total-pending').innerText = total.toLocaleString();
+            updateViewButtons();
+        }
+
+        // --- NAVIGATION ---
+        function openQueue(queueName) {
+            const queue = queueData.find(q => q.name === queueName);
+            const tenant = queue ? queue.category : 'BP'; 
+            window.location.href = `review.html?queue=${encodeURIComponent(queueName)}&tenant=${encodeURIComponent(tenant)}`;
+        }
+
+        // Initialize
+        executeSort();
+    </script>
+</body>
+</html>

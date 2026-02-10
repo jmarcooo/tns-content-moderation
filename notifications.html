@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification Center</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- Layout: Notification Center Container --- */
+        .notif-wrapper {
+            display: flex;
+            gap: 0; 
+            height: calc(100vh - 140px); 
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .notif-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            padding-top: 20px;
+            padding-right: 20px;
+            border-right: 1px solid transparent; /* Removed border to match clean look if needed, or keep it subtle */
+        }
+
+        .notif-nav-item {
+            padding: 12px 20px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 4px; /* Slightly sharper */
+            transition: all 0.2s ease;
+        }
+
+        .notif-nav-item:hover { color: var(--text-main); background-color: var(--hover-bg); }
+
+        .notif-nav-item.active {
+            color: #1F2328; /* Dark text */
+            background: linear-gradient(90deg, rgba(35, 134, 54, 0.1) 0%, transparent 100%);
+            border-left: 4px solid #238636;
+            font-weight: 600;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* --- Content Area --- */
+        .notif-content {
+            flex-grow: 1;
+            padding-left: 30px; 
+            padding-top: 10px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- MAIN CARD CONTAINER --- */
+        .main-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px; /* Standard radius */
+            width: 100%;
+            height: 100%; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); /* Subtle shadow */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========================
+           SEND NOTIFICATION STYLES
+           ======================== */
+        .send-container {
+            padding: 40px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .send-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 30px;
+        }
+
+        .send-form-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr; /* Fixed left col, flexible right col */
+            gap: 60px; /* Space between columns */
+            max-width: 1400px;
+        }
+
+        .form-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px; /* Space between inputs */
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-header);
+        }
+
+        .input-control {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: #fff; /* Clean white background */
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        
+        .input-control:focus {
+            outline: none;
+            border-color: #238636;
+            box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+        }
+
+        .input-textarea {
+            resize: vertical;
+            min-height: 250px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .btn-blast {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            align-self: flex-start; /* Do not stretch */
+            margin-top: 10px;
+        }
+        .btn-blast:hover {
+            background-color: #1a6328;
+        }
+
+        /* ========================
+           LIST / SPLIT VIEW STYLES (Preserved)
+           ======================== */
+        .notif-split-container { display: flex; flex-grow: 1; height: 100%; overflow: hidden; }
+        .notif-list-pane { width: 380px; flex-shrink: 0; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background-color: var(--bg-card); }
+        .notif-detail-pane { flex-grow: 1; overflow-y: auto; padding: 40px; background-color: var(--bg-card); display: flex; flex-direction: column; }
+        
+        /* List Headers */
+        .list-header-top { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); font-weight: 700; color: var(--text-header); }
+        .select-all-row { padding: 12px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background-color: var(--bg-body); font-size: 0.9rem; color: var(--text-muted); }
+        .list-scroll-area { overflow-y: auto; flex-grow: 1; }
+
+        /* List Rows */
+        .notif-row { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: background 0.1s; }
+        .notif-row:hover { background-color: var(--hover-bg); }
+        .notif-row.active-view { background-color: rgba(35, 134, 54, 0.05); }
+
+        .notif-details { flex-grow: 1; overflow: hidden; }
+        .notif-header-line { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .notif-title { font-size: 0.9rem; font-weight: 500; color: var(--text-header); }
+        .notif-time-sm { font-size: 0.75rem; color: var(--text-muted); }
+        .notif-snippet { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Detail Pane */
+        .detail-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+        .detail-title-lg { font-size: 2rem; font-weight: 500; color: var(--text-header); margin: 0; }
+        .detail-timestamp { text-align: right; font-size: 0.85rem; color: var(--text-muted); }
+        .field-group-readonly { margin-bottom: 25px; }
+        .field-box-readonly { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background-color: transparent; color: var(--text-main); font-size: 1rem; }
+        .body-content-readonly { min-height: 400px; white-space: pre-wrap; line-height: 1.6; }
+        
+        .detail-footer { margin-top: auto; display: flex; justify-content: flex-end; gap: 15px; padding-top: 20px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); padding: 8px 24px; border-radius: 4px; cursor: pointer; font-weight: 500; color: var(--text-main); }
+        .btn-outline:hover { background-color: var(--hover-bg); }
+        .btn-link { background: none; border: none; color: #0969da; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+        .custom-checkbox { width: 16px; height: 16px; cursor: pointer; margin-top: 3px; accent-color: #238636; }
+
+    </style>
+</head>
+<body>
+    <script src="sidebar.js"></script>
+    <main class="main-content">
+        
+        <div class="header">
+            <h1 id="header-title">Notification Center</h1>
+        </div>
+
+        <div class="notif-wrapper">
+            
+            <div class="notif-sidebar">
+                <div class="notif-nav-item active" id="nav-list" onclick="switchView('list')">All Notifications</div>
+                <div class="notif-nav-item" id="nav-send" onclick="switchView('send')">Send Notification</div>
+            </div>
+
+            <div class="notif-content">
+                
+                <div id="view-list" class="main-card" style="display: flex;">
+                    <div class="notif-split-container">
+                        <div class="notif-list-pane">
+                            <div class="list-header-top">
+                                <span>History</span>
+                                <button class="btn-link" onclick="NotifApp.markAllRead()">Mark all as read</button>
+                            </div>
+                            <div class="select-all-row">
+                                <input type="checkbox" id="selectAll" class="custom-checkbox" onchange="NotifApp.toggleSelectAll(this)">
+                                <label for="selectAll" style="cursor:pointer;">Select All</label>
+                                <button id="btnDeleteList" class="btn-link" style="color:#f85149; margin-left:auto; display:none;" onclick="NotifApp.deleteSelected()">Delete</button>
+                            </div>
+                            <div class="list-scroll-area" id="notif-list-container"></div>
+                        </div>
+
+                        <div class="notif-detail-pane" id="detail-view">
+                            <div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
+                                Select a notification to view details
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-send" class="main-card" style="display: none;">
+                    <div class="send-container">
+                        <h2 class="send-title">Send Notification</h2>
+                        
+                        <form onsubmit="event.preventDefault(); NotifApp.sendBlast();">
+                            <div class="send-form-grid">
+                                
+                                <div class="form-col">
+                                    <div class="input-group">
+                                        <label class="input-label">Target Audience</label>
+                                        <select class="input-control">
+                                            <option>All Users</option>
+                                            <option>Moderators Only</option>
+                                            <option>Admins Only</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label class="input-label">Notification Type</label>
+                                        <select class="input-control">
+                                            <option>System Alert</option>
+                                            <option>Maintenance</option>
+                                            <option>Policy Update</option>
+                                            <option>General Announcement</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-col">
+                                    <div class="input-group">
+                                        <label class="input-label">Message Title</label>
+                                        <input type="text" class="input-control" placeholder="e.g. System Maintenance">
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label class="input-label">Message Body</label>
+                                        <textarea class="input-control input-textarea" placeholder="Type message..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn-blast">Send Blast</button>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function switchView(view) {
+            document.querySelectorAll('.notif-nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-' + view).classList.add('active');
+            document.getElementById('view-send').style.display = 'none';
+            document.getElementById('view-list').style.display = 'none';
+            
+            if(view === 'list') {
+                document.getElementById('view-list').style.display = 'flex';
+            } else {
+                document.getElementById('view-send').style.display = 'flex'; // Changed to flex to support internal layout
+            }
+        }
+
+        const NotifApp = {
+            data: [
+                { id: 1, title: "System Alert", body: "High volume detected in \"Dynamic Video\" queue. Server scale-up triggered.", time: "10m ago", fullTime: "02/03/2026 15:23", read: false, sender: "Admin" },
+                { id: 2, title: "New Appeal", body: "User @gamer123 has submitted an appeal ticket for review regarding ban #4402.", time: "45m ago", fullTime: "02/03/2026 14:45", read: false, sender: "System" },
+                { id: 3, title: "Maintenance", body: "Scheduled maintenance for Feb 5th at 02:00 UTC. Expected downtime: 45 mins.", time: "2h ago", fullTime: "02/03/2026 13:00", read: true, sender: "DevOps" },
+                { id: 4, title: "Server Load", body: "Node-EU-3 is experiencing high latency (350ms). Traffic redirected.", time: "3h ago", fullTime: "02/03/2026 12:15", read: true, sender: "Monitor" },
+                { id: 5, title: "Payment Failed", body: "Gateway B reported a 2% failure rate increase. Tech team alerted.", time: "5h ago", fullTime: "02/03/2026 10:00", read: true, sender: "Billing" },
+                { id: 6, title: "New Registration", body: "User @mod_candidate completed onboarding.", time: "1d ago", fullTime: "02/02/2026 09:30", read: true, sender: "HR" },
+                { id: 7, title: "Policy Update", body: "New moderation guidelines updated for \"Hate Speech\".", time: "2d ago", fullTime: "02/01/2026 16:00", read: true, sender: "Policy" }
+            ],
+            selected: new Set(),
+            currentViewId: null,
+
+            init() {
+                this.renderList();
+                if(this.data.length > 0) this.handleRowClick(this.data[0].id);
+            },
+
+            renderList() {
+                const container = document.getElementById('notif-list-container');
+                container.innerHTML = this.data.map(item => `
+                    <div class="notif-row ${this.currentViewId === item.id ? 'active-view' : ''}" onclick="NotifApp.handleRowClick(${item.id})">
+                        <div onclick="event.stopPropagation()">
+                            <input type="checkbox" class="custom-checkbox" 
+                                ${this.selected.has(item.id) ? 'checked' : ''}
+                                onchange="NotifApp.toggleSelect(${item.id})">
+                        </div>
+                        <div class="notif-details">
+                            <div class="notif-header-line">
+                                <span class="notif-title" style="${!item.read ? 'font-weight:700' : ''}">${item.title}</span>
+                                <span class="notif-time-sm">${item.time}</span>
+                            </div>
+                            <div class="notif-snippet">${item.body}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const delBtn = document.getElementById('btnDeleteList');
+                delBtn.style.display = this.selected.size > 0 ? 'block' : 'none';
+                delBtn.innerText = `Delete (${this.selected.size})`;
+            },
+
+            renderDetail(id) {
+                const container = document.getElementById('detail-view');
+                const item = this.data.find(i => i.id === id);
+
+                if (!item) {
+                    container.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">Select a notification</div>`;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="detail-header-row">
+                        <h1 class="detail-title-lg">${item.title}</h1>
+                        <div class="detail-timestamp">
+                            <div>${item.fullTime}</div>
+                            <div>${item.time}</div>
+                        </div>
+                    </div>
+
+                    <div class="field-group-readonly">
+                        <label class="input-label" style="margin-bottom:8px; display:block;">Sent by:</label>
+                        <div class="field-box-readonly">${item.sender}</div>
+                    </div>
+
+                    <div class="field-group-readonly" style="flex-grow:1; display:flex; flex-direction:column;">
+                        <label class="input-label" style="margin-bottom:8px; display:block;">Body:</label>
+                        <div class="field-box-readonly body-content-readonly">${item.body}</div>
+                    </div>
+
+                    <div class="detail-footer">
+                        <button class="btn-outline" onclick="NotifApp.deleteSingle(${item.id})">Delete</button>
+                        <button class="btn-outline" onclick="NotifApp.markReadSingle(${item.id})">Mark as Read</button>
+                    </div>
+                `;
+            },
+
+            toggleSelect(id) {
+                if(this.selected.has(id)) this.selected.delete(id);
+                else this.selected.add(id);
+                this.renderList();
+            },
+
+            toggleSelectAll(checkbox) {
+                if(checkbox.checked) this.data.forEach(i => this.selected.add(i.id));
+                else this.selected.clear();
+                this.renderList();
+            },
+
+            handleRowClick(id) {
+                this.currentViewId = id;
+                this.renderList();
+                this.renderDetail(id);
+            },
+
+            deleteSelected() {
+                if(confirm(`Delete ${this.selected.size} items?`)) {
+                    this.data = this.data.filter(i => !this.selected.has(i.id));
+                    this.selected.clear();
+                    document.getElementById('selectAll').checked = false;
+                    this.renderList();
+                    if(this.data.length > 0) this.handleRowClick(this.data[0].id);
+                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = ''; }
+                }
+            },
+
+            deleteSingle(id) {
+                if(confirm('Delete this notification?')) {
+                    this.data = this.data.filter(i => i.id !== id);
+                    this.renderList();
+                    if(this.data.length > 0) this.handleRowClick(this.data[0].id);
+                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = ''; }
+                }
+            },
+
+            markReadSingle(id) {
+                const item = this.data.find(i => i.id === id);
+                if(item) {
+                    item.read = true;
+                    this.renderList();
+                }
+            },
+
+            markAllRead() {
+                this.data.forEach(i => i.read = true);
+                this.renderList();
+            },
+
+            sendBlast() {
+                alert('Notification Blast Sent!');
+            }
+        };
+
+        NotifApp.init();
+    </script>
+</body>
+</html>

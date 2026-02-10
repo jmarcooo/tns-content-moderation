@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit History</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .back-nav {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        .back-nav:hover { color: var(--accent-blue); }
+        
+        .placeholder-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <script src="sidebar.js"></script>
+    <main class="main-content">
+        <a href="quality-assurance.html" class="back-nav">← Back to Quality Assurance</a>
+        <div class="header">
+            <h1>Audit History</h1>
+        </div>
+
+        <div class="placeholder-container">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📜</div>
+            <h2>Audit Logs</h2>
+            <p>View logs of past quality audits and scores.</p>
+        </div>
+    </main>
+</body>
+</html>

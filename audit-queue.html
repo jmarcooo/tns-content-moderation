@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Queues</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Audit Queues</h1>
+            
+            <div style="display: flex; align-items: center;">
+                <select id="sortDropdown" class="sort-select" onchange="handleDropdownSort(this.value)">
+                    <option value="audited-desc">Audited % (Highest)</option>
+                    <option value="audited-asc">Audited % (Lowest)</option>
+                    <option value="count-desc">Pending (Highest)</option>
+                    <option value="count-asc">Pending (Lowest)</option>
+                </select>
+
+                <div class="view-switcher">
+                    <button id="btn-card" class="view-btn" onclick="switchView('card')" title="Card View">⊞</button>
+                    <button id="btn-list" class="view-btn" onclick="switchView('list')" title="List View">☰</button>
+                </div>
+
+                <div style="text-align: right; margin-left: 20px;">
+                    <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
+                    <strong id="total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <div id="queue-container" class="queue-grid"></div>
+
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script>
+        // --- 1. AUTH GUARD ---
+        if (!localStorage.getItem('currentUser')) {
+            window.location.href = 'login.html';
+        }
+
+        // --- 2. CONFIGURATION (MATCHING CONFIG.JS) ---
+        let queueData = [
+            // Video/Image (BP/GP)
+            { id: 'bp_img',   category: 'BP', name: 'QA - Dynamic Image Review',   count: 142, latency: '1m 20s', aht: '12s', auditedPercent: 42 },
+            { id: 'bp_vid',   category: 'BP', name: 'QA - Dynamic Video Review',   count: 56,  latency: '3m 45s', aht: '45s', auditedPercent: 27 },
+            { id: 'gp_img',   category: 'GP', name: 'QA - Dynamic Image Review',   count: 23,  latency: '5m 10s', aht: '15s', auditedPercent: 61 },
+            { id: 'gp_vid',   category: 'GP', name: 'QA - Dynamic Video Review',   count: 12,  latency: '8m 20s', aht: '55s', auditedPercent: 75 },
+            
+            // Avatar (Community)
+            { id: 'comm_ava', category: 'Community', name: 'QA - Avatar Review',    count: 310, latency: '2m 15s', aht: '8s',  auditedPercent: 88 },
+            
+            // Nickname/Profile (Community)
+            { id: 'comm_nick',category: 'Community', name: 'QA - Nickname Review',  count: 67,  latency: '0m 50s', aht: '3s',  auditedPercent: 52 },
+            { id: 'comm_prof',category: 'Community', name: 'QA - Profile Review',   count: 105, latency: '4m 30s', aht: '20s', auditedPercent: 47 }
+        ];
+
+        // --- 3. VIEW STATE & SORT LOGIC ---
+        let currentView = localStorage.getItem('modQueueView') || 'card';
+        let sortCol = 'auditedPercent';
+        let sortAsc = false;
+
+        function getSortIcon(col) {
+            if (col !== sortCol) return '';
+            return sortAsc ? '▲' : '▼';
+        }
+
+        function getSortClass(col) {
+            return col === sortCol ? 'sorted' : '';
+        }
+
+        function handleHeaderSort(col) {
+            if (sortCol === col) {
+                sortAsc = !sortAsc;
+            } else {
+                sortCol = col;
+                sortAsc = false;
+            }
+            executeSort();
+            renderQueues();
+        }
+
+        function handleDropdownSort(val) {
+            if (val === 'audited-desc') { sortCol = 'auditedPercent'; sortAsc = false; }
+            else if (val === 'audited-asc') { sortCol = 'auditedPercent'; sortAsc = true; }
+            else if (val === 'count-desc') { sortCol = 'count'; sortAsc = false; }
+            else if (val === 'count-asc') { sortCol = 'count'; sortAsc = true; }
+            executeSort();
+            renderQueues();
+        }
+
+        function executeSort() {
+            queueData.sort((a, b) => {
+                let av = a[sortCol], bv = b[sortCol];
+                if (av === undefined) av = 0;
+                if (bv === undefined) bv = 0;
+                if (typeof av === 'string') av = av.toLowerCase();
+                if (typeof bv === 'string') bv = bv.toLowerCase();
+
+                if (av < bv) return sortAsc ? -1 : 1;
+                if (av > bv) return sortAsc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // --- 4. RENDERING ---
+        function updateViewButtons() {
+            document.getElementById('btn-card').classList.toggle('active', currentView === 'card');
+            document.getElementById('btn-list').classList.toggle('active', currentView === 'list');
+        }
+
+        function switchView(v) {
+            currentView = v;
+            localStorage.setItem('modQueueView', v);
+            renderQueues();
+        }
+
+        function renderQueues() {
+            const container = document.getElementById('queue-container');
+            let total = 0;
+            let html = '';
+
+            if (currentView === 'card') {
+                container.className = 'queue-grid';
+                html += queueData.map(queue => {
+                    total += queue.count;
+                    return `
+                    <div class="queue-card" onclick="openQueue('${queue.name.replace(/'/g,"\\'")}')">
+                        <div class="card-body">
+                            <div class="card-head">
+                                <div>
+                                    <div class="queue-title">${queue.name}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="count-number">${queue.auditedPercent}%</div>
+                                    <div class="count-label">Audited</div>
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <div style="font-size:0.85rem; color:var(--text-muted);">
+                                    ${queue.count.toLocaleString()} Pending Items
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn-review" style="padding: 2px 8px; font-size: 0.75rem;">Review</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                container.className = 'queue-container list-mode';
+                html += `
+                <div class="list-header-row">
+                    <div class="col-tenant ${getSortClass('category')}" onclick="handleHeaderSort('category')">
+                        TENANT ${getSortIcon('category')}
+                    </div>
+                    <div class="col-name ${getSortClass('name')}" onclick="handleHeaderSort('name')">
+                        QUEUE NAME ${getSortIcon('name')}
+                    </div>
+                    <div class="col-audited ${getSortClass('auditedPercent')}" onclick="handleHeaderSort('auditedPercent')">
+                        AUDITED % ${getSortIcon('auditedPercent')}
+                    </div>
+                </div>
+                `;
+                html += queueData.map(queue => {
+                    total += queue.count;
+                    return `
+                    <div class="queue-list-item" onclick="openQueue('${queue.name.replace(/'/g,"\\'")}')">
+                        <div class="col-tenant"><span class="badge-tenant">${queue.category}</span></div>
+                        <div class="col-name">${queue.name}</div>
+                        <div class="col-audited">${queue.auditedPercent}%</div>
+                    </div>`;
+                }).join('');
+            }
+
+            container.innerHTML = html;
+            document.getElementById('total-pending').innerText = total.toLocaleString();
+            updateViewButtons();
+        }
+
+        // --- 5. NAVIGATION ---
+        function openQueue(queueName) {
+            const queue = queueData.find(q => q.name === queueName);
+            const tenant = queue ? queue.category : 'BP';
+            window.location.href = `audit-review.html?queue=${encodeURIComponent(queueName)}&tenant=${encodeURIComponent(tenant)}`;
+        }
+
+        executeSort();
+        renderQueues();
+
+    </script>
+</body>
+</html>

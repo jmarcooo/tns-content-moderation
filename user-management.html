@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Table Column Sizing */
+        #modStatusTable th:nth-child(1) { width: 30%; }
+        #modStatusTable th:nth-child(2) { width: 15%; }
+        #modStatusTable th:nth-child(3) { width: 15%; }
+        #modStatusTable th:nth-child(4) { width: 15%; }
+        #modStatusTable th:nth-child(5) { width: 15%; }
+        #modStatusTable th:nth-child(6) { width: 10%; text-align: right; }
+        #modStatusTable td:nth-child(6) { text-align: right; }
+
+        /* Status Dots */
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .dot-green { background-color: #238636; }
+        .dot-orange { background-color: #d29922; }
+        .dot-gray { background-color: #6e7681; }
+        .dot-blue { background-color: #0969da; }
+        .dot-purple { background-color: #8957e5; }
+        .dot-red { background-color: #da3633; }
+
+        .btn-sm { padding: 4px 10px; font-size: 0.8rem; border: 1px solid var(--border-color); background: var(--bg-body); border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        .btn-sm:hover { background: var(--hover-bg); border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        /* --- NEW CARD STYLES (Matching Moderation Dashboard) --- */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .selection-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            height: 220px;
+            position: relative;
+        }
+
+        .selection-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: var(--hover-bg);
+            fill: var(--accent-blue);
+        }
+        
+        /* Specific colors for icons */
+        .icon-blue { fill: #0969da; background-color: rgba(9, 105, 218, 0.1); }
+        .icon-green { fill: #238636; background-color: rgba(35, 134, 54, 0.1); }
+        .icon-purple { fill: #8957e5; background-color: rgba(137, 87, 229, 0.1); }
+
+        .selection-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 8px;
+        }
+
+        .selection-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Back Link Styling */
+        .back-nav {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+        .back-nav:hover { color: var(--accent-blue); }
+        
+        /* Placeholder Container */
+        .placeholder-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content">
+        
+        <div id="view-dashboard">
+            <div class="header" style="border-bottom: none; padding-bottom: 0;">
+                <h1 id="txt-main-title">User Management</h1>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Manage users, track status, and configure permissions.</p>
+
+            <div class="selection-grid">
+                
+                <div class="selection-card" onclick="switchSection('view-status')">
+                    <svg class="card-icon icon-blue" viewBox="0 0 24 24">
+                        <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                    </svg>
+                    <h3 id="txt-card-status-title" class="selection-title">User Status</h3>
+                    <p id="txt-card-status-desc" class="selection-desc">Real-time status monitoring of moderators.</p>
+                </div>
+
+                <div class="selection-card" onclick="switchSection('view-accounts')">
+                    <svg class="card-icon icon-green" viewBox="0 0 24 24">
+                         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                    <h3 id="txt-card-acc-title" class="selection-title">Accounts</h3>
+                    <p id="txt-card-acc-desc" class="selection-desc">Manage registered users and edit details.</p>
+                </div>
+
+                <div class="selection-card" onclick="switchSection('view-roles')">
+                    <svg class="card-icon icon-purple" viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                    </svg>
+                    <h3 class="selection-title">Roles & Permissions</h3>
+                    <p class="selection-desc">Configure access levels and platform privileges.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="view-accounts" style="display: none;">
+            <div onclick="switchSection('view-dashboard')" class="back-nav" id="txt-back-link-1">← Back to Dashboard</div>
+            <div class="header">
+                <h1 id="txt-acc-header">Accounts</h1>
+                <button class="btn-primary" onclick="openAddModal()" id="txt-btn-add">+ Add User</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr id="table-head-accounts"></tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-status" style="display: none;">
+            <div onclick="switchSection('view-dashboard')" class="back-nav" id="txt-back-link-2">← Back to Dashboard</div>
+            <div class="header">
+                <h1 id="txt-mod-header">Moderator Status Monitor</h1>
+            </div>
+
+            <div class="table-container">
+                <table id="modStatusTable" class="mod-table">
+                    <thead>
+                        <tr id="table-head-status"></tr>
+                    </thead>
+                    <tbody id="modStatusBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-roles" style="display: none;">
+            <div onclick="switchSection('view-dashboard')" class="back-nav">← Back to Dashboard</div>
+            <div class="header">
+                <h1>Roles & Permissions</h1>
+            </div>
+            
+            <div class="placeholder-container">
+                <div style="font-size: 3rem; margin-bottom: 20px;">🛡️</div>
+                <h2>Role Configuration</h2>
+                <p>This module will allow admins to define granular permissions.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header" id="txt-modal-add-title">Register New User</div>
+            <form id="addForm">
+                <div class="form-group"><label id="lbl-fullname">Full Name</label><input type="text" id="addName" required placeholder="e.g. Jon Odono"></div>
+                <div class="form-group"><label id="lbl-email">Email</label><input type="email" id="addEmail" required placeholder="e.g. jon@contentmod.com"></div>
+                <div class="form-group"><label id="lbl-username">Username</label><input type="text" id="addUsername" required placeholder="e.g. jodono"></div>
+                <div class="form-group">
+                    <label id="lbl-role">Role</label>
+                    <select id="addRole"><option>User</option><option>Moderator</option><option>Admin</option></select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('addModal')" id="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-create">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">Edit User</div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group"><label>Full Name</label><input type="text" id="editName" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="editEmail" required></div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="editRole"><option>User</option><option>Moderator</option><option>Admin</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <select id="editAccountStatus">
+                        <option value="Active">Active</option>
+                        <option value="Banned">Banned</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- ICONS & TRANSLATIONS ---
+        const ICON_EDIT = `<i class="fa-regular fa-pen-to-square"></i>`;
+        const ICON_DELETE = `<i class="fa-regular fa-trash-can"></i>`;
+        // Basic SVG icons for edit/delete if font-awesome not present
+        const SVG_EDIT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+        const SVG_DELETE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+
+
+        const APP_LANG_PAGE = localStorage.getItem('appLang') || 'en';
+        const PAGE_TEXT = {
+            en: { mainTitle: "User Management", cardStatusTitle: "User Status", cardStatusDesc: "Real-time status monitoring of moderators.", cardAccTitle: "Accounts", cardAccDesc: "Manage registered users and edit details.", backDashboard: "← Back to Dashboard", accHeader: "Accounts", btnAdd: "+ Add User", modHeader: "Moderator Status Monitor", thId: "ID", thName: "Name", thRole: "Role", thStatus: "Status", thCreated: "Created At", thActions: "Actions", thEmail: "Email", thTasks: "Tasks Moderated", thAht: "Average Handling Time", thDuration: "Status Duration", thChange: "Change Status", modalAddTitle: "Register New User", lblName: "Full Name", lblEmail: "Email", lblUser: "Username", lblRole: "Role", btnCancel: "Cancel", btnCreate: "Create" },
+            zh: { mainTitle: "用户管理", cardStatusTitle: "用户状态", cardStatusDesc: "实时监控审核员状态。", cardAccTitle: "账号管理", cardAccDesc: "管理注册用户及编辑详情。", backDashboard: "← 返回面板", accHeader: "账号列表", btnAdd: "+ 添加用户", modHeader: "审核员状态监控", thId: "ID", thName: "姓名", thRole: "角色", thStatus: "状态", thCreated: "创建时间", thActions: "操作", thEmail: "邮箱", thTasks: "审核任务数", thAht: "平均处理时长", thDuration: "状态持续时间", thChange: "更改状态", modalAddTitle: "注册新用户", lblName: "全名", lblEmail: "邮箱", lblUser: "用户名", lblRole: "角色", btnCancel: "取消", btnCreate: "创建" }
+        };
+        const T_PAGE = PAGE_TEXT[APP_LANG_PAGE];
+
+        // --- AUTH GUARD ---
+        if (!localStorage.getItem('currentUser')) {
+            window.location.href = 'login.html';
+        }
+
+        // --- INITIALIZATION ---
+        let users = [];
+
+        async function init() {
+            applyTranslations();
+
+            try {
+                // FETCH FROM STATIC FILE
+                const res = await fetch('users.json');
+                if (!res.ok) throw new Error('Network response was not ok');
+                users = await res.json();
+                render();
+            } catch (err) { 
+                console.error("Error connecting to server:", err);
+                // Fallback data if file fetch fails
+                users = [
+                    { id: "460480001", username: "jon.odono", role: "Admin", name: "Marco", email: "jon@digi.com", status: "Online", account_status: "Active", createdAt: "1/26/2026" },
+                    { id: "460480002", username: "kenneth.c", role: "Moderator", name: "Kenneth Cortes", email: "ken@digi.com", status: "Break", account_status: "Active", createdAt: "1/26/2026" }
+                ];
+                render();
+            }
+        }
+
+        // --- SAVING DATA ---
+        async function save() {
+            // 1. Optimistic Update (UI Only)
+            render();
+            if(document.getElementById('view-status').style.display === 'block') renderModStatus();
+            console.log('Static Mode: Changes are temporary and not saved to the file system.');
+        }
+
+        // --- UI & LOGIC ---
+        function switchSection(id) {
+            document.getElementById('view-dashboard').style.display = 'none';
+            document.getElementById('view-accounts').style.display = 'none';
+            document.getElementById('view-status').style.display = 'none';
+            document.getElementById('view-roles').style.display = 'none'; // New Section
+            
+            document.getElementById(id).style.display = 'block';
+            if(id === 'view-status') renderModStatus();
+        }
+
+        function applyTranslations() {
+            document.getElementById('txt-main-title').innerText = T_PAGE.mainTitle;
+            document.getElementById('txt-card-status-title').innerText = T_PAGE.cardStatusTitle;
+            document.getElementById('txt-card-status-desc').innerText = T_PAGE.cardStatusDesc;
+            document.getElementById('txt-card-acc-title').innerText = T_PAGE.cardAccTitle;
+            document.getElementById('txt-card-acc-desc').innerText = T_PAGE.cardAccDesc;
+            document.getElementById('txt-back-link-1').innerText = T_PAGE.backDashboard;
+            document.getElementById('txt-back-link-2').innerText = T_PAGE.backDashboard;
+            document.getElementById('txt-acc-header').innerText = T_PAGE.accHeader;
+            document.getElementById('txt-btn-add').innerText = T_PAGE.btnAdd;
+            document.getElementById('txt-mod-header').innerText = T_PAGE.modHeader;
+            document.getElementById('txt-modal-add-title').innerText = T_PAGE.modalAddTitle;
+            document.getElementById('lbl-fullname').innerText = T_PAGE.lblName;
+            document.getElementById('lbl-email').innerText = T_PAGE.lblEmail;
+            document.getElementById('lbl-username').innerText = T_PAGE.lblUser;
+            document.getElementById('lbl-role').innerText = T_PAGE.lblRole;
+            document.getElementById('btn-cancel').innerText = T_PAGE.btnCancel;
+            document.getElementById('btn-create').innerText = T_PAGE.btnCreate;
+
+            document.getElementById('table-head-accounts').innerHTML = `
+                <th>${T_PAGE.thId}</th><th>${T_PAGE.thName}</th><th>${T_PAGE.thRole}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thCreated}</th><th>${T_PAGE.thActions}</th>
+            `;
+            document.getElementById('table-head-status').innerHTML = `
+                <th>${T_PAGE.thEmail}</th><th>${T_PAGE.thTasks}</th><th>${T_PAGE.thAht}</th><th>${T_PAGE.thStatus}</th><th>${T_PAGE.thDuration}</th><th>${T_PAGE.thChange}</th>
+            `;
+        }
+
+        function render() {
+            const tbody = document.getElementById('userTableBody');
+            if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found or connection failed.</td></tr>'; return; }
+            
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td style="font-family:monospace; color:#8b949e; font-size:0.85rem;">${u.id}</td>
+                    <td><strong>${u.name}</strong><br><span style="font-size:0.8em; color:#8b949e">@${u.username}</span></td>
+                    <td>${u.role}</td>
+                    <td><span class="badge ${getBadgeClass(u.account_status)}">${u.account_status || 'Active'}</span></td>
+                    <td style="font-size:0.85rem;">${u.createdAt || 'N/A'}</td>
+                    <td>
+                        <button onclick="openEdit('${u.id}')" class="action-btn" title="Edit">${SVG_EDIT}</button>
+                        <button onclick="delUser('${u.id}')" class="action-btn" title="Delete">${SVG_DELETE}</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getBadgeClass(status) { return status === 'Banned' ? 'status-Banned' : 'status-Active'; }
+
+        function renderModStatus() {
+            const tbody = document.getElementById('modStatusBody');
+            const moderators = users.filter(u => u.role === 'Moderator');
+            if (moderators.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No users with role "Moderator" found.</td></tr>'; return; }
+
+            tbody.innerHTML = moderators.map(u => {
+                const tasks = Math.floor(Math.random() * 500) + 50;
+                const aht = (Math.random() * 60 + 10).toFixed(0);
+                let dotColor = 'dot-gray';
+                const s = u.status || 'Offline'; 
+                if(s === 'Online') dotColor = 'dot-green';
+                else if(s === 'Break' || s === 'Lunch') dotColor = 'dot-orange';
+                else if(s === 'Meeting') dotColor = 'dot-blue';
+                else if(s === 'Training') dotColor = 'dot-purple';
+                else if(s === 'Idle') dotColor = 'dot-red';
+
+                let durationStr = "--";
+                if (u.last_status_update) {
+                    const diffMs = new Date() - new Date(u.last_status_update);
+                    if (!isNaN(diffMs) && diffMs >= 0) {
+                        const hrs = Math.floor(diffMs / 3600000);
+                        const mins = Math.floor((diffMs % 3600000) / 60000);
+                        durationStr = `${hrs}h ${mins}m`;
+                    }
+                }
+
+                return `
+                <tr>
+                    <td><div style="font-weight:600; color:var(--text-header);">${u.email || u.username + '@contentmod.com'}</div></td>
+                    <td>${tasks}</td>
+                    <td>${aht}s</td>
+                    <td><div style="display:flex; align-items:center;"><span class="status-dot ${dotColor}"></span>${s}</div></td>
+                    <td style="font-family:monospace; color:var(--text-main);">${durationStr}</td>
+                    <td><button class="btn-sm" onclick="alert('Simulated: Changing status for ${u.username}...')">${T_PAGE.thChange} ▼</button></td>
+                </tr>
+            `}).join('');
+        }
+
+        function getExcelDate() { const date = new Date(); const excelEpoch = new Date(1899, 11, 30); return Math.floor((date - excelEpoch) / (1000 * 60 * 60 * 24)); }
+        function generateNewId() { const prefix = getExcelDate().toString(); const count = users.filter(u => u.id.toString().startsWith(prefix)).length; return prefix + (count + 1).toString().padStart(9, '0'); }
+        function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        document.getElementById('addForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const now = new Date().toLocaleString();
+            users.push({
+                id: generateNewId(),
+                name: document.getElementById('addName').value,
+                email: document.getElementById('addEmail').value,
+                username: document.getElementById('addUsername').value,
+                role: document.getElementById('addRole').value,
+                status: 'Offline', account_status: 'Active', 
+                last_status_update: new Date().toISOString(),
+                password: 'password123', createdAt: now
+            });
+            save(); closeModal('addModal'); document.getElementById('addForm').reset();
+        });
+
+        function openEdit(id) {
+            const u = users.find(u => u.id.toString() === id.toString());
+            if (!u) return;
+            document.getElementById('editId').value = u.id;
+            document.getElementById('editName').value = u.name;
+            document.getElementById('editEmail').value = u.email || "";
+            document.getElementById('editRole').value = u.role;
+            document.getElementById('editAccountStatus').value = u.account_status || 'Active';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        document.getElementById('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const idx = users.findIndex(u => u.id.toString() === id.toString());
+            if (idx > -1) {
+                users[idx].name = document.getElementById('editName').value;
+                users[idx].email = document.getElementById('editEmail').value;
+                users[idx].role = document.getElementById('editRole').value;
+                users[idx].account_status = document.getElementById('editAccountStatus').value;
+                save(); closeModal('editModal');
+            }
+        });
+
+        function delUser(id) {
+            if(confirm('Delete user?')) { 
+                users = users.filter(u => u.id.toString() !== id.toString());
+                save(); 
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

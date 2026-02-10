@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Task</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
+        .restricted-text { background-color: rgba(210, 153, 34, 0.25); border-bottom: 2px solid #d29922; color: #b07b17; font-weight: bold; padding: 0 2px; border-radius: 2px; }
+        /* Hide modules by default until loaded */
+        #module-content, #module-text { display: none; }
+
+        /* SVG Styles for Viewer */
+        .icon-svg-lg {
+            width: 20px;
+            height: 20px;
+            fill: white; /* Viewer is dark, icons white */
+        }
+        .close-icon-svg {
+            width: 24px; 
+            height: 24px; 
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content" style="padding-bottom: 50px;">
+        
+        <div class="header" style="margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
+            <div>
+                <a href="moderation.html" style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem;">← Back to Queues</a>
+                <h1 id="queue-title" style="margin-top: 5px;">Loading...</h1>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="badge status-Active">Time: <span id="timer" class="timer-badge">00:00:00</span></span>
+                <span class="badge" style="background-color: var(--hover-bg); border: 1px solid var(--border-color); color: var(--text-main);">
+                    Done: <span id="session-counter" style="font-weight:bold;">0</span>
+                </span>
+            </div>
+        </div>
+
+        <div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh; font-size: 1.2rem; color: var(--text-muted);">
+            <div>⚡ Fetching next task...</div>
+        </div>
+
+        <div id="workbench" class="workbench-container" style="display: none;">
+            
+            <div class="left-sidebar">
+                <div class="info-card">
+                    <div class="info-header">Content Info</div>
+                    <div class="info-row"><span class="label">Content ID:</span> <span class="value" id="content-id">--</span></div>
+                    <div class="info-row"><span class="label">Type:</span> <span class="value" id="content-type">--</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">User Info</div>
+                    <div class="info-row"><span class="label">User ID:</span> <span class="value" id="user-id">--</span></div>
+                    <div class="info-row"><span class="label">Level:</span> <span class="value" id="user-level">--</span></div>
+                    <div class="info-row"><span class="label">Violations:</span> <span class="value" id="viol-hist" style="color:#f85149">0</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">Moderation Info</div>
+                    <div class="info-row"><span class="label">Task ID:</span> <span class="value" id="sidebar-task-id" style="font-family:monospace;">--</span></div>
+                    <div class="info-row"><span class="label">Reviewer:</span> <span class="value" id="reviewer-name">Admin</span></div>
+                </div>
+            </div>
+
+            <div class="content-canvas">
+                
+                <div id="module-content">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="section-header">CONTENT</div>
+                        <span id="status-content" class="decision-badge"></span>
+                    </div>
+                    <div class="image-grid" id="image-container"></div>
+                    
+                    <div class="action-module">
+                        <button class="btn-sm btn-approve-sm" onclick="ReviewApp.setStatus('content', 'approve')">Approve</button>
+                        <button class="btn-sm btn-reject-sm" onclick="ReviewApp.openDrawer('content')">Reject</button>
+                    </div>
+                </div>
+
+                <div id="module-text" style="margin-top: 30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="section-header">TEXT</div>
+                        <span id="status-text" class="decision-badge"></span>
+                    </div>
+
+                    <div id="text-wrapper-top" style="margin-bottom: 15px;">
+                        <div class="label" id="label-top" style="margin-bottom:4px; font-weight:bold;">Context</div>
+                        <div id="text-top" class="text-context-box" onmouseup="ReviewApp.handleTextSelection('top')"></div>
+                    </div>
+
+                    <div id="text-wrapper-bottom">
+                        <div class="label" id="label-bottom" style="margin-bottom:4px; font-weight:bold;">Content</div>
+                        <div id="text-bottom" class="text-context-box" onmouseup="ReviewApp.handleTextSelection('bottom')"></div>
+                    </div>
+
+                    <div class="action-module">
+                        <button class="btn-sm btn-approve-sm" onclick="ReviewApp.setStatus('text', 'approve')">Approve</button>
+                        <button class="btn-sm btn-restrict-sm" onmousedown="event.preventDefault()" onclick="ReviewApp.setStatus('text', 'restrict')">Restrict</button>
+                        <button class="btn-sm btn-reject-sm" onclick="ReviewApp.openDrawer('text')">Reject</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: auto; padding-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+                    <button class="btn-cancel" onclick="ReviewApp.submitAndExit()">Submit & Exit</button>
+                    <button class="btn-primary" onclick="ReviewApp.nextTask()">Submit & Next →</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="violationDrawer" class="violation-drawer">
+            <div class="drawer-header">
+                <span id="drawer-title">Select Reason</span>
+                <span style="cursor:pointer;" onclick="ReviewApp.closeDrawer()">
+                    <svg class="close-icon-svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </span>
+            </div>
+            <div class="drawer-content" id="violationList"></div>
+        </div>
+
+        <div id="imageViewer" class="viewer-overlay">
+            <span class="close-viewer" onclick="ImageViewer.close()">
+                <svg class="close-icon-svg" style="fill: white;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </span>
+            
+            <div class="viewer-content">
+                <img id="viewer-img-target" src="" class="viewer-image" alt="Zoom View">
+            </div>
+            
+            <div class="viewer-controls">
+                <button class="viewer-btn" onclick="ImageViewer.transform('zoomIn')" title="Zoom In">
+                    <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/></svg>
+                </button>
+                
+                <button class="viewer-btn" onclick="ImageViewer.transform('zoomOut')" title="Zoom Out">
+                    <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M7 9h5v1H7z"/></svg>
+                </button>
+                
+                <button class="viewer-btn" onclick="ImageViewer.transform('rotateL')" title="Rotate Left">
+                    <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.49-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.87-1.59-1.01-2.47zm1.01 5.32c1.16 1.24 2.66 2.19 4.33 2.66l.54-1.92c-1.07-.3-2.04-.9-2.87-1.7l-2 1.96zM2 9l4 4 4-4H2zm15 11.17V19c0-4.42-3.58-8-8-8h-1V7h-2v6h2v-4h1c3.31 0 6 2.69 6 6v1.17c-1.68-.47-3.18-1.42-4.34-2.66l-2 1.96A9.92 9.92 0 0 0 17 21a10 10 0 0 0 10-10h-2c0 4.42-3.58 8-8 8v1.17z"/></svg>
+                </button>
+                
+                <button class="viewer-btn" onclick="ImageViewer.transform('rotateR')" title="Rotate Right">
+                    <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/></svg>
+                </button>
+                
+                <button class="viewer-btn" onclick="ImageViewer.transform('flip')" title="Flip Horizontal">
+                    <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z"/></svg>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="review-logic.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Labelling</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .icon-svg { width: 14px; height: 14px; fill: currentColor; vertical-align: middle; margin-right: 4px; opacity: 0.7; }
+        .back-nav { margin-bottom: 15px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; text-decoration: none; }
+        .back-nav:hover { color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content">
+        
+        <a href="moderation.html" class="back-nav">← Back to Dashboard</a>
+
+        <div class="header">
+            <h1>Content Labelling</h1>
+            <div style="text-align: right; margin-left: 20px;">
+                <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
+                <strong style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">1,577</strong>
+            </div>
+        </div>
+
+        <div class="queue-container list-mode">
+            <div class="list-header-row" style="grid-template-columns: 150px 2.5fr 1fr 100px;">
+                <div class="col-tenant">SOURCE</div>
+                <div class="col-name">QUEUE NAME</div>
+                <div class="col-pending">PENDING</div>
+                <div class="col-action">ACTION</div>
+            </div>
+
+            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+                <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
+                <div class="col-name">Dynamic Post Labelling</div>
+                <div class="col-pending">842 <span class="sub-text">Items</span></div>
+                <div class="col-action"><button class="btn-review">Start</button></div>
+            </div>
+
+            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+                <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
+                <div class="col-name">Image Labelling</div>
+                <div class="col-pending">420 <span class="sub-text">Items</span></div>
+                <div class="col-action"><button class="btn-review">Start</button></div>
+            </div>
+
+            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+                <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
+                <div class="col-name">Text Labelling</div>
+                <div class="col-pending">315 <span class="sub-text">Items</span></div>
+                <div class="col-action"><button class="btn-review">Start</button></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="auth.js"></script>
+    <script>Auth.requireLogin();</script>
+</body>
+</html>

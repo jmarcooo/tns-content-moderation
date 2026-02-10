@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .selection-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            height: 220px;
+            position: relative;
+            text-decoration: none; /* Ensure link style doesn't break layout */
+        }
+
+        .selection-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: var(--hover-bg);
+            fill: var(--accent-blue);
+        }
+
+        .selection-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-header);
+            margin-bottom: 8px;
+        }
+
+        .selection-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="sidebar.js"></script>
+
+    <main class="main-content">
+        <div class="header" style="border-bottom: none; padding-bottom: 0;">
+            <h1>Moderation</h1>
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Select a moderation tool to proceed.</p>
+
+        <div class="selection-grid">
+            
+            <a href="content-moderation.html" class="selection-card">
+                <svg class="card-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div class="selection-title">Content Moderation</div>
+                <div class="selection-desc">Shows UGC content queues for moderation and review.</div>
+            </a>
+
+            <a href="content-labelling.html" class="selection-card">
+                <svg class="card-icon" viewBox="0 0 24 24" style="fill: #d29922;">
+                    <path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16zM16 17H5V7h11l3.55 5L16 17z"/>
+                </svg>
+                <div class="selection-title">Content Labelling</div>
+                <div class="selection-desc">Labels contents based on the context for training data.</div>
+            </a>
+
+            <a href="moderation-history.html" class="selection-card">
+                <svg class="card-icon" viewBox="0 0 24 24" style="fill: #8957e5;">
+                    <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                <div class="selection-title">Moderation History</div>
+                <div class="selection-desc">View past actions and audit logs for your account.</div>
+            </a>
+
+        </div>
+
+    </main>
+
+    <script src="auth.js"></script>
+    <script>
+        Auth.requireLogin();
+    </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Admin Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: var(--bg-body); 
+        }
+        
+        .login-card { 
+            width: 100%; 
+            max-width: 350px; 
+            background: var(--bg-card);      
+            padding: 2rem; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: var(--shadow);
+            text-align: center; 
+        }
+        
+        .sidebar { display: none; } 
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <span style="font-size: 3rem;">🛡️</span>
+        <h2 style="color: var(--text-header); margin: 10px 0;">Admin Portal</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in to continue</p>
+
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username (admin)" required>
+            <input type="password" id="password" placeholder="Password (password123)" required>
+            <button type="submit" class="btn-primary" style="width:100%; margin-top:15px;">Sign In</button>
+            <p id="error-msg" style="color:#f85149; margin-top:10px; display:none;">❌ Invalid credentials</p>
+        </form>
+    </div>
+
+    <script>
+        // 1. CLEAR OLD SESSION
+        localStorage.removeItem('currentUser'); 
+
+        // 2. CHECK THEME
+        const savedTheme = localStorage.getItem('appTheme') || 'light';
+        if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+
+        // 3. LOGIN LOGIC (STATIC / NO-SERVER)
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uInput = document.getElementById('username').value;
+            const pInput = document.getElementById('password').value;
+
+            try {
+                // Fetch static file instead of calling API
+                const response = await fetch('users.json');
+                if (!response.ok) throw new Error("Could not load users.json");
+                
+                const users = await response.json();
+                
+                // Validate credentials locally
+                const user = users.find(u => u.username === uInput && u.password === pInput);
+
+                if (user) {
+                    // Create safe user object (remove password)
+                    const safeUser = { ...user };
+                    delete safeUser.password;
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(safeUser));
+                    window.location.href = 'home.html';
+                } else {
+                    document.getElementById('error-msg').innerText = "❌ Invalid credentials";
+                    document.getElementById('error-msg').style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('error-msg').innerText = "❌ Error loading user data";
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

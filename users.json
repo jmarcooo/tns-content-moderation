@@ -1,0 +1,38 @@
+[
+    {
+        "id": "46048000000001",
+        "username": "jon.odono",
+        "password": "password123", 
+        "role": "Admin",
+        "name": "Marco",
+        "email": "jon.odono@digiplus.com.ph",
+        "status": "Online",
+        "account_status": "Active",
+        "last_status_update": "2026-02-02T08:00:00.000Z",
+        "createdAt": "1/26/2026, 4:39:00 PM"
+    },
+    {
+        "id": "46048000000002",
+        "username": "kenneth.cortes",
+        "password": "password123",
+        "role": "Moderator",
+        "name": "Kenneth Cortes",
+        "email": "kenneth.cortes@digiplus.com.ph",
+        "status": "Break",
+        "account_status": "Active",
+        "last_status_update": "2026-02-02T12:15:00.000Z",
+        "createdAt": "1/26/2026, 5:15:00 PM"
+    },
+    {
+        "id": "46048000000003",
+        "username": "liezl.tejero",
+        "password": "password123",
+        "role": "Moderator",
+        "name": "Liezl Tejero",
+        "email": "liezl.tejero@digiplus.com.ph",
+        "status": "Online",
+        "account_status": "Active",
+        "last_status_update": "2026-02-02T09:30:00.000Z",
+        "createdAt": "1/27/2026, 10:00:00 AM"
+    }
+]
