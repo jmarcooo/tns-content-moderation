@@ -49,7 +49,7 @@ body {
 }
 
 /* =========================================
-   3. SIDEBAR (Fixed Layout)
+   3. SIDEBAR (Full Width Fix)
    ========================================= */
 .sidebar {
     width: var(--sidebar-width);
@@ -97,15 +97,23 @@ body {
 
 .sidebar-spacer { margin-top: auto; }
 
-/* --- TWO-COLUMN USER PROFILE LAYOUT --- */
+/* --- FULL WIDTH USER PROFILE LAYOUT --- */
 .user-profile { 
     border-top: 1px solid var(--border-color); 
     padding-top: 15px; 
     margin-top: 10px;
     display: flex; 
-    flex-direction: row; /* Forces 2 columns: Avatar | Details */
+    flex-direction: column; /* Vertical Stacking for Full Width */
     gap: 12px;
-    align-items: flex-start;
+    width: 100%;
+}
+
+/* Header: Avatar + Info Row */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .avatar { 
@@ -117,16 +125,14 @@ body {
     font-weight: bold; color: white; 
     font-size: 1.1rem;
     flex-shrink: 0;
-    margin-top: 2px; /* Slight visual adjustment */
 }
 
-/* Right Column Container */
-.profile-details {
+.profile-identity {
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Spacing between Name/Email/Status/Logout */
-    width: 100%;
-    min-width: 0; /* Important for text truncation to work */
+    overflow: hidden; 
+    justify-content: center;
+    flex-grow: 1;
 }
 
 .profile-name { 
@@ -142,13 +148,14 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
+    line-height: 1.4;
+    max-width: 100%;
 }
 
-/* --- VISIBLE STATUS DROPDOWN --- */
+/* --- FULL WIDTH STATUS DROPDOWN --- */
 .status-dropdown { 
     position: relative; 
-    width: 100%;
+    width: 100%; /* Forces full width */
 }
 
 .status-trigger { 
@@ -156,7 +163,7 @@ body {
     align-items: center; 
     justify-content: space-between; 
     gap: 8px; 
-    padding: 5px 8px; 
+    padding: 8px 10px; 
     border-radius: 6px; 
     cursor: pointer; 
     font-size: 0.8rem; 
@@ -164,10 +171,11 @@ body {
     color: var(--text-main); 
     
     border: 1px solid #d0d7de; 
-    background-color: #f6f8fa; /* Light grey for visibility */
+    background-color: #f6f8fa; 
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     transition: all 0.2s; 
-    width: 100%; 
+    width: 100%; /* Forces button to stretch */
+    box-sizing: border-box; /* Includes padding in width calculation */
 }
 
 .status-trigger:hover { 
@@ -190,6 +198,7 @@ body {
     padding: 6px; 
     margin-bottom: 6px; 
     z-index: 9999; 
+    box-sizing: border-box;
 }
 
 .status-menu.active { display: block; animation: popUp 0.15s ease-out; }
@@ -208,19 +217,18 @@ body {
 }
 .status-menu li:hover { background-color: var(--hover-bg); }
 
-/* --- LOGOUT BUTTON --- */
+/* --- FULL WIDTH LOGOUT BUTTON --- */
 .logout-link { 
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
+    display: block; /* Allows width to work */
+    width: 100%;
     color: var(--danger-red); 
     text-decoration: none; 
     font-size: 0.8rem; 
     font-weight: 600; 
-    padding-left: 2px; 
+    padding: 8px 2px; /* Add padding for clickable area */
     opacity: 0.9;
     transition: opacity 0.2s;
-    margin-top: 2px;
+    box-sizing: border-box;
 }
 .logout-link:hover { opacity: 1; text-decoration: underline; }
 
