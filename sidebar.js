@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
         name: 'Guest', 
         username: 'guest', 
         email: 'guest@example.com', 
+        role: 'Visitor', // Default role
         status: 'Online' 
     };
 
@@ -25,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         logout: `<svg class="logout-icon" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>`
     };
 
-    // 3. GENERATE HTML (Full width structure)
+    // 3. GENERATE HTML (Correct Alignment Structure)
     const sidebarHTML = `
     <nav class="sidebar">
         <div class="brand">${ICONS.brand}<span>AdminPanel</span></div>
@@ -45,37 +46,35 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
 
         <div class="user-profile">
-            <div class="profile-header">
-                <div class="avatar">${currentUser.name.charAt(0).toUpperCase()}</div>
-                <div class="profile-identity">
-                    <div class="profile-name">${currentUser.name}</div>
-                    <div class="profile-email" title="${currentUser.email || ''}">${currentUser.email || ''}</div>
-                </div>
-            </div>
+            <div class="avatar">${currentUser.name.charAt(0).toUpperCase()}</div>
+            
+            <div class="profile-details">
+                <div class="profile-name">${currentUser.name}</div>
+                <div class="profile-email" title="${currentUser.email || ''}">${currentUser.email || ''}</div>
+                <div class="profile-role">${currentUser.role || 'User'}</div>
 
-            <div class="status-dropdown">
-                <div class="status-trigger" id="statusTrigger">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span id="currentDot" class="dot dot-${(currentUser.status || 'Offline').toLowerCase()}"></span>
-                        <span id="currentStatusText">${currentUser.status || 'Offline'}</span>
+                <div class="status-dropdown">
+                    <div class="status-trigger" id="statusTrigger">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="currentDot" class="dot dot-${(currentUser.status || 'Offline').toLowerCase()}"></span>
+                            <span id="currentStatusText">${currentUser.status || 'Offline'}</span>
+                        </div>
+                        <span style="font-size:0.7rem; opacity:0.7;">▼</span>
                     </div>
-                    <span style="font-size:0.7rem; opacity:0.7;">▼</span>
+                    
+                    <ul class="status-menu" id="statusMenu">
+                        <li data-status="Online"><span class="dot dot-online"></span> Online</li>
+                        <li data-status="Break"><span class="dot dot-break"></span> Break</li>
+                        <li data-status="Lunch"><span class="dot dot-lunch"></span> Lunch</li>
+                        <li data-status="Meeting"><span class="dot dot-meeting"></span> Meeting</li>
+                        <li data-status="Offline"><span class="dot dot-offline"></span> Offline</li>
+                    </ul>
                 </div>
-                
-                <ul class="status-menu" id="statusMenu">
-                    <li data-status="Online"><span class="dot dot-online"></span> Online</li>
-                    <li data-status="Break"><span class="dot dot-break"></span> Break</li>
-                    <li data-status="Lunch"><span class="dot dot-lunch"></span> Lunch</li>
-                    <li data-status="Meeting"><span class="dot dot-meeting"></span> Meeting</li>
-                    <li data-status="Offline"><span class="dot dot-offline"></span> Offline</li>
-                </ul>
-            </div>
 
-            <a href="#" id="btnLogout" class="logout-link">
-                <div style="display:flex; align-items:center; gap:8px;">
+                <a href="#" id="btnLogout" class="logout-link">
                     ${ICONS.logout} <span>${T.logout}</span>
-                </div>
-            </a>
+                </a>
+            </div>
         </div>
     </nav>
     `;
