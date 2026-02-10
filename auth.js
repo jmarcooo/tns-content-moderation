@@ -9,7 +9,10 @@ const Auth = {
 
     login: async (username, password) => {
         try {
-            const res = await fetch('users.json');
+            // CHANGED: Fetch from API instead of JSON file
+            const res = await fetch('/api/users');
+            if (!res.ok) throw new Error('DB Connection Failed');
+            
             const users = await res.json();
             const user = users.find(u => u.username === username);
             
