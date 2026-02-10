@@ -36,10 +36,10 @@
         <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in to continue</p>
 
         <form id="loginForm">
-            <input type="text" id="username" placeholder="Username (admin)" required>
-            <input type="password" id="password" placeholder="Password (password123)" required>
-            <button type="submit" class="btn-primary" style="width:100%; margin-top:15px;">Sign In</button>
-            <p id="error-msg" style="color:#f85149; margin-top:10px; display:none;">❌ Invalid credentials</p>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" id="btn-login" class="btn-primary" style="width:100%; margin-top:15px;">Sign In</button>
+            <p id="error-msg" style="color:#f85149; margin-top:10px; display:none; font-size: 0.9rem;">❌ Invalid credentials</p>
         </form>
     </div>
 
@@ -51,37 +51,54 @@
         const savedTheme = localStorage.getItem('appTheme') || 'light';
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
 
-        // 3. LOGIN LOGIC (STATIC / NO-SERVER)
+        // 3. LOGIN LOGIC (CONNECTED TO DB)
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const uInput = document.getElementById('username').value;
-            const pInput = document.getElementById('password').value;
+            
+            const uInput = document.getElementById('username').value.trim();
+            const pInput = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btn-login');
+            const errorMsg = document.getElementById('error-msg');
+
+            // Reset UI
+            errorMsg.style.display = 'none';
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
 
             try {
-                // Fetch static file instead of calling API
-                const response = await fetch('users.json');
-                if (!response.ok) throw new Error("Could not load users.json");
+                // Fetch users from your Vercel API Route (Database)
+                const response = await fetch('/api/users');
+                
+                if (!response.ok) {
+                    throw new Error("Failed to connect to database.");
+                }
                 
                 const users = await response.json();
                 
-                // Validate credentials locally
+                // Find matching user
+                // (Note: In a full production app, verify passwords on the server side)
                 const user = users.find(u => u.username === uInput && u.password === pInput);
 
                 if (user) {
-                    // Create safe user object (remove password)
+                    // Success: Save user info (excluding password)
                     const safeUser = { ...user };
                     delete safeUser.password;
                     
                     localStorage.setItem('currentUser', JSON.stringify(safeUser));
                     window.location.href = 'home.html';
                 } else {
-                    document.getElementById('error-msg').innerText = "❌ Invalid credentials";
-                    document.getElementById('error-msg').style.display = 'block';
+                    // Fail
+                    errorMsg.innerText = "❌ Invalid username or password";
+                    errorMsg.style.display = 'block';
+                    btn.innerText = "Sign In";
+                    btn.disabled = false;
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('error-msg').innerText = "❌ Error loading user data";
-                document.getElementById('error-msg').style.display = 'block';
+                errorMsg.innerText = "❌ Connection Error: " + err.message;
+                errorMsg.style.display = 'block';
+                btn.innerText = "Sign In";
+                btn.disabled = false;
             }
         });
     </script>
