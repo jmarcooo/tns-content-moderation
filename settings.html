@@ -5,6 +5,7 @@
     <title>Settings</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Layout specific for Settings Items */
         .settings-container { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: var(--shadow); }
         .settings-section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .settings-section:last-child { border-bottom: none; margin-bottom: 0; }
@@ -23,6 +24,7 @@
         <div class="header"><h1 id="txt-header">Settings</h1></div>
         
         <div class="settings-container">
+            
             <div class="settings-section">
                 <div class="section-title" id="txt-appear-title">Appearance</div>
                 <div class="settings-row">
@@ -49,42 +51,63 @@
             </div>
 
             <div class="settings-section">
-                <div class="section-title">Keyboard Shortcuts</div>
+                <div class="section-title" id="txt-kb-header">Keyboard Shortcuts</div>
                 
                 <div class="settings-row">
-                    <div><div class="setting-label">Approve Content</div><div class="setting-desc">Key to approve the main content (Image/Video).</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-app-cont">Approve Content</div>
+                        <div class="setting-desc" id="desc-kb-app-cont">Key to approve the main content (Image/Video).</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-approve-content" readonly>
                 </div>
                 <div class="settings-row">
-                    <div><div class="setting-label">Reject Content</div><div class="setting-desc">Key to reject the main content.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-rej-cont">Reject Content</div>
+                        <div class="setting-desc" id="desc-kb-rej-cont">Key to reject the main content.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-reject-content" readonly>
                 </div>
 
                 <div class="settings-row">
-                    <div><div class="setting-label">Approve Text</div><div class="setting-desc">Key to approve text/caption.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-app-text">Approve Text</div>
+                        <div class="setting-desc" id="desc-kb-app-text">Key to approve text/caption.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-approve-text" readonly>
                 </div>
                 <div class="settings-row">
-                    <div><div class="setting-label">Reject Text</div><div class="setting-desc">Key to reject text/caption.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-rej-text">Reject Text</div>
+                        <div class="setting-desc" id="desc-kb-rej-text">Key to reject text/caption.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-reject-text" readonly>
                 </div>
 
                 <div class="settings-row" style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
-                    <div><div class="setting-label">Approve All</div><div class="setting-desc">Approve both content and text simultaneously.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-app-all">Approve All</div>
+                        <div class="setting-desc" id="desc-kb-app-all">Approve both content and text simultaneously.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-approve-all" readonly>
                 </div>
                 <div class="settings-row">
-                    <div><div class="setting-label">Reject All</div><div class="setting-desc">Reject both content and text simultaneously.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-rej-all">Reject All</div>
+                        <div class="setting-desc" id="desc-kb-rej-all">Reject both content and text simultaneously.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-reject-all" readonly>
                 </div>
 
                 <div class="settings-row" style="margin-top: 15px;">
-                    <div><div class="setting-label">Submit & Next</div><div class="setting-desc">Submit decision and load next task.</div></div>
+                    <div>
+                        <div class="setting-label" id="lbl-kb-next">Submit & Next</div>
+                        <div class="setting-desc" id="desc-kb-next">Submit decision and load next task.</div>
+                    </div>
                     <input type="text" class="key-input" id="bind-next" readonly>
                 </div>
 
                 <div style="margin-top: 15px; display:flex; justify-content:flex-end;">
-                     <button class="btn-primary" onclick="saveKeybinds()">Save Shortcuts</button>
+                     <button class="btn-primary" id="btn-save-shortcuts" onclick="saveKeybinds()">Save Shortcuts</button>
                 </div>
             </div>
         </div>
@@ -94,19 +117,51 @@
         // --- 1. TRANSLATION & THEME LOGIC ---
         const APP_LANG_SET = localStorage.getItem('appLang') || 'en';
         const TEXT = {
-            en: { header: "Settings", appearTitle: "Appearance", darkMode: "Dark Mode", darkDesc: "Adjust the appearance to reduce eye strain.", btnDark: "Switch to Dark Mode", btnLight: "Switch to Light Mode", langTitle: "Language / 语言", langLabel: "Interface Language", langDesc: "Select your preferred language." },
-            zh: { header: "设置", appearTitle: "外观", darkMode: "深色模式", darkDesc: "调整外观以减少眼睛疲劳。", btnDark: "切换到深色模式", btnLight: "切换到浅色模式", langTitle: "语言 / Language", langLabel: "界面语言", langDesc: "选择您的首选语言。" }
+            en: { 
+                header: "Settings", appearTitle: "Appearance", darkMode: "Dark Mode", darkDesc: "Adjust the appearance to reduce eye strain.", btnDark: "Switch to Dark Mode", btnLight: "Switch to Light Mode", langTitle: "Language / 语言", langLabel: "Interface Language", langDesc: "Select your preferred language.",
+                kbHeader: "Keyboard Shortcuts",
+                kbAppCont: "Approve Content", kbAppContDesc: "Key to approve the main content (Image/Video).",
+                kbRejCont: "Reject Content", kbRejContDesc: "Key to reject the main content.",
+                kbAppText: "Approve Text", kbAppTextDesc: "Key to approve text/caption.",
+                kbRejText: "Reject Text", kbRejTextDesc: "Key to reject text/caption.",
+                kbAppAll: "Approve All", kbAppAllDesc: "Approve both content and text simultaneously.",
+                kbRejAll: "Reject All", kbRejAllDesc: "Reject both content and text simultaneously.",
+                kbNext: "Submit & Next", kbNextDesc: "Submit decision and load next task.",
+                btnSave: "Save Shortcuts"
+            },
+            zh: { 
+                header: "设置", appearTitle: "外观", darkMode: "深色模式", darkDesc: "调整外观以减少眼睛疲劳。", btnDark: "切换到深色模式", btnLight: "切换到浅色模式", langTitle: "语言 / Language", langLabel: "界面语言", langDesc: "选择您的首选语言。",
+                kbHeader: "键盘快捷键",
+                kbAppCont: "通过内容", kbAppContDesc: "批准主要内容（图片/视频）的按键。",
+                kbRejCont: "拒绝内容", kbRejContDesc: "拒绝主要内容的按键。",
+                kbAppText: "通过文本", kbAppTextDesc: "批准文本/标题的按键。",
+                kbRejText: "拒绝文本", kbRejTextDesc: "拒绝文本/标题的按键。",
+                kbAppAll: "全部通过", kbAppAllDesc: "同时批准内容和文本。",
+                kbRejAll: "全部拒绝", kbRejAllDesc: "同时拒绝内容和文本。",
+                kbNext: "提交并继续", kbNextDesc: "提交决定并加载下一个任务。",
+                btnSave: "保存快捷键"
+            }
         };
         const T_SET = TEXT[APP_LANG_SET];
 
         // Apply Translations
-        document.getElementById('txt-header').innerText = T_SET.header;
-        document.getElementById('txt-appear-title').innerText = T_SET.appearTitle;
-        document.getElementById('txt-dark-mode').innerText = T_SET.darkMode;
-        document.getElementById('txt-dark-desc').innerText = T_SET.darkDesc;
-        document.getElementById('txt-lang-title').innerText = T_SET.langTitle;
-        document.getElementById('txt-lang-label').innerText = T_SET.langLabel;
-        document.getElementById('txt-lang-desc').innerText = T_SET.langDesc;
+        const ids = {
+            'txt-header': T_SET.header, 'txt-appear-title': T_SET.appearTitle, 'txt-dark-mode': T_SET.darkMode, 'txt-dark-desc': T_SET.darkDesc, 'txt-lang-title': T_SET.langTitle, 'txt-lang-label': T_SET.langLabel, 'txt-lang-desc': T_SET.langDesc,
+            'txt-kb-header': T_SET.kbHeader,
+            'lbl-kb-app-cont': T_SET.kbAppCont, 'desc-kb-app-cont': T_SET.kbAppContDesc,
+            'lbl-kb-rej-cont': T_SET.kbRejCont, 'desc-kb-rej-cont': T_SET.kbRejContDesc,
+            'lbl-kb-app-text': T_SET.kbAppText, 'desc-kb-app-text': T_SET.kbAppTextDesc,
+            'lbl-kb-rej-text': T_SET.kbRejText, 'desc-kb-rej-text': T_SET.kbRejTextDesc,
+            'lbl-kb-app-all': T_SET.kbAppAll, 'desc-kb-app-all': T_SET.kbAppAllDesc,
+            'lbl-kb-rej-all': T_SET.kbRejAll, 'desc-kb-rej-all': T_SET.kbRejAllDesc,
+            'lbl-kb-next': T_SET.kbNext, 'desc-kb-next': T_SET.kbNextDesc,
+            'btn-save-shortcuts': T_SET.btnSave
+        };
+
+        for (const [id, text] of Object.entries(ids)) {
+            const el = document.getElementById(id);
+            if(el) el.innerText = text;
+        }
 
         // Theme Button Logic
         function updateThemeButtonText() {
@@ -126,7 +181,6 @@
         }
 
         // --- 2. SHORTCUTS LOGIC ---
-        // Expanded Defaults
         const defaultBinds = { 
             'approve-content': '1', 
             'reject-content': '2', 
@@ -140,7 +194,6 @@
         const saved = JSON.parse(localStorage.getItem('appKeybinds')) || {};
         const currentBinds = { ...defaultBinds, ...saved };
 
-        // IDs for all inputs
         const bindIds = [
             'approve-content', 'reject-content', 
             'approve-text', 'reject-text', 
@@ -148,7 +201,6 @@
             'next'
         ];
 
-        // Populate Fields & Add Listeners
         bindIds.forEach(key => {
             const el = document.getElementById(`bind-${key}`);
             if(el) {
@@ -157,8 +209,6 @@
                 el.addEventListener('keydown', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    // Ignore standalone modifiers
                     if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
 
                     let keys = [];
@@ -188,7 +238,7 @@
                 if(el) newBinds[key] = el.value;
             });
             localStorage.setItem('appKeybinds', JSON.stringify(newBinds));
-            alert('Shortcuts Saved!'); 
+            alert(APP_LANG_SET === 'zh' ? '快捷键已保存！' : 'Shortcuts Saved!'); 
         }
     </script>
 </body>
