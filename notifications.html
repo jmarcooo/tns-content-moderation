@@ -20,7 +20,7 @@
             flex-shrink: 0;
             padding-top: 20px;
             padding-right: 20px;
-            border-right: 1px solid transparent; /* Removed border to match clean look if needed, or keep it subtle */
+            border-right: 1px solid transparent; 
         }
 
         .notif-nav-item {
@@ -30,14 +30,14 @@
             cursor: pointer;
             font-size: 0.95rem;
             font-weight: 500;
-            border-radius: 4px; /* Slightly sharper */
+            border-radius: 4px; 
             transition: all 0.2s ease;
         }
 
         .notif-nav-item:hover { color: var(--text-main); background-color: var(--hover-bg); }
 
         .notif-nav-item.active {
-            color: #1F2328; /* Dark text */
+            color: #1F2328; 
             background: linear-gradient(90deg, rgba(35, 134, 54, 0.1) 0%, transparent 100%);
             border-left: 4px solid #238636;
             font-weight: 600;
@@ -58,10 +58,10 @@
         .main-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 8px; /* Standard radius */
+            border-radius: 8px; 
             width: 100%;
             height: 100%; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); /* Subtle shadow */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
             position: relative;
             overflow: hidden;
             display: flex;
@@ -86,15 +86,15 @@
 
         .send-form-grid {
             display: grid;
-            grid-template-columns: 350px 1fr; /* Fixed left col, flexible right col */
-            gap: 60px; /* Space between columns */
+            grid-template-columns: 350px 1fr; 
+            gap: 60px; 
             max-width: 1400px;
         }
 
         .form-col {
             display: flex;
             flex-direction: column;
-            gap: 24px; /* Space between inputs */
+            gap: 24px; 
         }
 
         .input-group {
@@ -115,7 +115,7 @@
             border-radius: 4px;
             font-size: 0.95rem;
             color: var(--text-main);
-            background-color: #fff; /* Clean white background */
+            background-color: var(--bg-input);
             width: 100%;
             transition: border-color 0.2s;
         }
@@ -142,7 +142,7 @@
             font-weight: 600;
             font-size: 0.9rem;
             cursor: pointer;
-            align-self: flex-start; /* Do not stretch */
+            align-self: flex-start; 
             margin-top: 10px;
         }
         .btn-blast:hover {
@@ -150,7 +150,7 @@
         }
 
         /* ========================
-           LIST / SPLIT VIEW STYLES (Preserved)
+           LIST / SPLIT VIEW STYLES
            ======================== */
         .notif-split-container { display: flex; flex-grow: 1; height: 100%; overflow: hidden; }
         .notif-list-pane { width: 380px; flex-shrink: 0; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background-color: var(--bg-card); }
@@ -209,19 +209,19 @@
                     <div class="notif-split-container">
                         <div class="notif-list-pane">
                             <div class="list-header-top">
-                                <span>History</span>
-                                <button class="btn-link" onclick="NotifApp.markAllRead()">Mark all as read</button>
+                                <span id="txt-history">History</span>
+                                <button class="btn-link" id="btn-mark-all" onclick="NotifApp.markAllRead()">Mark all as read</button>
                             </div>
                             <div class="select-all-row">
                                 <input type="checkbox" id="selectAll" class="custom-checkbox" onchange="NotifApp.toggleSelectAll(this)">
-                                <label for="selectAll" style="cursor:pointer;">Select All</label>
+                                <label for="selectAll" style="cursor:pointer;" id="lbl-select-all">Select All</label>
                                 <button id="btnDeleteList" class="btn-link" style="color:#f85149; margin-left:auto; display:none;" onclick="NotifApp.deleteSelected()">Delete</button>
                             </div>
                             <div class="list-scroll-area" id="notif-list-container"></div>
                         </div>
 
                         <div class="notif-detail-pane" id="detail-view">
-                            <div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
+                            <div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);" id="txt-detail-placeholder">
                                 Select a notification to view details
                             </div>
                         </div>
@@ -230,14 +230,14 @@
 
                 <div id="view-send" class="main-card" style="display: none;">
                     <div class="send-container">
-                        <h2 class="send-title">Send Notification</h2>
+                        <h2 class="send-title" id="txt-send-title">Send Notification</h2>
                         
                         <form onsubmit="event.preventDefault(); NotifApp.sendBlast();">
                             <div class="send-form-grid">
                                 
                                 <div class="form-col">
                                     <div class="input-group">
-                                        <label class="input-label">Target Audience</label>
+                                        <label class="input-label" id="lbl-target">Target Audience</label>
                                         <select class="input-control">
                                             <option>All Users</option>
                                             <option>Moderators Only</option>
@@ -246,7 +246,7 @@
                                     </div>
                                     
                                     <div class="input-group">
-                                        <label class="input-label">Notification Type</label>
+                                        <label class="input-label" id="lbl-type">Notification Type</label>
                                         <select class="input-control">
                                             <option>System Alert</option>
                                             <option>Maintenance</option>
@@ -258,16 +258,16 @@
 
                                 <div class="form-col">
                                     <div class="input-group">
-                                        <label class="input-label">Message Title</label>
+                                        <label class="input-label" id="lbl-msg-title">Message Title</label>
                                         <input type="text" class="input-control" placeholder="e.g. System Maintenance">
                                     </div>
 
                                     <div class="input-group">
-                                        <label class="input-label">Message Body</label>
+                                        <label class="input-label" id="lbl-msg-body">Message Body</label>
                                         <textarea class="input-control input-textarea" placeholder="Type message..."></textarea>
                                     </div>
 
-                                    <button type="submit" class="btn-blast">Send Blast</button>
+                                    <button type="submit" class="btn-blast" id="btn-send-blast">Send Blast</button>
                                 </div>
 
                             </div>
@@ -281,6 +281,72 @@
     </main>
 
     <script>
+        // --- 1. TRANSLATION DATA ---
+        const APP_LANG = localStorage.getItem('appLang') || 'en';
+        const NOTIF_TEXT = {
+            en: {
+                header: "Notification Center",
+                navList: "All Notifications",
+                navSend: "Send Notification",
+                history: "History",
+                markAll: "Mark all as read",
+                selectAll: "Select All",
+                delete: "Delete",
+                markRead: "Mark as Read",
+                sentBy: "Sent by:",
+                body: "Body:",
+                placeholder: "Select a notification to view details",
+                sendTitle: "Send Notification",
+                target: "Target Audience",
+                type: "Notification Type",
+                msgTitle: "Message Title",
+                msgBody: "Message Body",
+                btnSend: "Send Blast"
+            },
+            zh: {
+                header: "通知中心",
+                navList: "所有通知",
+                navSend: "发送通知",
+                history: "历史记录",
+                markAll: "全部标记为已读",
+                selectAll: "全选",
+                delete: "删除",
+                markRead: "标记为已读",
+                sentBy: "发送者：",
+                body: "内容：",
+                placeholder: "请选择一条通知以查看详情",
+                sendTitle: "发送通知",
+                target: "目标受众",
+                type: "通知类型",
+                msgTitle: "消息标题",
+                msgBody: "消息内容",
+                btnSend: "发送通知"
+            }
+        };
+        const T = NOTIF_TEXT[APP_LANG];
+
+        // --- 2. APPLY STATIC TRANSLATIONS ---
+        const staticIds = {
+            'header-title': T.header,
+            'nav-list': T.navList,
+            'nav-send': T.navSend,
+            'txt-history': T.history,
+            'btn-mark-all': T.markAll,
+            'lbl-select-all': T.selectAll,
+            'txt-detail-placeholder': T.placeholder,
+            'txt-send-title': T.sendTitle,
+            'lbl-target': T.target,
+            'lbl-type': T.type,
+            'lbl-msg-title': T.msgTitle,
+            'lbl-msg-body': T.msgBody,
+            'btn-send-blast': T.btnSend
+        };
+
+        for (const [id, text] of Object.entries(staticIds)) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        }
+
         function switchView(view) {
             document.querySelectorAll('.notif-nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + view).classList.add('active');
@@ -290,7 +356,7 @@
             if(view === 'list') {
                 document.getElementById('view-list').style.display = 'flex';
             } else {
-                document.getElementById('view-send').style.display = 'flex'; // Changed to flex to support internal layout
+                document.getElementById('view-send').style.display = 'flex';
             }
         }
 
@@ -331,9 +397,10 @@
                     </div>
                 `).join('');
                 
+                // Dynamic Delete Button Text
                 const delBtn = document.getElementById('btnDeleteList');
                 delBtn.style.display = this.selected.size > 0 ? 'block' : 'none';
-                delBtn.innerText = `Delete (${this.selected.size})`;
+                delBtn.innerText = `${T.delete} (${this.selected.size})`;
             },
 
             renderDetail(id) {
@@ -341,7 +408,7 @@
                 const item = this.data.find(i => i.id === id);
 
                 if (!item) {
-                    container.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">Select a notification</div>`;
+                    container.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">${T.placeholder}</div>`;
                     return;
                 }
 
@@ -355,18 +422,18 @@
                     </div>
 
                     <div class="field-group-readonly">
-                        <label class="input-label" style="margin-bottom:8px; display:block;">Sent by:</label>
+                        <label class="input-label" style="margin-bottom:8px; display:block;">${T.sentBy}</label>
                         <div class="field-box-readonly">${item.sender}</div>
                     </div>
 
                     <div class="field-group-readonly" style="flex-grow:1; display:flex; flex-direction:column;">
-                        <label class="input-label" style="margin-bottom:8px; display:block;">Body:</label>
+                        <label class="input-label" style="margin-bottom:8px; display:block;">${T.body}</label>
                         <div class="field-box-readonly body-content-readonly">${item.body}</div>
                     </div>
 
                     <div class="detail-footer">
-                        <button class="btn-outline" onclick="NotifApp.deleteSingle(${item.id})">Delete</button>
-                        <button class="btn-outline" onclick="NotifApp.markReadSingle(${item.id})">Mark as Read</button>
+                        <button class="btn-outline" onclick="NotifApp.deleteSingle(${item.id})">${T.delete}</button>
+                        <button class="btn-outline" onclick="NotifApp.markReadSingle(${item.id})">${T.markRead}</button>
                     </div>
                 `;
             },
@@ -390,22 +457,22 @@
             },
 
             deleteSelected() {
-                if(confirm(`Delete ${this.selected.size} items?`)) {
+                if(confirm(`${T.delete} ${this.selected.size} items?`)) {
                     this.data = this.data.filter(i => !this.selected.has(i.id));
                     this.selected.clear();
                     document.getElementById('selectAll').checked = false;
                     this.renderList();
                     if(this.data.length > 0) this.handleRowClick(this.data[0].id);
-                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = ''; }
+                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">${T.placeholder}</div>`; }
                 }
             },
 
             deleteSingle(id) {
-                if(confirm('Delete this notification?')) {
+                if(confirm(`${T.delete}?`)) {
                     this.data = this.data.filter(i => i.id !== id);
                     this.renderList();
                     if(this.data.length > 0) this.handleRowClick(this.data[0].id);
-                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = ''; }
+                    else { this.currentViewId = null; document.getElementById('detail-view').innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">${T.placeholder}</div>`; }
                 }
             },
 
@@ -423,7 +490,7 @@
             },
 
             sendBlast() {
-                alert('Notification Blast Sent!');
+                alert(APP_LANG === 'zh' ? '通知已发送！' : 'Notification Blast Sent!');
             }
         };
 
