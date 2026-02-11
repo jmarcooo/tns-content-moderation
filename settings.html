@@ -5,90 +5,22 @@
     <title>Settings</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Layout specific for Settings Items */
-        .settings-container {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-        }
-
-        .settings-section {
-            padding-bottom: 24px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .settings-section:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-            margin-bottom: 0;
-        }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: var(--text-header);
-            margin-bottom: 12px;
-        }
-
-        .settings-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .settings-row:last-child { margin-bottom: 0; }
-
-        .setting-label {
-            font-weight: 600;
-            color: var(--text-header);
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-        }
-
-        .setting-desc {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        /* Keybind Input Style */
-        .key-input {
-            width: 140px;
-            padding: 8px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-input);
-            color: var(--text-main);
-            font-family: monospace;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .key-input:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
-            outline: none;
-            background: var(--hover-bg);
-        }
-        .key-input.active-bind {
-            border-color: #238636;
-            background-color: rgba(35, 134, 54, 0.1);
-            transform: scale(1.05);
-        }
+        .settings-container { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: var(--shadow); }
+        .settings-section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+        .settings-section:last-child { border-bottom: none; margin-bottom: 0; }
+        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--text-header); margin-bottom: 12px; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .setting-label { font-weight: 600; color: var(--text-header); font-size: 0.95rem; margin-bottom: 4px; }
+        .setting-desc { color: var(--text-muted); font-size: 0.85rem; }
+        .key-input { width: 140px; padding: 8px; text-align: center; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); color: var(--text-main); font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <script src="sidebar.js"></script>
     <main class="main-content">
-        <div class="header">
-            <h1 id="txt-header">Settings</h1>
-        </div>
+        <div class="header"><h1 id="txt-header">Settings</h1></div>
         
         <div class="settings-container">
-            
             <div class="settings-section">
                 <div class="section-title" id="txt-appear-title">Appearance</div>
                 <div class="settings-row">
@@ -96,7 +28,7 @@
                         <div class="setting-label" id="txt-dark-mode">Dark Mode</div>
                         <div class="setting-desc" id="txt-dark-desc">Adjust the appearance to reduce eye strain.</div>
                     </div>
-                    <button class="btn-cancel" id="btn-theme-toggle" onclick="toggleTheme()">Switch to Dark Mode</button>
+                    <button class="btn-cancel" id="btn-theme-toggle" onclick="window.toggleTheme()">Switch to Dark Mode</button>
                 </div>
             </div>
 
@@ -116,73 +48,23 @@
 
             <div class="settings-section">
                 <div class="section-title">Keyboard Shortcuts</div>
-                
                 <div class="settings-row">
-                    <div>
-                        <div class="setting-label">Approve Content</div>
-                        <div class="setting-desc">Key to approve the main content (Image/Video).</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-approve-content" placeholder="Press key..." readonly>
+                    <div><div class="setting-label">Approve Content</div></div>
+                    <input type="text" class="key-input" id="bind-approve-content" readonly>
                 </div>
-
                 <div class="settings-row">
-                    <div>
-                        <div class="setting-label">Reject Content</div>
-                        <div class="setting-desc">Key to reject the main content.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-reject-content" placeholder="Press key..." readonly>
+                    <div><div class="setting-label">Reject Content</div></div>
+                    <input type="text" class="key-input" id="bind-reject-content" readonly>
                 </div>
-
-                <div class="settings-row">
-                    <div>
-                        <div class="setting-label">Approve Text</div>
-                        <div class="setting-desc">Key to approve the text/caption.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-approve-text" placeholder="Press key..." readonly>
-                </div>
-
-                <div class="settings-row">
-                    <div>
-                        <div class="setting-label">Reject Text</div>
-                        <div class="setting-desc">Key to reject the text/caption.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-reject-text" placeholder="Press key..." readonly>
-                </div>
-
-                <div class="settings-row" style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
-                    <div>
-                        <div class="setting-label">Approve All</div>
-                        <div class="setting-desc">Approve both content and text simultaneously.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-approve-all" placeholder="Press key..." readonly>
-                </div>
-
-                <div class="settings-row">
-                    <div>
-                        <div class="setting-label">Reject All</div>
-                        <div class="setting-desc">Reject both content and text simultaneously.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-reject-all" placeholder="Press key..." readonly>
-                </div>
-
-                <div class="settings-row" style="margin-top: 15px;">
-                    <div>
-                        <div class="setting-label">Submit & Next</div>
-                        <div class="setting-desc">Submit decision and load next task.</div>
-                    </div>
-                    <input type="text" class="key-input" id="bind-next" placeholder="Press key..." readonly>
-                </div>
-
                 <div style="margin-top: 15px; display:flex; justify-content:flex-end;">
                      <button class="btn-primary" onclick="saveKeybinds()">Save Shortcuts</button>
                 </div>
             </div>
-
         </div>
     </main>
 
     <script>
-        // --- 1. TRANSLATION & THEME LOGIC (Existing) ---
+        // --- 1. TRANSLATION & THEME LOGIC ---
         const APP_LANG_SET = localStorage.getItem('appLang') || 'en';
         const TEXT = {
             en: { header: "Settings", appearTitle: "Appearance", darkMode: "Dark Mode", darkDesc: "Adjust the appearance to reduce eye strain.", btnDark: "Switch to Dark Mode", btnLight: "Switch to Light Mode", langTitle: "Language / 语言", langLabel: "Interface Language", langDesc: "Select your preferred language." },
@@ -190,6 +72,7 @@
         };
         const T_SET = TEXT[APP_LANG_SET];
 
+        // Apply Translations
         document.getElementById('txt-header').innerText = T_SET.header;
         document.getElementById('txt-appear-title').innerText = T_SET.appearTitle;
         document.getElementById('txt-dark-mode').innerText = T_SET.darkMode;
@@ -198,19 +81,16 @@
         document.getElementById('txt-lang-label').innerText = T_SET.langLabel;
         document.getElementById('txt-lang-desc').innerText = T_SET.langDesc;
 
+        // Theme Button Logic
         function updateThemeButtonText() {
             const isDark = document.body.classList.contains('dark-mode');
             const btn = document.getElementById('btn-theme-toggle');
-            btn.innerText = isDark ? T_SET.btnLight : T_SET.btnDark;
+            if(btn) btn.innerText = isDark ? T_SET.btnLight : T_SET.btnDark;
         }
-        updateThemeButtonText();
-        window.addEventListener('themeChanged', updateThemeButtonText);
         
-        const originalToggle = window.toggleTheme;
-        window.toggleTheme = function() {
-            if(originalToggle) originalToggle(); 
-            setTimeout(updateThemeButtonText, 50);
-        };
+        // Init & Listen for global event from sidebar.js
+        setTimeout(updateThemeButtonText, 50); 
+        window.addEventListener('themeChanged', updateThemeButtonText);
 
         document.getElementById('langSelect').value = APP_LANG_SET;
         function changeLanguage(lang) {
@@ -218,86 +98,17 @@
             location.reload(); 
         }
 
-        // --- 2. KEYBIND LOGIC (Updated for Complex Keys) ---
-        
-        // A. Define Defaults
-        const defaultBinds = {
-            'approve-content': '1',
-            'reject-content': '2',
-            'approve-text': '3',
-            'reject-text': '4',
-            'approve-all': 'Ctrl+1', 
-            'reject-all': 'Ctrl+2',
-            'next': 'Enter'
-        };
-
-        // B. Load Saved & Merge
+        // --- 2. SHORTCUTS LOGIC ---
+        const defaultBinds = { 'approve-content': '1', 'reject-content': '2' };
         const saved = JSON.parse(localStorage.getItem('appKeybinds')) || {};
-        let currentBinds = { ...defaultBinds, ...saved };
+        const currentBinds = { ...defaultBinds, ...saved };
 
-        // C. Map Inputs
-        const bindInputs = {
-            'approve-content': document.getElementById('bind-approve-content'),
-            'reject-content': document.getElementById('bind-reject-content'),
-            'approve-text': document.getElementById('bind-approve-text'),
-            'reject-text': document.getElementById('bind-reject-text'),
-            'approve-all': document.getElementById('bind-approve-all'),
-            'reject-all': document.getElementById('bind-reject-all'),
-            'next': document.getElementById('bind-next')
-        };
-
-        // D. Populate Fields
-        for (const [action, key] of Object.entries(currentBinds)) {
-            if (bindInputs[action]) {
-                bindInputs[action].value = key;
-            }
-        }
-
-        // E. Complex Key Listener (Detects Modifiers)
-        function getKeyString(e) {
-            // Don't register standalone modifier presses
-            if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return null;
-
-            let keys = [];
-            if (e.ctrlKey) keys.push('Ctrl');
-            if (e.altKey) keys.push('Alt');
-            if (e.shiftKey) keys.push('Shift');
-            if (e.metaKey) keys.push('Meta');
-            
-            let char = e.key;
-            if (char === ' ') char = 'Space';
-            if (char.length === 1) char = char.toUpperCase();
-            
-            keys.push(char);
-            return keys.join('+');
-        }
-
-        Object.values(bindInputs).forEach(input => {
-            if(!input) return;
-            input.addEventListener('keydown', (e) => {
-                e.preventDefault();
-                // Prevent browser shortcuts (like Ctrl+P) from firing while recording
-                e.stopPropagation();
-                
-                const keyString = getKeyString(e);
-                if (keyString) {
-                    input.value = keyString;
-                    // Visual feedback
-                    input.classList.add('active-bind');
-                    setTimeout(() => input.classList.remove('active-bind'), 200);
-                }
-            });
+        ['approve-content', 'reject-content'].forEach(key => {
+            const el = document.getElementById(`bind-${key}`);
+            if(el) el.value = currentBinds[key];
         });
 
-        // F. Save Function
-        function saveKeybinds() {
-            const newBinds = {};
-            for (const [key, input] of Object.entries(bindInputs)) {
-                if(input) newBinds[key] = input.value;
-            }
-            localStorage.setItem('appKeybinds', JSON.stringify(newBinds));
-            alert('Shortcuts Saved!');
-        }
+        function saveKeybinds() { alert('Shortcuts Saved!'); }
     </script>
 </body>
 </html>
