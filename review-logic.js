@@ -185,7 +185,7 @@ window.ReviewApp = {
 
             imgContainer.innerHTML = `
                 <div class="video-player-wrapper" style="flex: 3; min-width: 0; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
+                    <video controls style="width: 50%; height: auto; display: block; aspect-ratio: 16 / 9;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -326,7 +326,7 @@ window.ReviewApp = {
         document.getElementById('violationDrawer')?.classList.add('open'); 
     },
 
-    closeDrawer() { document.getElementById('violationDrawer')?.classList.remove('open'); },
+    closeDrawer() { document.getElementById('violationDrawer')?.classList.remove('open'); },https://github.com/jmarcooo/tns-content-moderation/blob/main/review-logic.js
     confirmReject(r) { 
         if (this.currentTargetForDrawer === 'both') {
             const mc = document.getElementById('module-content');
