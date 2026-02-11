@@ -162,9 +162,14 @@ window.ReviewApp = {
         if (task.video) {
             // RENDER VIDEO PLAYER
             modContent.style.display = 'block';
+            
+            // Override alignment to LEFT for video
+            imgContainer.style.justifyContent = 'flex-start';
+
+            // Increased size: max-width 950px, max-height 600px
             imgContainer.innerHTML = `
-                <div class="video-player-wrapper" style="width: 100%; max-width: 700px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <video controls style="width: 100%; display: block; max-height: 500px;">
+                <div class="video-player-wrapper" style="width: 100%; max-width: 950px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <video controls style="width: 100%; display: block; max-height: 600px;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -173,6 +178,10 @@ window.ReviewApp = {
         } else if (task.images.length > 0) {
             // RENDER IMAGE GRID
             modContent.style.display = 'block';
+            
+            // Reset alignment to CENTER (default) for images
+            imgContainer.style.justifyContent = ''; 
+
             imgContainer.innerHTML = task.images.map(src => 
                 `<div class="content-image-card"><img src="${src}" onclick="window.ImageViewer.open(this.src)"></div>`
             ).join('');
