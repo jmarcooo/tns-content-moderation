@@ -111,17 +111,28 @@ window.ReviewApp = {
         });
     },
 
+    // --- NEW VIDEO SEEK FUNCTION ---
+    seekToTime(timeStr) {
+        const video = document.querySelector('video');
+        if (video) {
+            const parts = timeStr.split(':');
+            // Convert "MM:SS" to seconds
+            const seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            video.currentTime = seconds;
+            video.play(); // Auto-play when seeking
+        }
+    },
+
     generateTask() {
         const id = Math.floor(Math.random() * 99999);
         const type = this.queueName.toLowerCase();
-        // Initialize task structure
         let task = { 
             id, 
             type, 
             userId: "720" + Math.floor(Math.random()*1000), 
             images: [], 
             video: null, 
-            frames: [], // Array for keyframes
+            frames: [], 
             transcript: null, 
             textTop: "", 
             textBottom: "" 
@@ -132,7 +143,6 @@ window.ReviewApp = {
             task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
             task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)\n[00:30] Character 1: Run away!\n[00:35] (Intense music swells)";
             
-            // Mock Keyframes (Updated to 6 images)
             task.frames = [
                 `https://picsum.photos/300/160?r=${Math.random()}`,
                 `https://picsum.photos/300/160?r=${Math.random()}`,
@@ -146,20 +156,17 @@ window.ReviewApp = {
             task.textBottom = "Please review the video content for policy violations."; 
         
         } else if (type.includes('image')) {
-            // --- IMAGE TASK ---
             const imgCount = Math.floor(Math.random() * 3) + 1;
             for(let i=0; i<imgCount; i++) task.images.push(`https://picsum.photos/400/300?r=${Math.random()}`);
             task.textTop = "Check out this content!"; 
             task.textBottom = "Please like and subscribe to my channel."; 
         
         } else if (type.includes('avatar')) {
-            // --- AVATAR TASK ---
             task.images.push(`https://i.pravatar.cc/300?u=${id}`);
             task.textTop = "Avatar Review";
             task.textBottom = "Is this avatar appropriate?";
 
         } else if (type.includes('nick') || type.includes('profile')) {
-            // --- TEXT ONLY TASK ---
             task.images = []; 
             task.textTop = "Old_Nickname_123"; 
             task.textBottom = "New_Nickname_SUPER"; 
@@ -187,16 +194,20 @@ window.ReviewApp = {
             // RENDER 3 PARTITIONS: VIDEO | TRANSCRIPT | FRAMES
             modContent.style.display = 'block';
 
-            // Flex Layout for 3 Columns
+            // Auto-link timestamps in transcript
+            // Replaces [00:00] with clickable span
+            const formattedTranscript = task.transcript.replace(/\[(\d{2}:\d{2})\]/g, (match, time) => {
+                return `<span class="timestamp-link" onclick="window.ReviewApp.seekToTime('${time}')" style="color:#0969da; cursor:pointer; font-weight:700; text-decoration:underline;">${match}</span>`;
+            });
+
             imgContainer.style.display = 'flex';
             imgContainer.style.flexDirection = 'row';
             imgContainer.style.flexWrap = 'nowrap';
             imgContainer.style.justifyContent = 'space-between';
-            imgContainer.style.alignItems = 'stretch'; // Equal height
+            imgContainer.style.alignItems = 'stretch';
             imgContainer.style.gap = '15px';
             imgContainer.style.width = '100%';
 
-            // Generate Frames HTML (6 Images)
             const framesHTML = task.frames.map(src => 
                 `<div style="border:1px solid #ddd; border-radius:4px; overflow:hidden; cursor:pointer;" onclick="window.ImageViewer.open('${src}')">
                     <img src="${src}" style="width:100%; height:100%; object-fit:cover; display:block;">
@@ -213,7 +224,7 @@ window.ReviewApp = {
 
                 <div class="transcript-section" style="flex: 0.8; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
-                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${task.transcript}</div>
+                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${formattedTranscript}</div>
                 </div>
 
                 <div class="frames-section" style="flex: 1.2; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
@@ -225,7 +236,6 @@ window.ReviewApp = {
             `;
 
         } else if (task.images.length > 0) {
-            // RENDER IMAGE GRID (Standard)
             modContent.style.display = 'block';
             
             imgContainer.style.display = 'flex';
