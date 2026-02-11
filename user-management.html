@@ -19,7 +19,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.9rem;
-            min-width: 800px; /* Prevents squashing on small screens */
+            min-width: 800px; 
         }
 
         .styled-table thead tr {
@@ -31,7 +31,7 @@
         }
 
         .styled-table th, .styled-table td {
-            padding: 15px 20px; /* Adds breathing room */
+            padding: 15px 20px; 
             border-bottom: 1px solid var(--border-color);
             vertical-align: middle;
         }
@@ -45,7 +45,7 @@
         }
 
         /* Column Specifics */
-        .col-id { width: 15%; color: var(--text-muted); } /* Removed monospace font */
+        .col-id { width: 15%; color: var(--text-muted); } 
         .col-user { width: 25%; font-weight: 600; }
         .col-role { width: 15%; }
         .col-status { width: 15%; }
@@ -60,7 +60,7 @@
         .dot-red { background-color: #da3633; }
         .dot-purple { background-color: #8957e5; }
 
-        /* --- UPDATED CARD GRID (Matching Moderation/QA) --- */
+        /* --- CARD GRID --- */
         .selection-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -104,8 +104,44 @@
         .back-nav { cursor: pointer; color: var(--text-muted); margin-bottom: 20px; display: inline-block; }
         .back-nav:hover { color: var(--accent-blue); }
         
-        /* Hidden elements class */
-        .hidden { display: none !important; }
+        /* TOAST NOTIFICATION */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 9999;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        .toast-success { background-color: #238636; }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
     </style>
 </head>
 <body>
@@ -151,8 +187,7 @@
             <div class="table-container">
                 <table class="styled-table">
                     <thead>
-                        <tr id="table-head-accounts">
-                            </tr>
+                        <tr id="table-head-accounts"></tr>
                     </thead>
                     <tbody id="userTableBody"></tbody>
                 </table>
@@ -168,8 +203,7 @@
             <div class="table-container">
                 <table class="styled-table">
                     <thead>
-                        <tr id="table-head-status">
-                           </tr>
+                        <tr id="table-head-status"></tr>
                     </thead>
                     <tbody id="modStatusBody"></tbody>
                 </table>
@@ -185,6 +219,10 @@
         </div>
 
     </main>
+
+    <div id="toast-notification" class="toast toast-success">
+        <span style="font-size:1.2rem;">✓</span> <span id="toast-message">Status Updated</span>
+    </div>
 
     <div id="addModal" class="modal-overlay">
         <div class="modal-content">
@@ -231,6 +269,30 @@
         </div>
     </div>
 
+    <div id="forceStatusModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">Change User Status</div>
+            <p style="color:var(--text-muted); margin-bottom:15px;">Forcefully changing status for: <strong id="forceStatusName">User</strong></p>
+            <form id="forceStatusForm">
+                <input type="hidden" id="forceStatusId">
+                <div class="form-group">
+                    <label>New Status</label>
+                    <select id="forceStatusSelect">
+                        <option value="Online">Online</option>
+                        <option value="Break">Break</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('forceStatusModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // --- ICONS & VARIABLES ---
         const SVG_EDIT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
@@ -251,16 +313,21 @@
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (!currentUser) window.location.href = 'login.html';
             
-            // Check if user is Admin
             isAdmin = (currentUser.role === 'Admin');
 
-            // Hide Admin-Only Buttons immediately
             if (!isAdmin) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
             }
 
             applyTranslations();
             await fetchUsers();
+            
+            // Auto refresh for status monitoring
+            setInterval(async () => {
+                if(document.getElementById('view-status').style.display === 'block') {
+                    await fetchUsers();
+                }
+            }, 30000); 
         }
 
         async function fetchUsers() {
@@ -269,6 +336,10 @@
                 if (!res.ok) throw new Error('API Error');
                 users = await res.json();
                 render();
+                // If status view is active, re-render that too
+                if(document.getElementById('view-status').style.display === 'block') {
+                    renderModStatus();
+                }
             } catch (err) {
                 console.error(err);
                 document.getElementById('userTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Failed to load data. API may be down.</td></tr>';
@@ -286,7 +357,6 @@
             if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No users found.</td></tr>'; return; }
             
             tbody.innerHTML = users.map(u => {
-                // Determine actions column content based on role
                 const actionButtons = isAdmin 
                     ? `
                         <button class="action-btn" title="Edit" onclick="openEdit('${u.id}')">${SVG_EDIT}</button>
@@ -297,7 +367,6 @@
                 return `
                 <tr>
                     <td class="col-id" title="${u.id}">${u.id}</td>
-                    
                     <td>
                         <div style="font-weight:600; color:var(--text-header);">${u.name}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">@${u.username}</div>
@@ -305,12 +374,24 @@
                     <td><span style="background:var(--hover-bg); padding:4px 8px; border-radius:4px; font-size:0.85rem;">${u.role}</span></td>
                     <td><span class="badge ${u.account_status === 'Banned' ? 'status-Banned' : 'status-Active'}">${u.account_status || 'Active'}</span></td>
                     <td style="font-size:0.85rem;">${new Date(u.created_at || Date.now()).toLocaleDateString()}</td>
-                    
-                    <td style="text-align:right;">
-                        ${actionButtons}
-                    </td>
+                    <td style="text-align:right;">${actionButtons}</td>
                 </tr>
             `}).join('');
+        }
+
+        // --- DURATION FORMATTER (HH:MM:SS) ---
+        function formatDuration(isoString) {
+            if (!isoString) return "00:00:00";
+            const start = new Date(isoString).getTime();
+            const now = Date.now();
+            let diff = now - start;
+            if (diff < 0) diff = 0;
+
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         function renderModStatus() {
@@ -326,17 +407,12 @@
                 else if(s === 'Break' || s === 'Lunch') dotColor = 'dot-orange';
                 else if(s === 'Meeting') dotColor = 'dot-blue';
                 
-                // Calculate Duration
-                let duration = "0m";
-                if(u.last_status_update) {
-                    const diff = Date.now() - new Date(u.last_status_update).getTime();
-                    const mins = Math.floor(diff / 60000);
-                    duration = mins + "m";
-                }
+                // New Duration Format
+                let duration = formatDuration(u.last_status_update);
 
-                // Only show Change button if Admin
+                // Admin Force Change Trigger
                 const actionCell = isAdmin 
-                    ? `<button class="btn-sm" onclick="alert('Change Status feature coming soon via API')">Change ▼</button>` 
+                    ? `<button class="btn-sm" onclick="openForceStatusModal('${u.id}', '${u.name}', '${u.status}')">Change ▼</button>` 
                     : `<span style="color:var(--text-muted);">-</span>`;
 
                 return `
@@ -348,7 +424,7 @@
                     <td>0</td>
                     <td>0s</td>
                     <td><div style="display:flex; align-items:center;"><span class="status-dot ${dotColor}"></span>${s}</div></td>
-                    <td style="font-family:monospace;">${duration}</td>
+                    <td style="font-family:monospace; font-size:0.95rem;">${duration}</td>
                     <td style="text-align:right;">${actionCell}</td>
                 </tr>
             `}).join('');
@@ -360,10 +436,56 @@
             fetchUsers();
         }
 
-        // Modal Logic
+        // --- POPUP / TOAST NOTIFICATION ---
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').innerText = message;
+            toast.className = "toast toast-success show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- MODAL HELPERS ---
         function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
+
+        // --- FORCE STATUS CHANGE MODAL ---
+        function openForceStatusModal(id, name, currentStatus) {
+            document.getElementById('forceStatusId').value = id;
+            document.getElementById('forceStatusName').innerText = name;
+            document.getElementById('forceStatusSelect').value = currentStatus || 'Offline';
+            document.getElementById('forceStatusModal').style.display = 'flex';
+        }
+
+        // --- SUBMIT FORCE STATUS CHANGE ---
+        document.getElementById('forceStatusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('forceStatusId').value;
+            const name = document.getElementById('forceStatusName').innerText;
+            const newStatus = document.getElementById('forceStatusSelect').value;
+
+            try {
+                const updatedData = {
+                    id: id,
+                    status: newStatus,
+                    last_status_update: new Date().toISOString() // Reset timer
+                };
+
+                await fetch('/api/users', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                });
+
+                closeModal('forceStatusModal');
+                showToast(`Status changed for ${name} to ${newStatus}`);
+                fetchUsers(); // Refresh table
+            } catch (err) {
+                console.error("Update failed", err);
+                alert("Failed to update status");
+            }
+        });
+
+        // Add/Edit Handlers (Existing)
         document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const userData = {
@@ -381,7 +503,6 @@
             fetchUsers();
         });
 
-        // Edit Modal Logic
         function openEdit(id) {
             const u = users.find(u => u.id.toString() === id.toString());
             if (!u) return;
