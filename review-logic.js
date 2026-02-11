@@ -114,16 +114,28 @@ window.ReviewApp = {
     generateTask() {
         const id = Math.floor(Math.random() * 99999);
         const type = this.queueName.toLowerCase();
-        let task = { id, type, userId: "720" + Math.floor(Math.random()*1000), images: [], textTop: "", textBottom: "" };
+        let task = { id, type, userId: "720" + Math.floor(Math.random()*1000), images: [], video: null, textTop: "", textBottom: "" };
 
-        if (type.includes('image') || type.includes('video')) {
+        if (type.includes('video')) {
+            // --- VIDEO TASK ---
+            // Use a sample video URL for demonstration
+            task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+            task.textTop = "Dynamic Video Review"; 
+            task.textBottom = "Please review the video content for policy violations."; 
+        
+        } else if (type.includes('image')) {
+            // --- IMAGE TASK ---
             const imgCount = Math.floor(Math.random() * 3) + 1;
             for(let i=0; i<imgCount; i++) task.images.push(`https://picsum.photos/400/300?r=${Math.random()}`);
             task.textTop = "Check out this content!"; 
             task.textBottom = "Please like and subscribe to my channel."; 
+        
         } else if (type.includes('avatar')) {
+            // --- AVATAR TASK ---
             task.images.push(`https://i.pravatar.cc/300?u=${id}`);
+        
         } else if (type.includes('nick') || type.includes('profile')) {
+            // --- TEXT ONLY TASK ---
             task.images = []; 
             task.textTop = "Old_Nickname_123"; 
             task.textBottom = "New_Nickname_SUPER"; 
@@ -146,10 +158,21 @@ window.ReviewApp = {
         const modText = document.getElementById('module-text');
         const imgContainer = document.getElementById('image-container');
 
-        if (task.images.length > 0) {
+        // --- CONTENT RENDERING LOGIC ---
+        if (task.video) {
+            // RENDER VIDEO PLAYER
             modContent.style.display = 'block';
-            // FIXED: Removed special handling for 'avatar'.
-            // Now ALL images, including avatars, use the standard .content-image-card wrapper.
+            imgContainer.innerHTML = `
+                <div class="video-player-wrapper" style="width: 100%; max-width: 700px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <video controls style="width: 100%; display: block; max-height: 500px;">
+                        <source src="${task.video}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            `;
+        } else if (task.images.length > 0) {
+            // RENDER IMAGE GRID
+            modContent.style.display = 'block';
             imgContainer.innerHTML = task.images.map(src => 
                 `<div class="content-image-card"><img src="${src}" onclick="window.ImageViewer.open(this.src)"></div>`
             ).join('');
