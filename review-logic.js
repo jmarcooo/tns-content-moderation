@@ -166,9 +166,9 @@ window.ReviewApp = {
             // Override alignment to LEFT for video
             imgContainer.style.justifyContent = 'flex-start';
 
-            // Increased size: max-width 950px, max-height 800px
+            // Fixed size: max-width 750px (balanced large size)
             imgContainer.innerHTML = `
-                <div class="video-player-wrapper" style="width: 100%; max-width: 950px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div class="video-player-wrapper" style="width: 100%; max-width: 750px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                     <video controls style="width: 100%; display: block; max-height: 800px;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
