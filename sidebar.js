@@ -1,27 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // =========================================
-    // 1. GLOBAL THEME LOGIC
-    // =========================================
-    const savedTheme = localStorage.getItem('appTheme') || 'light';
-    if (savedTheme === 'dark') document.body.classList.add('dark-mode');
-
-    // Define global toggle function
-    window.toggleTheme = function() {
-        const isDark = document.body.classList.toggle('dark-mode');
-        localStorage.setItem('appTheme', isDark ? 'dark' : 'light');
-        
-        // Dispatch event so Settings page can update button text immediately
-        window.dispatchEvent(new Event('themeChanged'));
-    };
-
-    // =========================================
-    // 2. GET CURRENT USER
-    // =========================================
+    // 1. GET CURRENT USER
     const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { 
         name: 'Guest', 
         username: 'guest', 
         email: 'guest@example.com', 
-        role: 'Visitor',
+        role: 'Visitor', // Default role
         status: 'Online' 
     };
 
@@ -31,9 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         zh: { overview: "总览", users: "用户管理", mod: "审核", audit: "质量保证", notifs: "通知中心", settings: "设置", logout: "退出登录" }
     }[APP_LANG];
 
-    // =========================================
-    // 3. ICONS
-    // =========================================
+    // 2. ICONS
     const ICONS = {
         brand: `<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>`,
         overview: `<svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>`,
@@ -45,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         logout: `<svg class="logout-icon" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>`
     };
 
-    // 4. GENERATE HTML
+    // 3. GENERATE HTML (RESTRUCTURED LAYOUT)
     const sidebarHTML = `
     <nav class="sidebar">
         <div class="brand">${ICONS.brand}<span>AdminPanel</span></div>
@@ -65,39 +46,41 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
 
         <div class="user-profile">
-            <div class="avatar">${currentUser.name.charAt(0).toUpperCase()}</div>
-            
-            <div class="profile-details">
-                <div class="profile-name">${currentUser.name}</div>
-                <div class="profile-email" title="${currentUser.email || ''}">${currentUser.email || ''}</div>
-                <div class="profile-role">${currentUser.role || 'User'}</div>
-
-                <div class="status-dropdown">
-                    <div class="status-trigger" id="statusTrigger">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span id="currentDot" class="dot dot-${(currentUser.status || 'Offline').toLowerCase()}"></span>
-                            <span id="currentStatusText">${currentUser.status || 'Offline'}</span>
-                        </div>
-                        <span style="font-size:0.7rem; opacity:0.7;">▼</span>
-                    </div>
-                    
-                    <ul class="status-menu" id="statusMenu">
-                        <li data-status="Online"><span class="dot dot-online"></span> Online</li>
-                        <li data-status="Break"><span class="dot dot-break"></span> Break</li>
-                        <li data-status="Lunch"><span class="dot dot-lunch"></span> Lunch</li>
-                        <li data-status="Meeting"><span class="dot dot-meeting"></span> Meeting</li>
-                        <li data-status="Offline"><span class="dot dot-offline"></span> Offline</li>
-                    </ul>
+            <div class="profile-header">
+                <div class="avatar">${currentUser.name.charAt(0).toUpperCase()}</div>
+                <div class="profile-details">
+                    <div class="profile-name">${currentUser.name}</div>
+                    <div class="profile-email" title="${currentUser.email || ''}">${currentUser.email || ''}</div>
+                    <div class="profile-role">${currentUser.role || 'User'}</div>
                 </div>
-
-                <a href="#" id="btnLogout" class="logout-link">
-                    ${ICONS.logout} <span>${T.logout}</span>
-                </a>
             </div>
+
+            <div class="status-dropdown">
+                <div class="status-trigger" id="statusTrigger">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="currentDot" class="dot dot-${(currentUser.status || 'Offline').toLowerCase()}"></span>
+                        <span id="currentStatusText">${currentUser.status || 'Offline'}</span>
+                    </div>
+                    <span style="font-size:0.7rem; opacity:0.7;">▼</span>
+                </div>
+                
+                <ul class="status-menu" id="statusMenu">
+                    <li data-status="Online"><span class="dot dot-online"></span> Online</li>
+                    <li data-status="Break"><span class="dot dot-break"></span> Break</li>
+                    <li data-status="Lunch"><span class="dot dot-lunch"></span> Lunch</li>
+                    <li data-status="Meeting"><span class="dot dot-meeting"></span> Meeting</li>
+                    <li data-status="Offline"><span class="dot dot-offline"></span> Offline</li>
+                </ul>
+            </div>
+
+            <a href="#" id="btnLogout" class="logout-link">
+                ${ICONS.logout} <span>${T.logout}</span>
+            </a>
         </div>
     </nav>
     `;
 
+    // 4. INJECT HTML
     document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
 
     // 5. ACTIVE LINK LOGIC
@@ -105,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const links = {
         'home.html': 'link-home',
         'user-management.html': 'link-users',
-        'moderation.html': 'link-mod', 'content-moderation.html': 'link-mod', 'review.html': 'link-mod', 'moderation-history.html': 'link-mod', 'content-labelling.html': 'link-mod', 'labelling-review.html': 'link-mod',
+        'moderation.html': 'link-mod', 'content-moderation.html': 'link-mod', 'review.html': 'link-mod', 'moderation-history.html': 'link-mod',
         'quality-assurance.html': 'link-audit', 'audit-queue.html': 'link-audit', 'audit-review.html': 'link-audit',
         'notifications.html': 'link-notifs',
         'settings.html': 'link-settings'
@@ -117,24 +100,32 @@ document.addEventListener("DOMContentLoaded", () => {
     // 6. STATUS DROPDOWN LOGIC
     const trigger = document.getElementById('statusTrigger');
     const menu = document.getElementById('statusMenu');
+    const dot = document.getElementById('currentDot');
+    const text = document.getElementById('currentStatusText');
+
     if (trigger && menu) {
         trigger.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('active'); });
         document.addEventListener('click', () => menu.classList.remove('active'));
         menu.querySelectorAll('li').forEach(item => {
             item.addEventListener('click', async (e) => {
+                e.stopPropagation();
                 const newStatus = item.getAttribute('data-status');
-                document.getElementById('currentStatusText').innerText = newStatus;
-                document.getElementById('currentDot').className = `dot dot-${newStatus.toLowerCase()}`;
+                text.innerText = newStatus;
+                dot.className = `dot dot-${newStatus.toLowerCase()}`;
+                menu.classList.remove('active');
                 
                 currentUser.status = newStatus;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
                 try {
-                    await fetch('/api/users', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: currentUser.id, status: newStatus, last_status_update: new Date().toISOString() })
-                    });
-                } catch(e) {}
+                    if (currentUser.id && currentUser.id !== 'guest') {
+                        await fetch('/api/users', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: currentUser.id, status: newStatus, last_status_update: new Date().toISOString() })
+                        });
+                    }
+                } catch (err) { console.error(err); }
             });
         });
     }
