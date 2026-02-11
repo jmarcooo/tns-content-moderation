@@ -181,7 +181,7 @@ window.ReviewApp = {
             imgContainer.style.flexWrap = 'nowrap';
             imgContainer.style.justifyContent = 'flex-start';
             imgContainer.style.alignItems = 'flex-start';
-            imgContainer.style.gap = '20px';
+            imgContainer.style.gap = '10px';
 
             imgContainer.innerHTML = `
                 <div class="video-player-wrapper" style="flex: 3; min-width: 0; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
