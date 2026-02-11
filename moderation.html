@@ -2,60 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moderation Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .selection-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
-            margin-top: 20px;
-        }
-
-        .selection-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 32px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            height: 220px;
-            position: relative;
-            text-decoration: none;
-        }
-
-        .selection-card:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
-        }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 20px;
-            /* Removed padding/bg to match User Management style */
-            fill: var(--accent-blue);
-        }
-
-        .selection-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-header);
-            margin-bottom: 8px;
-        }
-
-        .selection-desc {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
+        .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; margin-top: 20px; }
+        .selection-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 32px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; height: 220px; position: relative; text-decoration: none; }
+        .selection-card:hover { border-color: var(--accent-blue); transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+        .card-icon { width: 48px; height: 48px; margin-bottom: 20px; fill: var(--accent-blue); }
+        .selection-title { font-size: 1.2rem; font-weight: 700; color: var(--text-header); margin-bottom: 8px; }
+        .selection-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -63,45 +18,62 @@
     <script src="sidebar.js"></script>
 
     <main class="main-content">
-        <div class="header">
-            <h1>Moderation</h1>
-        </div>
-        
-        <p style="color: var(--text-muted); margin-bottom: 30px;">Select a moderation tool to proceed.</p>
+        <div class="header"><h1 id="txt-title">Moderation</h1></div>
+        <p id="txt-subtitle" style="color: var(--text-muted); margin-bottom: 30px;">Select a moderation tool to proceed.</p>
 
         <div class="selection-grid">
-            
             <a href="content-moderation.html" class="selection-card">
-                <svg class="card-icon" viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
-                </svg>
-                <div class="selection-title">Content Moderation</div>
-                <div class="selection-desc">Shows UGC content queues for moderation and review.</div>
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                <div class="selection-title" id="txt-cm-title">Content Moderation</div>
+                <div class="selection-desc" id="txt-cm-desc">Shows UGC content queues for moderation and review.</div>
             </a>
 
             <a href="content-labelling.html" class="selection-card">
-                <svg class="card-icon" viewBox="0 0 24 24">
-                    <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
-                </svg>
-                <div class="selection-title">Content Labelling</div>
-                <div class="selection-desc">Labels contents based on the context for training data.</div>
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+                <div class="selection-title" id="txt-cl-title">Content Labelling</div>
+                <div class="selection-desc" id="txt-cl-desc">Labels contents based on the context for training data.</div>
             </a>
 
             <a href="moderation-history.html" class="selection-card">
-                <svg class="card-icon" viewBox="0 0 24 24">
-                    <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
-                </svg>
-                <div class="selection-title">Moderation History</div>
-                <div class="selection-desc">View past actions and audit logs for your account.</div>
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                <div class="selection-title" id="txt-hist-title">Moderation History</div>
+                <div class="selection-desc" id="txt-hist-desc">View past actions and audit logs for your account.</div>
             </a>
-
         </div>
-
     </main>
 
     <script src="auth.js"></script>
     <script>
         Auth.requireLogin();
+
+        // --- TRANSLATION LOGIC ---
+        const LANG = localStorage.getItem('appLang') || 'en';
+        const DICT = {
+            en: { 
+                title: "Moderation", 
+                subtitle: "Select a moderation tool to proceed.", 
+                cmTitle: "Content Moderation", cmDesc: "Shows UGC content queues for moderation and review.",
+                clTitle: "Content Labelling", clDesc: "Labels contents based on the context for training data.",
+                histTitle: "Moderation History", histDesc: "View past actions and audit logs for your account."
+            },
+            zh: { 
+                title: "审核中心", 
+                subtitle: "请选择一个审核工具以继续。", 
+                cmTitle: "内容审核", cmDesc: "显示用于审核和审查的 UGC 内容队列。",
+                clTitle: "内容标注", clDesc: "根据上下文标注内容以用于训练数据。",
+                histTitle: "审核历史", histDesc: "查看您账户的历史操作和审计日志。"
+            }
+        };
+        const T = DICT[LANG];
+
+        document.getElementById('txt-title').innerText = T.title;
+        document.getElementById('txt-subtitle').innerText = T.subtitle;
+        document.getElementById('txt-cm-title').innerText = T.cmTitle;
+        document.getElementById('txt-cm-desc').innerText = T.cmDesc;
+        document.getElementById('txt-cl-title').innerText = T.clTitle;
+        document.getElementById('txt-cl-desc').innerText = T.clDesc;
+        document.getElementById('txt-hist-title').innerText = T.histTitle;
+        document.getElementById('txt-hist-desc').innerText = T.histDesc;
     </script>
 </body>
 </html>
