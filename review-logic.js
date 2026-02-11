@@ -163,24 +163,24 @@ window.ReviewApp = {
             // RENDER VIDEO PLAYER + TRANSCRIPT
             modContent.style.display = 'block';
             
-            // 1. Switch container to BLOCK to allow custom flex layout inside
-            imgContainer.style.display = 'block';
-            imgContainer.style.textAlign = 'left';
+            // 1. Set display to FLEX for side-by-side layout
+            imgContainer.style.display = 'flex';
+            imgContainer.style.justifyContent = 'flex-start';
+            imgContainer.style.gap = '20px';
+            imgContainer.style.textAlign = ''; // Reset text-align
 
             // 2. Render Video (Left) and Transcript (Right)
             imgContainer.innerHTML = `
-                <div style="display: flex; gap: 20px; align-items: flex-start;">
-                    <div class="video-player-wrapper" style="flex: 1; max-width: 650px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
-                            <source src="${task.video}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
+                <div class="video-player-wrapper" style="flex: 2; min-width: 0; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
+                        <source src="${task.video}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
 
-                    <div class="transcript-wrapper" style="flex: 1; min-width: 300px; height: 100%; max-height: 365px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; overflow-y: auto; display: flex; flex-direction: column;">
-                        <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
-                        <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap;">${task.transcript}</div>
-                    </div>
+                <div class="transcript-wrapper" style="flex: 1; min-width: 280px; height: auto; max-height: 500px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #57606a; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px;">Transcript</div>
+                    <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${task.transcript}</div>
                 </div>
             `;
         } else if (task.images.length > 0) {
