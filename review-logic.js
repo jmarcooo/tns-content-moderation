@@ -111,15 +111,14 @@ window.ReviewApp = {
         });
     },
 
-    // --- NEW VIDEO SEEK FUNCTION ---
+    // Video Seek Function
     seekToTime(timeStr) {
         const video = document.querySelector('video');
         if (video) {
             const parts = timeStr.split(':');
-            // Convert "MM:SS" to seconds
             const seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
             video.currentTime = seconds;
-            video.play(); // Auto-play when seeking
+            video.play();
         }
     },
 
@@ -143,14 +142,10 @@ window.ReviewApp = {
             task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
             task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)\n[00:30] Character 1: Run away!\n[00:35] (Intense music swells)";
             
-            task.frames = [
-                `https://picsum.photos/300/160?r=${Math.random()}`,
-                `https://picsum.photos/300/160?r=${Math.random()}`,
-                `https://picsum.photos/300/160?r=${Math.random()}`,
-                `https://picsum.photos/300/160?r=${Math.random()}`,
-                `https://picsum.photos/300/160?r=${Math.random()}`,
-                `https://picsum.photos/300/160?r=${Math.random()}`
-            ];
+            // 6 Keyframes
+            for(let i=0; i<6; i++) {
+                task.frames.push(`https://picsum.photos/300/160?r=${Math.random()}`);
+            }
 
             task.textTop = "Dynamic Video Review"; 
             task.textBottom = "Please review the video content for policy violations."; 
@@ -191,53 +186,59 @@ window.ReviewApp = {
 
         // --- CONTENT RENDERING LOGIC ---
         if (task.video) {
-            // RENDER 3 PARTITIONS: VIDEO | TRANSCRIPT | FRAMES
             modContent.style.display = 'block';
 
-            // Auto-link timestamps in transcript
-            // Replaces [00:00] with clickable span
+            // Auto-link timestamps
             const formattedTranscript = task.transcript.replace(/\[(\d{2}:\d{2})\]/g, (match, time) => {
-                return `<span class="timestamp-link" onclick="window.ReviewApp.seekToTime('${time}')" style="color:#0969da; cursor:pointer; font-weight:700; text-decoration:underline;">${match}</span>`;
+                return `<span onclick="window.ReviewApp.seekToTime('${time}')" style="color:#0969da; cursor:pointer; font-weight:700;">${match}</span>`;
             });
 
-            imgContainer.style.display = 'flex';
-            imgContainer.style.flexDirection = 'row';
-            imgContainer.style.flexWrap = 'nowrap';
-            imgContainer.style.justifyContent = 'space-between';
-            imgContainer.style.alignItems = 'stretch';
-            imgContainer.style.gap = '15px';
+            // 3-COLUMN GRID LAYOUT
+            imgContainer.style.display = 'grid';
+            imgContainer.style.gridTemplateColumns = '1.6fr 1fr 1.3fr'; // Adjusted proportions
+            imgContainer.style.gap = '20px';
             imgContainer.style.width = '100%';
+            imgContainer.style.alignItems = 'start';
 
             const framesHTML = task.frames.map(src => 
-                `<div style="border:1px solid #ddd; border-radius:4px; overflow:hidden; cursor:pointer;" onclick="window.ImageViewer.open('${src}')">
+                `<div style="border-radius:4px; overflow:hidden; cursor:pointer; height:80px; border:1px solid #eee;" onclick="window.ImageViewer.open('${src}')">
                     <img src="${src}" style="width:100%; height:100%; object-fit:cover; display:block;">
                 </div>`
             ).join('');
 
             imgContainer.innerHTML = `
-                <div class="video-section" style="flex: 1; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display:flex; align-items:center;">
-                    <video controls style="width: 100%; height: auto; display: block; max-height: 450px;">
-                        <source src="${task.video}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                <div style="background:white;">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#2da44e; margin-bottom:10px; text-transform:uppercase;">CONTENT</div>
+                    <div style="background:#000; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                        <video controls style="width:100%; display:block; aspect-ratio:16/9;">
+                            <source src="${task.video}" type="video/mp4">
+                        </video>
+                    </div>
                 </div>
 
-                <div class="transcript-section" style="flex: 0.8; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
-                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${formattedTranscript}</div>
+                <div style="background:white; border:1px solid #e1e4e8; border-radius:8px; padding:15px; height:100%; display:flex; flex-direction:column;">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#57606a; margin-bottom:10px; text-transform:uppercase;">TRANSCRIPT</div>
+                    <div style="font-size:0.85rem; line-height:1.6; color:#24292f; white-space:pre-wrap; overflow-y:auto; flex-grow:1;">${formattedTranscript}</div>
                 </div>
 
-                <div class="frames-section" style="flex: 1.2; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Keyframes</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 8px; overflow-y: auto; flex-grow: 1;">
+                <div style="background:white; border:1px solid #e1e4e8; border-radius:8px; padding:15px; height:100%; display:flex; flex-direction:column;">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#57606a; margin-bottom:10px; text-transform:uppercase;">KEYFRAMES</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; overflow-y:auto;">
                         ${framesHTML}
                     </div>
                 </div>
             `;
 
+            // Hide the default "CONTENT" header since we moved it inside the grid
+            const mainHeader = modContent.querySelector('.section-header');
+            if(mainHeader) mainHeader.style.display = 'none';
+
         } else if (task.images.length > 0) {
+            // Standard Image Grid
             modContent.style.display = 'block';
-            
+            const mainHeader = modContent.querySelector('.section-header');
+            if(mainHeader) mainHeader.style.display = 'block';
+
             imgContainer.style.display = 'flex';
             imgContainer.style.flexWrap = 'wrap';
             imgContainer.style.justifyContent = 'center';
