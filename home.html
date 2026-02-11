@@ -6,41 +6,13 @@
     <title>Dashboard Overview</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-        }
-        
-        /* --- FIXED GRID LAYOUT --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Auto-fit columns */
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .metric-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
         .metric-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .metric-value { font-size: 2rem; font-weight: 700; color: var(--text-header); }
         .metric-trend { font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
-        .trend-up { color: #238636; }
-        .trend-down { color: #cf222e; }
-        .trend-neutral { color: #9a6700; }
-
+        .trend-up { color: #238636; } .trend-down { color: #cf222e; } .trend-neutral { color: #9a6700; }
         .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-header); margin-bottom: 15px; }
     </style>
 </head>
@@ -48,7 +20,7 @@
 
     <main class="main-content">
         <div class="header">
-            <h1>Overview</h1>
+            <h1 id="txt-overview">Overview</h1>
             <div class="header-actions">
                 <span id="welcome-text" style="font-weight: 500; color: var(--accent-blue);"></span>
             </div>
@@ -56,48 +28,72 @@
 
         <div class="dashboard-grid">
             <div class="metric-card">
-                <div class="metric-title">Total Users</div>
+                <div class="metric-title" id="txt-total-users">Total Users</div>
                 <div class="metric-value">1,204</div>
-                <div class="metric-trend trend-up">▲ 12% from last week</div>
+                <div class="metric-trend trend-up" id="txt-trend-1">▲ 12% from last week</div>
             </div>
             <div class="metric-card">
-                <div class="metric-title">Flagged Comments</div>
+                <div class="metric-title" id="txt-flagged">Flagged Comments</div>
                 <div class="metric-value">42</div>
-                <div class="metric-trend trend-down">▼ 5% from yesterday</div>
+                <div class="metric-trend trend-down" id="txt-trend-2">▼ 5% from yesterday</div>
             </div>
             <div class="metric-card">
-                <div class="metric-title">Pending Reviews</div>
+                <div class="metric-title" id="txt-pending">Pending Reviews</div>
                 <div class="metric-value">5</div>
-                <div class="metric-trend trend-neutral">⚠ Requires attention</div>
+                <div class="metric-trend trend-neutral" id="txt-trend-3">⚠ Requires attention</div>
             </div>
         </div>
 
-        <h2 class="section-title">Activity Log</h2>
+        <h2 class="section-title" id="txt-activity">Activity Log</h2>
         <ul class="activity-list">
-            <li class="activity-item">
-                User <strong>@spambot_99</strong> was banned by Admin.
-                <span>2 mins ago</span>
-            </li>
-            <li class="activity-item">
-                New user <strong>@dev_marco</strong> registered.
-                <span>15 mins ago</span>
-            </li>
-            <li class="activity-item">
-                System flagged 3 comments as "Toxic".
-                <span>1 hour ago</span>
-            </li>
+            <li class="activity-item">User <strong>@spambot_99</strong> was banned by Admin. <span>2 mins ago</span></li>
+            <li class="activity-item">New user <strong>@dev_marco</strong> registered. <span>15 mins ago</span></li>
+            <li class="activity-item">System flagged 3 comments as "Toxic". <span>1 hour ago</span></li>
         </ul>
     </main>
 
     <script src="sidebar.js"></script>
     <script>
-        // --- AUTH GUARD ---
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) {
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('welcome-text').innerText = `Welcome back, ${currentUser.name}`;
-        }
+        if (!currentUser) window.location.href = 'login.html';
+        
+        // --- TRANSLATION LOGIC ---
+        const LANG = localStorage.getItem('appLang') || 'en';
+        const DICT = {
+            en: { 
+                overview: "Overview", 
+                welcome: "Welcome back, ", 
+                totalUsers: "Total Users", 
+                flagged: "Flagged Comments", 
+                pending: "Pending Reviews", 
+                activity: "Activity Log",
+                trend1: "▲ 12% from last week",
+                trend2: "▼ 5% from yesterday",
+                trend3: "⚠ Requires attention"
+            },
+            zh: { 
+                overview: "总览", 
+                welcome: "欢迎回来，", 
+                totalUsers: "总用户数", 
+                flagged: "被标记评论", 
+                pending: "待审核", 
+                activity: "活动日志",
+                trend1: "▲ 上周增长 12%",
+                trend2: "▼ 昨日下降 5%",
+                trend3: "⚠ 需要注意"
+            }
+        };
+        const T = DICT[LANG];
+
+        document.getElementById('welcome-text').innerText = T.welcome + currentUser.name;
+        document.getElementById('txt-overview').innerText = T.overview;
+        document.getElementById('txt-total-users').innerText = T.totalUsers;
+        document.getElementById('txt-flagged').innerText = T.flagged;
+        document.getElementById('txt-pending').innerText = T.pending;
+        document.getElementById('txt-activity').innerText = T.activity;
+        document.getElementById('txt-trend-1').innerText = T.trend1;
+        document.getElementById('txt-trend-2').innerText = T.trend2;
+        document.getElementById('txt-trend-3').innerText = T.trend3;
     </script>
 </body>
 </html>
