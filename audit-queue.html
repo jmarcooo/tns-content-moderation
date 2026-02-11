@@ -128,12 +128,16 @@
                 container.className = 'queue-grid';
                 html += queueData.map(queue => {
                     total += queue.count;
+                    
+                    // FORMAT TITLE: Replace "QA - " with bold "QA "
+                    const displayTitle = queue.name.replace(/^QA\s-\s/, '<strong>QA</strong> ');
+
                     return `
                     <div class="queue-card" onclick="openQueue('${queue.name.replace(/'/g,"\\'")}')">
-                        <div class="card-body">
-                            <div class="card-head">
+                        <div class="card-body" style="width: 100%;">
+                            <div class="card-head" style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <div>
-                                    <div class="queue-title">${queue.name}</div>
+                                    <div class="queue-title">${displayTitle}</div>
                                 </div>
                                 <div style="text-align:right;">
                                     <div class="count-number">${queue.auditedPercent}%</div>
@@ -168,10 +172,13 @@
                 `;
                 html += queueData.map(queue => {
                     total += queue.count;
+                    // Format Title for List View as well
+                    const displayTitle = queue.name.replace(/^QA\s-\s/, '<strong>QA</strong> ');
+                    
                     return `
                     <div class="queue-list-item" onclick="openQueue('${queue.name.replace(/'/g,"\\'")}')">
                         <div class="col-tenant"><span class="badge-tenant">${queue.category}</span></div>
-                        <div class="col-name">${queue.name}</div>
+                        <div class="col-name">${displayTitle}</div>
                         <div class="col-audited">${queue.auditedPercent}%</div>
                     </div>`;
                 }).join('');
