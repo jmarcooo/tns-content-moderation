@@ -379,9 +379,9 @@
             `}).join('');
         }
 
-        // --- DURATION FORMATTER (HH:MM:SS) ---
+        // --- DURATION FORMATTER (HH:MM) ---
         function formatDuration(isoString) {
-            if (!isoString) return "00:00:00";
+            if (!isoString) return "00:00";
             const start = new Date(isoString).getTime();
             const now = Date.now();
             let diff = now - start;
@@ -389,9 +389,9 @@
 
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
+            // Removed seconds calculation for HH:MM format
 
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
 
         function renderModStatus() {
@@ -407,7 +407,7 @@
                 else if(s === 'Break' || s === 'Lunch') dotColor = 'dot-orange';
                 else if(s === 'Meeting') dotColor = 'dot-blue';
                 
-                // New Duration Format
+                // New Duration Format HH:MM
                 let duration = formatDuration(u.last_status_update);
 
                 // Admin Force Change Trigger
@@ -415,6 +415,7 @@
                     ? `<button class="btn-sm" onclick="openForceStatusModal('${u.id}', '${u.name}', '${u.status}')">Change ▼</button>` 
                     : `<span style="color:var(--text-muted);">-</span>`;
 
+                // Removed monospace font-family style
                 return `
                 <tr>
                     <td>
@@ -424,7 +425,7 @@
                     <td>0</td>
                     <td>0s</td>
                     <td><div style="display:flex; align-items:center;"><span class="status-dot ${dotColor}"></span>${s}</div></td>
-                    <td style="font-family:monospace; font-size:0.95rem;">${duration}</td>
+                    <td style="font-size:0.95rem;">${duration}</td>
                     <td style="text-align:right;">${actionCell}</td>
                 </tr>
             `}).join('');
@@ -478,7 +479,12 @@
 
                 closeModal('forceStatusModal');
                 showToast(`Status changed for ${name} to ${newStatus}`);
-                fetchUsers(); // Refresh table
+                
+                // Force Refresh as requested
+                setTimeout(() => {
+                    window.location.reload(); 
+                }, 1000); // Slight delay to let the toast appear briefly
+                
             } catch (err) {
                 console.error("Update failed", err);
                 alert("Failed to update status");
