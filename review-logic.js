@@ -130,10 +130,12 @@ window.ReviewApp = {
         if (type.includes('video')) {
             // --- VIDEO TASK ---
             task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-            task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)";
+            task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)\n[00:30] Character 1: Run away!\n[00:35] (Intense music swells)";
             
-            // Mock Keyframes
+            // Mock Keyframes (Updated to 6 images)
             task.frames = [
+                `https://picsum.photos/300/160?r=${Math.random()}`,
+                `https://picsum.photos/300/160?r=${Math.random()}`,
                 `https://picsum.photos/300/160?r=${Math.random()}`,
                 `https://picsum.photos/300/160?r=${Math.random()}`,
                 `https://picsum.photos/300/160?r=${Math.random()}`,
@@ -182,7 +184,7 @@ window.ReviewApp = {
 
         // --- CONTENT RENDERING LOGIC ---
         if (task.video) {
-            // RENDER 3 PARTITIONS: VIDEO | FRAMES | TRANSCRIPT
+            // RENDER 3 PARTITIONS: VIDEO | TRANSCRIPT | FRAMES
             modContent.style.display = 'block';
 
             // Flex Layout for 3 Columns
@@ -194,7 +196,7 @@ window.ReviewApp = {
             imgContainer.style.gap = '15px';
             imgContainer.style.width = '100%';
 
-            // Generate Frames HTML
+            // Generate Frames HTML (6 Images)
             const framesHTML = task.frames.map(src => 
                 `<div style="border:1px solid #ddd; border-radius:4px; overflow:hidden; cursor:pointer;" onclick="window.ImageViewer.open('${src}')">
                     <img src="${src}" style="width:100%; height:100%; object-fit:cover; display:block;">
@@ -202,23 +204,23 @@ window.ReviewApp = {
             ).join('');
 
             imgContainer.innerHTML = `
-                <div class="video-section" style="flex: 1.2; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display:flex; align-items:center;">
+                <div class="video-section" style="flex: 1; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display:flex; align-items:center;">
                     <video controls style="width: 100%; height: auto; display: block; max-height: 450px;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>
 
-                <div class="frames-section" style="flex: 1; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
+                <div class="transcript-section" style="flex: 0.8; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
+                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${task.transcript}</div>
+                </div>
+
+                <div class="frames-section" style="flex: 1.2; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Keyframes</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 8px; overflow-y: auto; flex-grow: 1;">
                         ${framesHTML}
                     </div>
-                </div>
-
-                <div class="transcript-section" style="flex: 1; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
-                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${task.transcript}</div>
                 </div>
             `;
 
