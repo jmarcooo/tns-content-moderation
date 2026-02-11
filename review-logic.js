@@ -188,6 +188,9 @@ window.ReviewApp = {
         if (task.video) {
             modContent.style.display = 'block';
 
+            // IMPORTANT: Remove 'image-grid' class to prevent CSS conflicts (fixed width of 300px)
+            imgContainer.className = ''; 
+
             // Auto-link timestamps
             const formattedTranscript = task.transcript.replace(/\[(\d{2}:\d{2})\]/g, (match, time) => {
                 return `<span onclick="window.ReviewApp.seekToTime('${time}')" style="color:#0969da; cursor:pointer; font-weight:700;">${match}</span>`;
@@ -195,7 +198,8 @@ window.ReviewApp = {
 
             // 3-COLUMN GRID LAYOUT
             imgContainer.style.display = 'grid';
-            imgContainer.style.gridTemplateColumns = '1.6fr 1fr 1.3fr'; // Adjusted proportions
+            // Adjusted proportions: Video gets 2fr (approx 50%), Transcript and Keyframes share rest
+            imgContainer.style.gridTemplateColumns = '2fr 1fr 1fr'; 
             imgContainer.style.gap = '20px';
             imgContainer.style.width = '100%';
             imgContainer.style.alignItems = 'start';
@@ -207,16 +211,16 @@ window.ReviewApp = {
             ).join('');
 
             imgContainer.innerHTML = `
-                <div style="background:white;">
+                <div style="background:white; height:100%;">
                     <div style="font-size:0.75rem; font-weight:bold; color:#2da44e; margin-bottom:10px; text-transform:uppercase;">CONTENT</div>
                     <div style="background:#000; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                        <video controls style="width:100%; display:block; aspect-ratio:16/9;">
+                        <video controls style="width:100%; display:block; aspect-ratio:16/9; max-height:600px;">
                             <source src="${task.video}" type="video/mp4">
                         </video>
                     </div>
                 </div>
 
-                <div style="background:white; border:1px solid #e1e4e8; border-radius:8px; padding:15px; height:100%; display:flex; flex-direction:column;">
+                <div style="background:white; border:1px solid #e1e4e8; border-radius:8px; padding:15px; height:100%; min-height:350px; display:flex; flex-direction:column;">
                     <div style="font-size:0.75rem; font-weight:bold; color:#57606a; margin-bottom:10px; text-transform:uppercase;">TRANSCRIPT</div>
                     <div style="font-size:0.85rem; line-height:1.6; color:#24292f; white-space:pre-wrap; overflow-y:auto; flex-grow:1;">${formattedTranscript}</div>
                 </div>
@@ -236,13 +240,13 @@ window.ReviewApp = {
         } else if (task.images.length > 0) {
             // Standard Image Grid
             modContent.style.display = 'block';
+            
+            // Restore 'image-grid' class for regular images
+            imgContainer.className = 'image-grid';
+            imgContainer.style = ''; // Clear inline grid styles
+
             const mainHeader = modContent.querySelector('.section-header');
             if(mainHeader) mainHeader.style.display = 'block';
-
-            imgContainer.style.display = 'flex';
-            imgContainer.style.flexWrap = 'wrap';
-            imgContainer.style.justifyContent = 'center';
-            imgContainer.style.gap = '20px';
 
             imgContainer.innerHTML = task.images.map(src => 
                 `<div class="content-image-card"><img src="${src}" onclick="window.ImageViewer.open(this.src)"></div>`
