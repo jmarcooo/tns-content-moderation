@@ -114,12 +114,12 @@ window.ReviewApp = {
     generateTask() {
         const id = Math.floor(Math.random() * 99999);
         const type = this.queueName.toLowerCase();
-        let task = { id, type, userId: "720" + Math.floor(Math.random()*1000), images: [], video: null, textTop: "", textBottom: "" };
+        let task = { id, type, userId: "720" + Math.floor(Math.random()*1000), images: [], video: null, transcript: null, textTop: "", textBottom: "" };
 
         if (type.includes('video')) {
             // --- VIDEO TASK ---
-            // Use a sample video URL for demonstration
             task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+            task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)";
             task.textTop = "Dynamic Video Review"; 
             task.textBottom = "Please review the video content for policy violations."; 
         
@@ -160,27 +160,37 @@ window.ReviewApp = {
 
         // --- CONTENT RENDERING LOGIC ---
         if (task.video) {
-            // RENDER VIDEO PLAYER
+            // RENDER VIDEO PLAYER + TRANSCRIPT
             modContent.style.display = 'block';
             
-            // Override alignment to LEFT for video
-            imgContainer.style.justifyContent = 'flex-start';
+            // 1. Switch container to BLOCK to allow custom flex layout inside
+            imgContainer.style.display = 'block';
+            imgContainer.style.textAlign = 'left';
 
-            // Fixed size: max-width 750px (balanced large size)
+            // 2. Render Video (Left) and Transcript (Right)
             imgContainer.innerHTML = `
-                <div class="video-player-wrapper" style="width: 100%; max-width: 750px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <video controls style="width: 75%; display: block; max-height: 800px;">
-                        <source src="${task.video}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <div class="video-player-wrapper" style="flex: 1; max-width: 650px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
+                            <source src="${task.video}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    <div class="transcript-wrapper" style="flex: 1; min-width: 300px; height: 100%; max-height: 365px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; overflow-y: auto; display: flex; flex-direction: column;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
+                        <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap;">${task.transcript}</div>
+                    </div>
                 </div>
             `;
         } else if (task.images.length > 0) {
             // RENDER IMAGE GRID
             modContent.style.display = 'block';
             
-            // Reset alignment to CENTER (default) for images
-            imgContainer.style.justifyContent = ''; 
+            // Reset to FLEX for images (center aligned)
+            imgContainer.style.display = 'flex';
+            imgContainer.style.justifyContent = 'center';
+            imgContainer.style.textAlign = '';
 
             imgContainer.innerHTML = task.images.map(src => 
                 `<div class="content-image-card"><img src="${src}" onclick="window.ImageViewer.open(this.src)"></div>`
