@@ -163,34 +163,38 @@ window.ReviewApp = {
             // RENDER VIDEO PLAYER + TRANSCRIPT
             modContent.style.display = 'block';
             
-            // 1. Set display to FLEX for side-by-side layout
+            // 1. Flex container for Side-by-Side
             imgContainer.style.display = 'flex';
+            imgContainer.style.flexWrap = 'nowrap'; // Prevent wrapping
+            imgContainer.style.alignItems = 'flex-start'; // Align tops
             imgContainer.style.justifyContent = 'flex-start';
             imgContainer.style.gap = '20px';
-            imgContainer.style.textAlign = ''; // Reset text-align
+            imgContainer.style.width = '100%';
+            imgContainer.style.textAlign = ''; // Reset
 
-            // 2. Render Video (Left) and Transcript (Right)
+            // 2. Render Video (Flex 3) and Transcript (Flex 1)
             imgContainer.innerHTML = `
-                <div class="video-player-wrapper" style="flex: 2; min-width: 0; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
+                <div class="video-player-wrapper" style="flex: 3; min-width: 0; background: #000; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9; max-height: 600px;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>
 
-                <div class="transcript-wrapper" style="flex: 1; min-width: 280px; height: auto; max-height: 500px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #57606a; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px;">Transcript</div>
-                    <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${task.transcript}</div>
+                <div class="transcript-wrapper" style="flex: 1; min-width: 250px; height: 100%; min-height: 300px; max-height: 600px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #57606a; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: left;">Transcript</div>
+                    <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${task.transcript}</div>
                 </div>
             `;
         } else if (task.images.length > 0) {
             // RENDER IMAGE GRID
             modContent.style.display = 'block';
             
-            // Reset to FLEX for images (center aligned)
+            // Reset to default Flex for images
             imgContainer.style.display = 'flex';
+            imgContainer.style.flexWrap = 'wrap';
             imgContainer.style.justifyContent = 'center';
-            imgContainer.style.textAlign = '';
+            imgContainer.style.gap = '20px';
 
             imgContainer.innerHTML = task.images.map(src => 
                 `<div class="content-image-card"><img src="${src}" onclick="window.ImageViewer.open(this.src)"></div>`
