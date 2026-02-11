@@ -121,6 +121,7 @@ window.ReviewApp = {
             userId: "720" + Math.floor(Math.random()*1000), 
             images: [], 
             video: null, 
+            frames: [], // Array for keyframes
             transcript: null, 
             textTop: "", 
             textBottom: "" 
@@ -130,6 +131,15 @@ window.ReviewApp = {
             // --- VIDEO TASK ---
             task.video = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
             task.transcript = "[00:00] (Music playing)\n[00:05] Narrator: In a forest far away...\n[00:10] (Birds chirping)\n[00:15] Character 1: Look at that giant bunny!\n[00:20] Character 2: Careful, he looks angry.\n[00:25] (Thud sound)";
+            
+            // Mock Keyframes
+            task.frames = [
+                `https://picsum.photos/300/160?r=${Math.random()}`,
+                `https://picsum.photos/300/160?r=${Math.random()}`,
+                `https://picsum.photos/300/160?r=${Math.random()}`,
+                `https://picsum.photos/300/160?r=${Math.random()}`
+            ];
+
             task.textTop = "Dynamic Video Review"; 
             task.textBottom = "Please review the video content for policy violations."; 
         
@@ -172,36 +182,50 @@ window.ReviewApp = {
 
         // --- CONTENT RENDERING LOGIC ---
         if (task.video) {
-            // RENDER VIDEO + TRANSCRIPT
+            // RENDER 3 PARTITIONS: VIDEO | FRAMES | TRANSCRIPT
             modContent.style.display = 'block';
 
-            // Override grid styles to allow side-by-side flex
+            // Flex Layout for 3 Columns
             imgContainer.style.display = 'flex';
             imgContainer.style.flexDirection = 'row';
             imgContainer.style.flexWrap = 'nowrap';
-            imgContainer.style.justifyContent = 'flex-start';
-            imgContainer.style.alignItems = 'flex-start';
-            imgContainer.style.gap = '20px';
+            imgContainer.style.justifyContent = 'space-between';
+            imgContainer.style.alignItems = 'stretch'; // Equal height
+            imgContainer.style.gap = '15px';
+            imgContainer.style.width = '100%';
+
+            // Generate Frames HTML
+            const framesHTML = task.frames.map(src => 
+                `<div style="border:1px solid #ddd; border-radius:4px; overflow:hidden; cursor:pointer;" onclick="window.ImageViewer.open('${src}')">
+                    <img src="${src}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                </div>`
+            ).join('');
 
             imgContainer.innerHTML = `
-                <div class="video-player-wrapper" style="flex: 3; min-width: 0; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <video controls style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;">
+                <div class="video-section" style="flex: 1.2; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display:flex; align-items:center;">
+                    <video controls style="width: 100%; height: auto; display: block; max-height: 450px;">
                         <source src="${task.video}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>
 
-                <div class="transcript-wrapper" style="flex: 1; min-width: 280px; height: auto; max-height: 500px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #57606a; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: left;">Transcript</div>
-                    <div style="font-size: 0.9rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${task.transcript}</div>
+                <div class="frames-section" style="flex: 1; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Keyframes</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 8px; overflow-y: auto; flex-grow: 1;">
+                        ${framesHTML}
+                    </div>
+                </div>
+
+                <div class="transcript-section" style="flex: 1; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; padding: 15px; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #57606a; margin-bottom: 10px; text-transform: uppercase;">Transcript</div>
+                    <div style="font-size: 0.85rem; line-height: 1.6; color: #24292f; white-space: pre-wrap; flex-grow: 1; overflow-y: auto; text-align: left;">${task.transcript}</div>
                 </div>
             `;
 
         } else if (task.images.length > 0) {
-            // RENDER IMAGE GRID
+            // RENDER IMAGE GRID (Standard)
             modContent.style.display = 'block';
             
-            // Reset styles for images
             imgContainer.style.display = 'flex';
             imgContainer.style.flexWrap = 'wrap';
             imgContainer.style.justifyContent = 'center';
