@@ -120,7 +120,7 @@ body {
 }
 
 .avatar { 
-    width: 42px; height: 42px;
+    width: 50px; height: 50px;
     min-width: 42px; min-height: 42px;
     background-color: #238636; 
     border-radius: 50%; 
@@ -156,9 +156,9 @@ body {
 
 .profile-role {
     font-size: 0.75rem;
-    color: var(--accent-blue); 
+    color: black; 
     font-weight: 600;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
 }
 
