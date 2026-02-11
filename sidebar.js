@@ -1,10 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. GET CURRENT USER
+    // =========================================
+    // 1. GLOBAL THEME LOGIC (Restored)
+    // =========================================
+    const savedTheme = localStorage.getItem('appTheme') || 'light';
+    if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+
+    // Define global toggle function for Settings page
+    window.toggleTheme = function() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('appTheme', isDark ? 'dark' : 'light');
+        
+        // Dispatch event so Settings page can update button text immediately
+        window.dispatchEvent(new Event('themeChanged'));
+    };
+
+    // =========================================
+    // 2. GET CURRENT USER
+    // =========================================
     const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { 
         name: 'Guest', 
         username: 'guest', 
         email: 'guest@example.com', 
-        role: 'Visitor', // Default role
+        role: 'Visitor',
         status: 'Online' 
     };
 
@@ -14,7 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
         zh: { overview: "总览", users: "用户管理", mod: "审核", audit: "质量保证", notifs: "通知中心", settings: "设置", logout: "退出登录" }
     }[APP_LANG];
 
-    // 2. ICONS
+    // =========================================
+    // 3. ICONS
+    // =========================================
     const ICONS = {
         brand: `<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>`,
         overview: `<svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>`,
@@ -26,7 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
         logout: `<svg class="logout-icon" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>`
     };
 
-    // 3. GENERATE HTML (RESTRUCTURED LAYOUT)
+    // =========================================
+    // 4. GENERATE HTML (With New Layout)
+    // =========================================
     const sidebarHTML = `
     <nav class="sidebar">
         <div class="brand">${ICONS.brand}<span>AdminPanel</span></div>
@@ -80,10 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
     </nav>
     `;
 
-    // 4. INJECT HTML
+    // 5. INJECT HTML
     document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
 
-    // 5. ACTIVE LINK LOGIC
+    // 6. ACTIVE LINK LOGIC
     const path = window.location.pathname;
     const links = {
         'home.html': 'link-home',
@@ -97,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (path.includes(key)) document.getElementById(id)?.classList.add('active');
     }
 
-    // 6. STATUS DROPDOWN LOGIC
+    // 7. STATUS DROPDOWN LOGIC
     const trigger = document.getElementById('statusTrigger');
     const menu = document.getElementById('statusMenu');
     const dot = document.getElementById('currentDot');
@@ -130,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 7. LOGOUT LOGIC
+    // 8. LOGOUT LOGIC
     document.getElementById('btnLogout').addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.removeItem('currentUser');
