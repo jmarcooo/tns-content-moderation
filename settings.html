@@ -12,7 +12,9 @@
         .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .setting-label { font-weight: 600; color: var(--text-header); font-size: 0.95rem; margin-bottom: 4px; }
         .setting-desc { color: var(--text-muted); font-size: 0.85rem; }
-        .key-input { width: 140px; padding: 8px; text-align: center; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); color: var(--text-main); font-weight: bold; cursor: pointer; }
+        .key-input { width: 140px; padding: 8px; text-align: center; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); color: var(--text-main); font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .key-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1); outline: none; background: var(--hover-bg); }
+        .key-input.active-bind { border-color: #238636; background-color: rgba(35, 134, 54, 0.1); transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -48,14 +50,39 @@
 
             <div class="settings-section">
                 <div class="section-title">Keyboard Shortcuts</div>
+                
                 <div class="settings-row">
-                    <div><div class="setting-label">Approve Content</div></div>
+                    <div><div class="setting-label">Approve Content</div><div class="setting-desc">Key to approve the main content (Image/Video).</div></div>
                     <input type="text" class="key-input" id="bind-approve-content" readonly>
                 </div>
                 <div class="settings-row">
-                    <div><div class="setting-label">Reject Content</div></div>
+                    <div><div class="setting-label">Reject Content</div><div class="setting-desc">Key to reject the main content.</div></div>
                     <input type="text" class="key-input" id="bind-reject-content" readonly>
                 </div>
+
+                <div class="settings-row">
+                    <div><div class="setting-label">Approve Text</div><div class="setting-desc">Key to approve text/caption.</div></div>
+                    <input type="text" class="key-input" id="bind-approve-text" readonly>
+                </div>
+                <div class="settings-row">
+                    <div><div class="setting-label">Reject Text</div><div class="setting-desc">Key to reject text/caption.</div></div>
+                    <input type="text" class="key-input" id="bind-reject-text" readonly>
+                </div>
+
+                <div class="settings-row" style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
+                    <div><div class="setting-label">Approve All</div><div class="setting-desc">Approve both content and text simultaneously.</div></div>
+                    <input type="text" class="key-input" id="bind-approve-all" readonly>
+                </div>
+                <div class="settings-row">
+                    <div><div class="setting-label">Reject All</div><div class="setting-desc">Reject both content and text simultaneously.</div></div>
+                    <input type="text" class="key-input" id="bind-reject-all" readonly>
+                </div>
+
+                <div class="settings-row" style="margin-top: 15px;">
+                    <div><div class="setting-label">Submit & Next</div><div class="setting-desc">Submit decision and load next task.</div></div>
+                    <input type="text" class="key-input" id="bind-next" readonly>
+                </div>
+
                 <div style="margin-top: 15px; display:flex; justify-content:flex-end;">
                      <button class="btn-primary" onclick="saveKeybinds()">Save Shortcuts</button>
                 </div>
@@ -99,16 +126,70 @@
         }
 
         // --- 2. SHORTCUTS LOGIC ---
-        const defaultBinds = { 'approve-content': '1', 'reject-content': '2' };
+        // Expanded Defaults
+        const defaultBinds = { 
+            'approve-content': '1', 
+            'reject-content': '2', 
+            'approve-text': '3', 
+            'reject-text': '4', 
+            'approve-all': 'Ctrl+1', 
+            'reject-all': 'Ctrl+2', 
+            'next': 'Enter' 
+        };
+        
         const saved = JSON.parse(localStorage.getItem('appKeybinds')) || {};
         const currentBinds = { ...defaultBinds, ...saved };
 
-        ['approve-content', 'reject-content'].forEach(key => {
+        // IDs for all inputs
+        const bindIds = [
+            'approve-content', 'reject-content', 
+            'approve-text', 'reject-text', 
+            'approve-all', 'reject-all', 
+            'next'
+        ];
+
+        // Populate Fields & Add Listeners
+        bindIds.forEach(key => {
             const el = document.getElementById(`bind-${key}`);
-            if(el) el.value = currentBinds[key];
+            if(el) {
+                el.value = currentBinds[key] || '';
+                
+                el.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Ignore standalone modifiers
+                    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+
+                    let keys = [];
+                    if (e.ctrlKey) keys.push('Ctrl');
+                    if (e.altKey) keys.push('Alt');
+                    if (e.shiftKey) keys.push('Shift');
+                    if (e.metaKey) keys.push('Meta');
+                    
+                    let char = e.key;
+                    if (char === ' ') char = 'Space';
+                    if (char.length === 1) char = char.toUpperCase();
+                    
+                    keys.push(char);
+                    const keyString = keys.join('+');
+                    
+                    el.value = keyString;
+                    el.classList.add('active-bind');
+                    setTimeout(() => el.classList.remove('active-bind'), 200);
+                });
+            }
         });
 
-        function saveKeybinds() { alert('Shortcuts Saved!'); }
+        function saveKeybinds() { 
+            const newBinds = {};
+            bindIds.forEach(key => {
+                const el = document.getElementById(`bind-${key}`);
+                if(el) newBinds[key] = el.value;
+            });
+            localStorage.setItem('appKeybinds', JSON.stringify(newBinds));
+            alert('Shortcuts Saved!'); 
+        }
     </script>
 </body>
 </html>
