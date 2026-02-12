@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Labelling Task (Fixed)</title>
-    <link rel="stylesheet" href="style.css"> 
+    <title>Video Labelling Task</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         /* --- PAGE SPECIFIC CSS --- */
         .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
@@ -41,7 +41,7 @@
 </head>
 <body>
 
-    <div id="sidebar-container"></div>
+    <script src="sidebar.js"></script>
 
     <main class="main-content">
         <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
@@ -59,8 +59,6 @@
 
         <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 60vh; font-size: 1.2rem; color: #57606a;">
             <div id="loader-text">⚡ Fetching video...</div>
-            <div id="error-log" style="color: red; font-size: 0.9rem; margin-top: 15px; display: none;"></div>
-            <button onclick="window.location.reload()" style="margin-top: 15px; padding: 8px 16px; cursor: pointer; display: none;" id="retry-btn">Retry</button>
         </div>
 
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
@@ -135,16 +133,6 @@
     </main>
 
     <script>
-        // --- 1. SAFE SIDEBAR LOADER ---
-        // Tries to load sidebar, but doesn't crash if missing
-        try {
-            const script = document.createElement('script');
-            script.src = 'sidebar.js';
-            script.onerror = () => console.warn("Sidebar.js not found, skipping.");
-            document.head.appendChild(script);
-        } catch(e) { console.log("Sidebar skipped"); }
-
-        // --- 2. MAIN APPLICATION LOGIC ---
         const VideoApp = {
             selectedLabel: null,
             timer: 0,
@@ -154,17 +142,19 @@
                 console.log("App Initializing...");
                 // Force UI to show after 2 seconds even if video fails
                 setTimeout(() => {
-                    if(document.getElementById('loader').style.display !== 'none') {
+                    const loader = document.getElementById('loader');
+                    if(loader && loader.style.display !== 'none') {
                         this.showUI();
                         console.warn("Forced UI Load");
                     }
-                }, 2000);
+                }, 1500);
 
                 this.loadNext();
                 setInterval(() => {
                     this.timer++;
                     const d = new Date(null); d.setSeconds(this.timer);
-                    document.getElementById('timer').innerText = d.toISOString().substr(11, 8);
+                    const timerEl = document.getElementById('timer');
+                    if(timerEl) timerEl.innerText = d.toISOString().substr(11, 8);
                 }, 1000);
             },
 
@@ -190,7 +180,7 @@
                 document.getElementById('text-top').innerText = "Sample Video Title " + id;
                 document.getElementById('text-bottom').innerText = "This is a test description for the video labelling task.";
 
-                // VIDEO SOURCE (Using reliable Wikimedia source to avoid Google Cloud CORS issues)
+                // VIDEO SOURCE (Using reliable Wikimedia source)
                 const vid = document.getElementById('main-video');
                 vid.src = "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm";
                 
@@ -219,20 +209,6 @@
 
         // Start App immediately
         window.addEventListener('DOMContentLoaded', () => VideoApp.init());
-
-        // Global Error Trap
-        window.onerror = function(msg, source, line) {
-            const errBox = document.getElementById('error-log');
-            const loaderText = document.getElementById('loader-text');
-            const retryBtn = document.getElementById('retry-btn');
-            
-            if(errBox && loaderText) {
-                loaderText.innerText = "⚠️ Critical Error";
-                errBox.style.display = 'block';
-                errBox.innerText = `Error: ${msg}\nLine: ${line}`;
-                retryBtn.style.display = 'block';
-            }
-        };
     </script>
 </body>
 </html>
