@@ -1,4 +1,3 @@
-// fileName: jmarcooo/tns-content-moderation/tns-content-moderation-764addffa1c2b5b5df3f12cfa95de572b7efee06/video-labelling-logic.js
 window.VideoLabelApp = {
     timerInterval: null,
     secondsElapsed: 0,
@@ -6,10 +5,16 @@ window.VideoLabelApp = {
     selectedLabels: new Set(),
 
     init() {
-        if(typeof Auth !== 'undefined') Auth.requireLogin();
-        this.loadNextTask();
-        this.startTimer();
-        this.bindKeys();
+        console.log("VideoLabelApp initializing...");
+        try {
+            if(typeof Auth !== 'undefined') Auth.requireLogin();
+            this.loadNextTask();
+            this.startTimer();
+            this.bindKeys();
+        } catch (error) {
+            console.error("Init Error:", error);
+            this.showError(error);
+        }
     },
 
     bindKeys() {
@@ -50,8 +55,14 @@ window.VideoLabelApp = {
     },
 
     loadNextTask() {
-        document.getElementById('loader').style.display = 'flex';
-        document.getElementById('workbench').style.display = 'none';
+        console.log("Loading next task...");
+        
+        // Ensure elements exist before trying to style them
+        const loader = document.getElementById('loader');
+        const workbench = document.getElementById('workbench');
+        
+        if (loader) loader.style.display = 'flex';
+        if (workbench) workbench.style.display = 'none';
         
         // Reset State
         this.selectedLabels.clear();
@@ -59,30 +70,46 @@ window.VideoLabelApp = {
         const remarkBox = document.getElementById('labelling-remarks');
         if(remarkBox) remarkBox.value = '';
 
-        const task = this.generateTask();
-        
-        // Bind Data
-        document.getElementById('info-id').innerText = task.id;
-        document.getElementById('info-duration').innerText = task.duration;
-        document.getElementById('info-user').innerText = task.publisher;
-        document.getElementById('info-followers').innerText = task.followers;
+        try {
+            const task = this.generateTask();
+            
+            // Safe Element Binding helper
+            const setSafe = (id, val) => {
+                const el = document.getElementById(id);
+                if(el) el.innerText = val;
+                else console.warn(`Missing element: ${id}`);
+            };
 
-        // Set Video
-        const videoEl = document.getElementById('main-video');
-        if(videoEl) {
-            videoEl.src = task.videoSrc;
-            videoEl.load();
+            // Bind Data
+            setSafe('info-id', task.id);
+            setSafe('info-duration', task.duration);
+            setSafe('info-user', task.publisher);
+            setSafe('info-followers', task.followers);
+
+            // Set Video
+            const videoEl = document.getElementById('main-video');
+            if(videoEl) {
+                videoEl.src = task.videoSrc;
+                videoEl.load();
+            } else {
+                console.warn("Main video element missing");
+            }
+
+            // Set Text
+            setSafe('text-top', task.textTop);
+            setSafe('text-bottom', task.textBottom);
+
+            // Show Workbench
+            setTimeout(() => {
+                if(loader) loader.style.display = 'none';
+                if(workbench) workbench.style.display = 'flex';
+                console.log("Task loaded successfully.");
+            }, 500);
+
+        } catch (e) {
+            console.error("Error inside loadNextTask:", e);
+            this.showError(e);
         }
-
-        // Set Text
-        document.getElementById('text-top').innerText = task.textTop;
-        document.getElementById('text-bottom').innerText = task.textBottom;
-
-        // Show Workbench
-        setTimeout(() => {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('workbench').style.display = 'flex';
-        }, 500); // Small artificial delay for effect
     },
 
     toggleLabel(btn, labelKey) {
@@ -101,6 +128,8 @@ window.VideoLabelApp = {
     startTimer() {
         this.secondsElapsed = 0;
         const timerEl = document.getElementById('timer');
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        
         this.timerInterval = setInterval(() => {
             this.secondsElapsed++;
             const date = new Date(0);
@@ -118,6 +147,18 @@ window.VideoLabelApp = {
 
     skipTask() {
         this.loadNextTask();
+    },
+
+    // Helper to show errors on screen
+    showError(err) {
+        const loader = document.getElementById('loader');
+        if(loader) {
+            loader.innerHTML = `<div style="color: red; text-align: center;">
+                <h3>⚠️ Error Loading Task</h3>
+                <p>${err.message}</p>
+                <button onclick="location.reload()" style="padding: 8px 16px; margin-top: 10px; cursor: pointer;">Retry</button>
+            </div>`;
+        }
     }
 };
 
