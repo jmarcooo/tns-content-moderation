@@ -92,8 +92,8 @@
             <div class="content-canvas" style="background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 8px; flex-grow: 1;">
                 <div id="module-content">
                     <div class="section-header">VIDEO CONTENT</div>
-                    <div style="background:black; border-radius:8px; overflow:hidden; aspect-ratio:16/9;">
-                        <video id="main-video" controls style="width:100%; height:100%; display:block;"></video>
+                    <div style="background:black; border-radius:8px; overflow:hidden; aspect-ratio:16/9; max-width: 640px; margin: 0 auto;">
+                        <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
                     </div>
                 </div>
 
@@ -150,7 +150,6 @@
                     document.getElementById('adminControls').style.display = 'flex';
                 }
 
-                // Safety: Release task on close/refresh
                 window.addEventListener('beforeunload', () => {
                     if (this.currentTask && !this.isSubmitting) {
                         fetch('/api/video-tasks', {
@@ -165,14 +164,12 @@
                 this.fetchNextTask();
             },
 
-            // --- SMART EXIT ---
             async handleBack(e) {
                 e.preventDefault();
                 if (!this.currentTask) {
                     window.location.href = 'content-labelling.html';
                     return;
                 }
-
                 if (confirm("⚠️ Are you sure you want to leave?\n\nThis task will be released back to the queue.")) {
                     this.isSubmitting = true; 
                     await this.releaseCurrentTask(); 
@@ -191,7 +188,6 @@
                 } catch(e) { console.error("Failed to release task", e); }
             },
 
-            // --- TIMER LOGIC ---
             startTimer() {
                 if (this.timerInterval) return; 
                 this.timerInterval = setInterval(() => {
@@ -207,7 +203,6 @@
                 }
             },
 
-            // --- STANDARD LOGIC ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -275,7 +270,6 @@
             },
 
             async fetchNextTask() {
-                // RESET UI
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'none';
@@ -323,7 +317,13 @@
                 document.getElementById('info-risk').innerText = task.risk_description || '--';
                 document.getElementById('text-top').innerText = task.video_title || "No Title";
                 document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
-                document.getElementById('main-video').src = task.video_url;
+                
+                const vid = document.getElementById('main-video');
+                vid.src = task.video_url;
+                
+                // AUTOPLAY LOGIC
+                vid.load();
+                vid.play().catch(e => console.log("Autoplay blocked by browser policy:", e));
 
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
