@@ -18,6 +18,22 @@
         .context-box { background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px; padding: 15px; }
         .action-column { flex: 2; background: white; border: 1px solid #d0d7de; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px; height: 100%; }
 
+        /* SIDEBAR INFO STYLES */
+        .info-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
+        .info-header { font-weight: bold; color: #24292f; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #eaecef; padding-bottom: 4px; }
+        .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; align-items: center; }
+        .info-row .label { color: #57606a; font-weight: 500; }
+        .info-row .value { color: #24292f; font-family: monospace; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        
+        /* COPY BUTTON STYLE */
+        .copy-btn {
+            background: none; border: none; cursor: pointer; padding: 2px 4px;
+            color: #0969da; font-size: 0.8rem; border-radius: 4px; transition: background 0.2s;
+            margin-left: 5px;
+        }
+        .copy-btn:hover { background-color: #f3f4f6; }
+        .copy-btn:active { transform: scale(0.95); }
+
         /* BUTTONS & INPUTS */
         .labelling-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .btn-label { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #57606a; transition: all 0.2s; text-align: left; }
@@ -85,18 +101,33 @@
 
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
             <div class="left-sidebar" style="width: 280px; flex-shrink:0;">
+                
                 <div class="info-card">
-                    <div class="info-header">Task Info</div>
-                    <div class="info-row"><span class="label">ID:</span> <span class="value" id="info-id">--</span></div>
+                    <div class="info-header">Task Details</div>
+                    <div class="info-row">
+                        <span class="label">Post ID:</span> 
+                        <div style="display:flex; align-items:center;">
+                            <span class="value" id="info-id">--</span>
+                            <button class="copy-btn" onclick="VideoApp.copyText('info-id')" title="Copy ID">📋</button>
+                        </div>
+                    </div>
                     <div class="info-row"><span class="label">Tenant:</span> <span class="value" id="info-tenant">--</span></div>
                     <div class="info-row"><span class="label">Duration:</span> <span class="value" id="info-duration">--</span></div>
                 </div>
+
                 <div class="info-card">
                     <div class="info-header">Source Info</div>
-                    <div class="info-row"><span class="label">Created By:</span> <span class="value" id="info-creator">--</span></div>
+                    <div class="info-row"><span class="label">Created by:</span> <span class="value" id="info-creator">--</span></div>
                     <div class="info-row"><span class="label">Time:</span> <span class="value" id="info-time">--</span></div>
-                    <div class="info-row"><span class="label">Video UID:</span> <span class="value" id="info-uid" style="font-size:0.8rem">--</span></div>
+                    <div class="info-row">
+                        <span class="label">Video UID:</span> 
+                        <div style="display:flex; align-items:center;">
+                            <span class="value" id="info-uid" title="">--</span>
+                            <button class="copy-btn" onclick="VideoApp.copyText('info-uid')" title="Copy UID">📋</button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             <div class="content-canvas" style="background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 8px; flex-grow: 1;">
@@ -198,7 +229,32 @@
                 if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
             },
 
-            // --- ROBUST CSV PARSER (Powered by PapaParse) ---
+            // --- HELPER: FORMAT DURATION (Seconds -> HH:MM:SS) ---
+            formatDuration(seconds) {
+                if(!seconds || isNaN(seconds)) return "00:00:00";
+                const secNum = parseInt(seconds, 10);
+                const hours   = Math.floor(secNum / 3600);
+                const minutes = Math.floor((secNum - (hours * 3600)) / 60);
+                const secs    = secNum - (hours * 3600) - (minutes * 60);
+
+                const hDisplay = hours < 10 ? "0"+hours : hours;
+                const mDisplay = minutes < 10 ? "0"+minutes : minutes;
+                const sDisplay = secs < 10 ? "0"+secs : secs;
+                
+                return `${hDisplay}:${mDisplay}:${sDisplay}`;
+            },
+
+            // --- HELPER: COPY TEXT ---
+            copyText(elementId) {
+                const text = document.getElementById(elementId).innerText;
+                if(text && text !== '--') {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Optional: Show tooltip or toast
+                    });
+                }
+            },
+
+            // --- UPLOAD CSV ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -207,13 +263,11 @@
                     header: true,
                     skipEmptyLines: true,
                     complete: async function(results) {
-                        // 1. Process Parsed Data
                         const rawData = results.data;
                         const tasks = [];
                         let skippedCount = 0;
 
                         rawData.forEach(row => {
-                            // Check if essential fields exist (ID and URL)
                             if (row.id && row.raw_media_url) {
                                 tasks.push({
                                     id: row.id.trim(),
@@ -226,24 +280,16 @@
                                     video_duration: row.video_duration || '',
                                     raw_media_url: row.raw_media_url.trim()
                                 });
-                            } else {
-                                skippedCount++;
-                            }
+                            } else { skippedCount++; }
                         });
 
-                        // 2. Validate Result
-                        if (tasks.length === 0) {
-                            alert("❌ No valid rows found.\nPlease ensure headers match: id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url");
-                            return;
-                        }
-
-                        // 3. Confirm with User if some rows skipped
+                        if (tasks.length === 0) { alert("❌ No valid rows found."); return; }
+                        
                         let confirmMsg = `Ready to upload ${tasks.length} tasks.`;
                         if (skippedCount > 0) confirmMsg += `\n(Skipped ${skippedCount} invalid rows)`;
                         
                         if (!confirm(confirmMsg)) return;
 
-                        // 4. Send to Backend
                         try {
                             const res = await fetch('/api/video-tasks', {
                                 method: 'POST',
@@ -259,9 +305,7 @@
                             }
                         } catch(err) { alert("Network Error: " + err.message); }
                     },
-                    error: function(err) {
-                        alert("CSV Parsing Error: " + err.message);
-                    }
+                    error: function(err) { alert("CSV Parsing Error: " + err.message); }
                 });
             },
 
@@ -318,16 +362,37 @@
 
             renderTask(task) {
                 this.currentTask = task; 
+                
+                // RENDER SIDEBAR with Requested Formatting
+                
+                // 1. Post ID
                 document.getElementById('info-id').innerText = task.source_id || '--';
+                
+                // 2. Tenant
                 document.getElementById('info-tenant').innerText = task.tenant || '--';
-                document.getElementById('info-duration').innerText = task.video_duration || '--';
+                
+                // 3. Duration (Formatted)
+                document.getElementById('info-duration').innerText = this.formatDuration(task.video_duration);
+
+                // 4. Source Info
                 document.getElementById('info-creator').innerText = task.created_by || '--';
                 document.getElementById('info-time').innerText = task.created_time || '--';
-                document.getElementById('info-uid').innerText = task.video_uid || '--';
+                
+                // 5. Video UID (Shortened)
+                const uid = task.video_uid || '--';
+                const shortUid = uid.length > 10 ? uid.substring(0, 10) + "..." : uid;
+                
+                const uidEl = document.getElementById('info-uid');
+                uidEl.innerText = shortUid;
+                uidEl.title = uid; // Full UID on hover
+                // Store full UID in a data attribute for copying
+                uidEl.setAttribute('data-full', uid); 
 
+                // Context
                 document.getElementById('text-top').innerText = task.title || "No Title";
                 document.getElementById('text-bottom').innerText = task.content || "";
                 
+                // Video
                 const vid = document.getElementById('main-video');
                 vid.src = task.raw_media_url;
                 vid.load();
@@ -337,6 +402,22 @@
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('workbench').style.display = 'flex';
                 }, 500);
+            },
+            
+            // Override copyText to handle the shortened UID logic
+            copyText(elementId) {
+                const el = document.getElementById(elementId);
+                // Check if we stored the full text in a data attribute (for shortened UIDs)
+                const text = el.getAttribute('data-full') || el.innerText;
+                
+                if(text && text !== '--') {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Visual feedback (optional)
+                        const originalColor = el.style.color;
+                        el.style.color = '#2da44e';
+                        setTimeout(() => el.style.color = originalColor, 500);
+                    });
+                }
             },
 
             selectLabel(btn, label) {
