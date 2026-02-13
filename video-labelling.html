@@ -169,9 +169,7 @@
                 e.preventDefault();
                 if (!this.currentTask) { window.location.href = 'content-labelling.html'; return; }
                 if (confirm("⚠️ Release task back to queue?")) {
-                    this.isSubmitting = true; 
-                    await this.releaseCurrentTask(); 
-                    window.location.href = 'content-labelling.html';
+                    this.isSubmitting = true; await this.releaseCurrentTask(); window.location.href = 'content-labelling.html';
                 }
             },
 
@@ -198,40 +196,65 @@
                 if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
             },
 
-            // --- CSV PARSER FOR 9 COLUMNS ---
+            // --- ROBUST CSV PARSER (Fixes newlines in quotes issue) ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     const text = e.target.result;
-                    const rows = text.split('\n');
-                    const tasks = [];
-                    
-                    // Skip header (index 0) and start from 1
-                    for(let i=1; i<rows.length; i++) {
-                        const rowText = rows[i];
-                        if(!rowText || rowText.trim() === '') continue;
+                    const rows = [];
+                    let currentRow = [];
+                    let currentField = '';
+                    let inQuotes = false;
 
-                        // Parse CSV line (Handling quotes "")
-                        // Regex splits by comma ONLY if not inside quotes
-                        const matches = rowText.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                        const c = matches.map(m => m.replace(/^"|"$/g, '')); // Remove surrounding quotes
+                    // Character-by-character parsing to handle quotes and newlines accurately
+                    for (let i = 0; i < text.length; i++) {
+                        const char = text[i];
+                        const nextChar = text[i + 1];
 
-                        if(c.length >= 9) { // Ensure roughly 9 columns exist
-                            tasks.push({
-                                id: c[0]?.trim(),
-                                tenant: c[1]?.trim(),
-                                title: c[2]?.trim(),
-                                content: c[3]?.trim(),
-                                created_by: c[4]?.trim(),
-                                created_time: c[5]?.trim(),
-                                video_uid: c[6]?.trim(),
-                                video_duration: c[7]?.trim(),
-                                raw_media_url: c[8]?.trim()
-                            });
+                        if (char === '"') {
+                            if (inQuotes && nextChar === '"') {
+                                currentField += '"'; // Handle escaped quotes
+                                i++; 
+                            } else {
+                                inQuotes = !inQuotes; // Toggle quotes
+                            }
+                        } else if (char === ',' && !inQuotes) {
+                            currentRow.push(currentField);
+                            currentField = '';
+                        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                            if (char === '\r' && nextChar === '\n') i++; // Handle CRLF
+                            currentRow.push(currentField);
+                            if (currentRow.length > 0) rows.push(currentRow);
+                            currentRow = [];
+                            currentField = '';
+                        } else {
+                            currentField += char;
                         }
                     }
+                    if (currentField || currentRow.length > 0) {
+                        currentRow.push(currentField);
+                        rows.push(currentRow);
+                    }
+
+                    // Process Parsed Rows (Skip Header)
+                    const tasks = rows.slice(1).map(c => {
+                        // Ensure we have roughly 9 columns (allow for slight variations)
+                        if(c.length < 9) return null;
+                        
+                        return {
+                            id: c[0]?.trim(),
+                            tenant: c[1]?.trim(),
+                            title: c[2]?.trim(),
+                            content: c[3]?.trim(),
+                            created_by: c[4]?.trim(),
+                            created_time: c[5]?.trim(),
+                            video_uid: c[6]?.trim(),
+                            video_duration: c[7]?.trim(),
+                            raw_media_url: c[8]?.trim()
+                        };
+                    }).filter(t => t !== null && t.raw_media_url && t.raw_media_url.startsWith('http'));
 
                     if(tasks.length > 0) {
                         try {
@@ -241,11 +264,11 @@
                                 body: JSON.stringify({ tasks })
                             });
                             if(res.ok) {
-                                alert(`✅ Uploaded ${tasks.length} tasks!`);
+                                alert(`✅ Successfully uploaded ${tasks.length} tasks!`);
                                 VideoApp.fetchNextTask();
                             } else alert("Upload failed.");
                         } catch(err) { alert("Error: " + err.message); }
-                    } else alert("No valid rows found.");
+                    } else alert("No valid rows found. Please check CSV format.");
                 };
                 reader.readAsText(file);
             },
