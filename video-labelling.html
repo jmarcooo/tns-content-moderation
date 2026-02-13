@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Labelling Task (Shared Queue)</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
     <style>
         .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
         .content-canvas { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 30px; }
@@ -196,67 +198,52 @@
                 if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
             },
 
-            // --- ROBUST CSV PARSER (Fixes newlines in quotes issue) ---
+            // --- ROBUST CSV PARSER (Powered by PapaParse) ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    const text = e.target.result;
-                    const rows = [];
-                    let currentRow = [];
-                    let currentField = '';
-                    let inQuotes = false;
 
-                    // Character-by-character parsing to handle quotes and newlines accurately
-                    for (let i = 0; i < text.length; i++) {
-                        const char = text[i];
-                        const nextChar = text[i + 1];
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: async function(results) {
+                        // 1. Process Parsed Data
+                        const rawData = results.data;
+                        const tasks = [];
+                        let skippedCount = 0;
 
-                        if (char === '"') {
-                            if (inQuotes && nextChar === '"') {
-                                currentField += '"'; // Handle escaped quotes
-                                i++; 
+                        rawData.forEach(row => {
+                            // Check if essential fields exist (ID and URL)
+                            if (row.id && row.raw_media_url) {
+                                tasks.push({
+                                    id: row.id.trim(),
+                                    tenant: row.tenant || '',
+                                    title: row.title || '',
+                                    content: row.content || '',
+                                    created_by: row.created_by || '',
+                                    created_time: row.created_time || '',
+                                    video_uid: row.video_uid || '',
+                                    video_duration: row.video_duration || '',
+                                    raw_media_url: row.raw_media_url.trim()
+                                });
                             } else {
-                                inQuotes = !inQuotes; // Toggle quotes
+                                skippedCount++;
                             }
-                        } else if (char === ',' && !inQuotes) {
-                            currentRow.push(currentField);
-                            currentField = '';
-                        } else if ((char === '\r' || char === '\n') && !inQuotes) {
-                            if (char === '\r' && nextChar === '\n') i++; // Handle CRLF
-                            currentRow.push(currentField);
-                            if (currentRow.length > 0) rows.push(currentRow);
-                            currentRow = [];
-                            currentField = '';
-                        } else {
-                            currentField += char;
+                        });
+
+                        // 2. Validate Result
+                        if (tasks.length === 0) {
+                            alert("❌ No valid rows found.\nPlease ensure headers match: id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url");
+                            return;
                         }
-                    }
-                    if (currentField || currentRow.length > 0) {
-                        currentRow.push(currentField);
-                        rows.push(currentRow);
-                    }
 
-                    // Process Parsed Rows (Skip Header)
-                    const tasks = rows.slice(1).map(c => {
-                        // Ensure we have roughly 9 columns (allow for slight variations)
-                        if(c.length < 9) return null;
+                        // 3. Confirm with User if some rows skipped
+                        let confirmMsg = `Ready to upload ${tasks.length} tasks.`;
+                        if (skippedCount > 0) confirmMsg += `\n(Skipped ${skippedCount} invalid rows)`;
                         
-                        return {
-                            id: c[0]?.trim(),
-                            tenant: c[1]?.trim(),
-                            title: c[2]?.trim(),
-                            content: c[3]?.trim(),
-                            created_by: c[4]?.trim(),
-                            created_time: c[5]?.trim(),
-                            video_uid: c[6]?.trim(),
-                            video_duration: c[7]?.trim(),
-                            raw_media_url: c[8]?.trim()
-                        };
-                    }).filter(t => t !== null && t.raw_media_url && t.raw_media_url.startsWith('http'));
+                        if (!confirm(confirmMsg)) return;
 
-                    if(tasks.length > 0) {
+                        // 4. Send to Backend
                         try {
                             const res = await fetch('/api/video-tasks', {
                                 method: 'POST',
@@ -266,11 +253,16 @@
                             if(res.ok) {
                                 alert(`✅ Successfully uploaded ${tasks.length} tasks!`);
                                 VideoApp.fetchNextTask();
-                            } else alert("Upload failed.");
-                        } catch(err) { alert("Error: " + err.message); }
-                    } else alert("No valid rows found. Please check CSV format.");
-                };
-                reader.readAsText(file);
+                            } else {
+                                const err = await res.json();
+                                alert("Upload failed: " + (err.error || "Unknown error"));
+                            }
+                        } catch(err) { alert("Network Error: " + err.message); }
+                    },
+                    error: function(err) {
+                        alert("CSV Parsing Error: " + err.message);
+                    }
+                });
             },
 
             async exportAndWipe() {
