@@ -16,7 +16,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- LIGHT MODE VARIABLES (Default) --- */
+        /* --- COLORS --- */
         :root {
             --bg-body: #ffffff;
             --bg-canvas: #f6f8fa;
@@ -31,101 +31,120 @@
             --tag-text: #0969da;
         }
 
-        /* --- DARK MODE --- */
-        body.dark-mode {
-            --bg-body: #0d1117;
-            --bg-canvas: #161b22;
-            --bg-card: #161b22;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
-            --border-color: #30363d;
-            --accent-color: #58a6ff;
-            --btn-sec-bg: #21262d;
-            --btn-sec-hover: #30363d;
-            --tag-bg: #1f6feb26;
-            --tag-text: #58a6ff;
-        }
+        /* --- LAYOUT STRUCTURE (FIXED VIEWPORT) --- */
+        body { background-color: var(--bg-body); color: var(--text-main); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        body { background-color: var(--bg-body); color: var(--text-main); margin: 0; }
-
-        .timer-badge { 
-            font-family: "Inter", -apple-system, sans-serif; 
-            font-variant-numeric: tabular-nums;
-            font-size: 0.9rem; 
-            font-weight: 600; 
-            color: var(--text-main); 
-        }
+        .timer-badge { font-family: "Inter", -apple-system, sans-serif; font-variant-numeric: tabular-nums; font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
         
+        /* Main Canvas - Fills remaining height */
         .content-canvas { 
-            display: flex; flex-direction: column; height: 100vh; 
-            overflow: hidden; /* Prevent body scroll, let children scroll */
-            padding: 20px 32px; background-color: var(--bg-body); box-sizing: border-box; 
+            flex-grow: 1;
+            display: flex; 
+            flex-direction: column; 
+            padding: 16px 24px; 
+            background-color: var(--bg-body); 
+            overflow: hidden; /* Prevents page scroll */
         }
         
-        /* --- LAYOUT --- */
-        .split-view { display: flex; gap: 24px; align-items: stretch; height: 100%; overflow: hidden; }
-        
-        /* LEFT COLUMN (Video) */
-        .video-column { 
-            flex: 3; display: flex; flex-direction: column; gap: 16px; 
-            height: 100%; overflow: hidden;
-        }
-        .video-wrapper { 
-            background: black; border-radius: 8px; overflow: hidden; 
-            aspect-ratio: 16/9; width: 100%; flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-        }
-        
-        /* ADAPTIVE CONTEXT BOX (Fills remaining space) */
-        .context-box { 
-            background-color: var(--bg-canvas); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; padding: 16px; 
-            flex-grow: 1; /* Key to filling space */
-            overflow-y: auto; /* Scroll internally if content is long */
-            display: flex; flex-direction: column;
-        }
-        
-        /* RIGHT COLUMN (Actions) */
-        .action-column { 
-            flex: 2; 
-            background: var(--bg-card); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; padding: 20px; 
-            display: flex; flex-direction: column; gap: 16px; height: 100%; 
-            overflow-y: auto; /* Scroll if actions overflow */
+        /* Workbench - The grid container */
+        .workbench-container {
+            display: none; /* Hidden by default */
+            align-items: stretch; /* Stretch children to full height */
+            gap: 24px;
+            height: 100%; /* Fill canvas */
+            overflow: hidden;
         }
 
-        /* --- SIDEBAR INFO CARDS --- */
+        /* --- LEFT SIDEBAR (Source Info) --- */
+        .left-sidebar { 
+            width: 260px; 
+            flex-shrink: 0; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            overflow-y: auto; 
+        }
+
         .info-card { 
             background: var(--bg-card); 
             border: 1px solid var(--border-color); 
             border-radius: 8px; 
             padding: 12px 14px; 
-            margin-bottom: 12px; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .info-header { font-weight: 700; color: var(--text-main); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-header { font-weight: 700; color: var(--text-main); margin-bottom: 8px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-row { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 6px; align-items: center; }
         .info-row .label { color: var(--text-muted); font-weight: 500; }
         .info-row .value { color: var(--text-main); font-weight: 400; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 
-        .value-wrapper { display: flex; align-items: center; justify-content: flex-end; }
-        .copy-btn { background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); border-radius: 3px; margin-right: 6px; }
-        .copy-btn:hover { background-color: var(--bg-canvas); color: var(--accent-color); }
-        .copy-btn svg { width: 12px; height: 12px; stroke-width: 2; }
+        /* --- CENTER/RIGHT WORKSPACE (Split View) --- */
+        .workspace-area {
+            flex-grow: 1;
+            background-color: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            display: flex;
+            overflow: hidden; /* Contains the split view */
+        }
 
-        /* --- LABELLING & TAGGING --- */
-        .section-header { font-weight: 700; font-size: 0.8rem; color: var(--text-main); text-transform: uppercase; margin-bottom: 10px; }
+        .split-view { 
+            display: flex; 
+            width: 100%;
+            height: 100%;
+        }
         
-        .labelling-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+        /* --- VIDEO COLUMN (Left Half of Workspace) --- */
+        .video-column { 
+            flex: 3; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .video-wrapper { 
+            background: black; border-radius: 8px; overflow: hidden; 
+            width: 100%; flex-shrink: 0; /* Don't shrink */
+            aspect-ratio: 16/9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            margin-bottom: 16px;
+        }
+        
+        /* SCROLLABLE CONTEXT BOX */
+        .context-box { 
+            background-color: var(--bg-canvas); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; padding: 16px; 
+            flex-grow: 1; /* Fills remaining height */
+            overflow-y: auto; /* Scroll ONLY inside this box */
+            min-height: 0; /* Flexbox scrolling fix */
+        }
+        
+        /* --- ACTION COLUMN (Right Half of Workspace) --- */
+        .action-column { 
+            flex: 2; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+            box-sizing: border-box;
+            background: #fff;
+        }
+
+        .labelling-grid { 
+            display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; 
+        }
+        
+        /* BUTTONS & TAGS */
         .btn-label { 
-            display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; 
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; 
             background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; 
             cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-main); transition: all 0.2s; 
         }
         .btn-label:hover { border-color: var(--accent-color); background-color: var(--bg-canvas); }
         .btn-label.selected { background-color: rgba(9, 105, 218, 0.05); border-color: var(--accent-color); color: var(--accent-color); font-weight: 600; }
+        
         .check-icon { width: 16px; height: 16px; border: 2px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-card); }
         .btn-label.selected .check-icon { border-color: var(--accent-color); background-color: var(--accent-color); }
         .check-icon svg { width: 9px; height: 9px; fill: white; display: none; }
@@ -135,93 +154,103 @@
         .tag-container {
             border: 1px solid var(--border-color); border-radius: 6px; padding: 8px;
             background-color: var(--bg-card); display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
-            min-height: 42px; align-items: center;
+            min-height: 42px; align-items: center; align-content: flex-start;
+            flex-grow: 1; /* Tag area takes available space */
+            overflow-y: auto; /* Scroll tags if too many */
         }
         .tag-container:focus-within { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(9,105,218,0.1); }
         
         .tag {
             background-color: var(--tag-bg); color: var(--tag-text); font-size: 0.8rem; font-weight: 500;
-            padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;
+            padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap;
         }
         .tag-remove { cursor: pointer; font-weight: bold; opacity: 0.6; }
         .tag-remove:hover { opacity: 1; }
-        
-        .tag-input {
-            border: none; outline: none; flex-grow: 1; background: transparent; 
-            font-size: 0.9rem; color: var(--text-main); padding: 4px; min-width: 120px;
-        }
+        .tag-input { border: none; outline: none; flex-grow: 1; background: transparent; font-size: 0.9rem; color: var(--text-main); padding: 4px; min-width: 80px; }
 
-        .labelling-textarea { 
-            width: 100%; padding: 10px; border: 1px solid var(--border-color); 
-            border-radius: 6px; background-color: var(--bg-card); color: var(--text-main); 
-            font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; box-sizing: border-box;
-        }
-        .labelling-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(9,105,218,0.1); }
-        .text-field-label { margin-bottom:6px; font-weight:600; color:var(--text-main); font-size:0.85rem; display: block;}
-        
         /* HEADER & ACTIONS */
+        .header { padding: 15px 32px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
         .btn-upload { background-color: #238636; } .btn-upload:hover { background-color: #2ea043; }
         .btn-export { background-color: #cf222e; margin-left: 10px; } .btn-export:hover { background-color: #d93f48; }
         
-        .btn-secondary { background-color: var(--btn-sec-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; font-size: 0.9rem; }
-        .btn-primary { background-color: #1f883d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-secondary { background-color: var(--btn-sec-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-primary { background-color: #1f883d; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; font-size: 0.9rem; }
         .btn-secondary:hover { background-color: var(--btn-sec-hover); border-color: #8b949e; }
         .btn-primary:hover { background-color: #1a7f37; }
-        .action-row { display: flex; gap: 10px; margin-top: auto; }
+        
+        /* PINNED BOTTOM ACTION ROW */
+        .action-row { 
+            display: flex; gap: 10px; 
+            margin-top: auto; /* Pushes to bottom */
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
 
+        /* TEXT STYLES */
         #queue-title { color: var(--text-main); margin: 0; margin-right: 20px; font-size: 1.4rem; letter-spacing: -0.5px; font-weight: 600; }
         .header-link { text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
         .header-link:hover { color: var(--accent-color); }
+        .section-header { font-weight: 700; font-size: 0.8rem; color: var(--text-main); text-transform: uppercase; margin-bottom: 12px; }
+        .text-field-label { margin-bottom:6px; font-weight:600; color:var(--text-main); font-size:0.85rem; display: block;}
+        
+        /* ICONS */
+        .value-wrapper { display: flex; align-items: center; justify-content: flex-end; }
+        .copy-btn { background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); border-radius: 3px; margin-right: 6px; }
+        .copy-btn:hover { background-color: var(--bg-canvas); color: var(--accent-color); }
+        .copy-btn svg { width: 12px; height: 12px; stroke-width: 2; }
     </style>
 </head>
 <body>
 
     <script src="sidebar.js"></script>
 
-    <main class="main-content">
-        <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
-            <div>
-                <a href="#" onclick="VideoApp.handleBack(event)" class="header-link">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    Back to Queue
-                </a>
-                <div style="display:flex; align-items:center; margin-top: 10px;">
-                    <h1 id="queue-title">Video Labelling</h1>
-                    <div id="adminControls" style="display:none; align-items:center;">
-                        <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Upload
-                        </button>
-                        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
-                        <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Batch Download & Wipe DB
-                        </button>
-                    </div>
+    <div class="header">
+        <div>
+            <a href="#" onclick="VideoApp.handleBack(event)" class="header-link">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Queue
+            </a>
+            <div style="display:flex; align-items:center; margin-top: 10px;">
+                <h1 id="queue-title">Video Labelling</h1>
+                <div id="adminControls" style="display:none; align-items:center;">
+                    <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload
+                    </button>
+                    <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+                    <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Batch Download & Wipe DB
+                    </button>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <span style="font-size:0.85rem; color: var(--text-muted);">Handling Time: <span id="timer" class="timer-badge">00:00:00</span></span>
-                <span style="font-size:0.85rem; color: var(--text-muted);">My Count: <span id="session-counter" style="color:var(--text-main); font-weight:bold;">0</span></span>
-            </div>
         </div>
+        
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <span style="font-size:0.85rem; color: var(--text-muted);">Handling Time: <span id="timer" class="timer-badge">00:00:00</span></span>
+            <span style="font-size:0.85rem; color: var(--text-muted);">My Count: <span id="session-counter" style="color:var(--text-main); font-weight:bold;">0</span></span>
+        </div>
+    </div>
 
-        <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 60vh; font-size: 1.1rem; color: var(--text-muted);">
+    <main class="content-canvas">
+        
+        <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 100%; font-size: 1.1rem; color: var(--text-muted);">
             <div id="loader-text" style="margin-bottom: 10px;">⚡ Fetching task...</div>
             <div id="error-msg" style="color:#cf222e; margin-top:10px; display:none; max-width: 400px; text-align: center; font-size: 0.9rem;"></div>
             <button id="retry-btn" onclick="VideoApp.fetchNextTask()" style="margin-top:15px; padding:8px 16px; cursor:pointer; display:none; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main); border-radius:6px;">Retry</button>
         </div>
-        <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: var(--text-muted);">
+        
+        <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 100%; color: var(--text-muted);">
             <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
             <h2 style="margin: 0; color: var(--text-main);">Queue Empty</h2>
             <p style="margin-top: 5px;">Waiting for new batch upload.</p>
             <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:8px 20px; background:var(--bg-canvas); border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">Refresh</button>
         </div>
 
-        <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px; height: 100%; padding-bottom: 20px;">
-            <div class="left-sidebar" style="width: 260px; flex-shrink:0;">
+        <div id="workbench" class="workbench-container">
+            
+            <div class="left-sidebar">
                 <div class="info-card">
                     <div class="info-header">Task Details</div>
                     <div class="info-row"><span class="label">Post ID:</span> <div class="value-wrapper"><button class="copy-btn" onclick="VideoApp.copyText('info-id')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></button><span class="value" id="info-id">--</span></div></div>
@@ -236,23 +265,25 @@
                 </div>
             </div>
 
-            <div class="content-canvas" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; flex-grow: 1; padding: 0;">
-                <div class="split-view" style="padding: 24px;">
+            <div class="workspace-area">
+                <div class="split-view">
                     
                     <div class="video-column">
                         <div class="section-header">VIDEO CONTENT</div>
                         <div class="video-wrapper">
                             <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
                         </div>
+                        
                         <div class="context-box">
-                            <div class="text-field-label">Video Title</div>
+                            <div class="text-field-label" style="font-size:0.9rem;">Video Title</div>
                             <div id="text-top" style="margin-bottom: 16px; font-weight: 400; color: var(--text-main); font-size: 0.9rem;"></div>
-                            <div class="text-field-label">Content / Description</div>
-                            <div id="text-bottom" style="color: var(--text-muted); line-height: 1.5; font-size: 0.9rem;"></div>
+                            
+                            <div class="text-field-label" style="font-size:0.9rem;">Content / Description</div>
+                            <div id="text-bottom" style="color: var(--text-muted); line-height: 1.5; font-size: 0.85rem;"></div>
                         </div>
                     </div>
 
-                    <div class="action-column" style="border:none; padding: 0; background: transparent;">
+                    <div class="action-column">
                         <div class="section-header">CATEGORIZATION</div>
                         <div class="labelling-grid">
                             <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
@@ -261,15 +292,12 @@
                             <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')"><span>Critical</span><div class="check-icon">✓</div></button>
                         </div>
 
-                        <div style="flex-grow: 1;">
+                        <div style="display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
                             <label class="text-field-label">Tags</label>
                             <div class="tag-container" onclick="document.getElementById('tag-input').focus()">
                                 <div id="tags-wrapper" style="display:contents;"></div>
                                 <input type="text" id="tag-input" class="tag-input" placeholder="Add tags (enter)..." onkeydown="VideoApp.handleTagInput(event)">
                             </div>
-
-                            <label class="text-field-label" style="margin-top:12px;">Notes</label>
-                            <textarea id="remarks" class="labelling-textarea" placeholder="Additional details..."></textarea>
                         </div>
 
                         <div class="action-row">
@@ -353,7 +381,7 @@
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex'; document.getElementById('workbench').style.display = 'none'; document.getElementById('empty-state').style.display = 'none';
                 this.selectedLabel = null; document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
-                document.getElementById('remarks').value = ''; this.tags = []; this.renderTags();
+                this.tags = []; this.renderTags();
 
                 try { const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); const data = await res.json();
                     if(data.task) { this.renderTask(data.task); this.startTimer(); } else { document.getElementById('loader').style.display = 'none'; document.getElementById('empty-state').style.display = 'flex'; this.stopTimer(); }
@@ -381,8 +409,8 @@
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
                 
-                // Combine Tags + Notes into Remarks field
-                const finalRemarks = `[Tags: ${this.tags.join(', ')}] ${document.getElementById('remarks').value}`;
+                // ONLY SEND TAGS AS REMARKS
+                const finalRemarks = `Tags: ${this.tags.join(', ')}`;
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
                     if(res.ok) { this.count++; document.getElementById('session-counter').innerText = this.count; this.isSubmitting = false; if (isLeaving) { alert("✅ Submitted."); window.location.href = 'content-labelling.html'; } else { this.fetchNextTask(); } }
