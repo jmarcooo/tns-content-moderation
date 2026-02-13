@@ -7,10 +7,11 @@ const pool = new Pool({
 });
 
 export default async function handler(req, res) {
+  // We must use the same client instance for transactions
   const client = await pool.connect();
 
   try {
-    // --- POST: Bulk Upload (15 Columns) ---
+    // --- POST: Bulk Upload ---
     if (req.method === 'POST') {
       const { tasks } = req.body;
       if (!tasks || tasks.length === 0) return res.status(400).json({ error: "No tasks provided" });
@@ -36,11 +37,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: `Successfully uploaded ${tasks.length} tasks.` });
     }
 
-    // --- GET: Fetch Next Task & Set Assignment Time ---
+    // --- GET: Fetch Next Task ---
     if (req.method === 'GET') {
       const { username } = req.query;
-      
-      // We check if 'assigned_at' is already set to avoid overwriting it if the user refreshes
       const query = `
         UPDATE video_labelling_tasks
         SET status = 'in_progress', 
@@ -60,10 +59,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ task: rows[0] || null });
     }
 
-    // --- PUT: Submit Label (Completion) ---
+    // --- PUT: Submit Label ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
-      // We update 'updated_at' here to mark the completion time
       const query = `
         UPDATE video_labelling_tasks 
         SET status = 'completed', label = $1, remarks = $2, updated_at = NOW() 
@@ -73,56 +71,59 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: EXPORT & WIPE (With Assignment Time) ---
+    // --- DELETE: EXPORT & WIPE (ROBUST TRANSACTION) ---
     if (req.method === 'DELETE') {
-      const query = `DELETE FROM video_labelling_tasks RETURNING *`;
-      const { rows } = await client.query(query);
+      try {
+        // Start Transaction
+        await client.query('BEGIN');
 
-      if (rows.length === 0) {
-        return res.status(404).json({ error: "Database is already empty." });
+        // 1. Get all data FIRST (Locking rows to ensure we have the latest state)
+        const selectQuery = `SELECT * FROM video_labelling_tasks ORDER BY id ASC FOR UPDATE`;
+        const { rows } = await client.query(selectQuery);
+
+        if (rows.length === 0) {
+             await client.query('ROLLBACK');
+             return res.status(404).json({ error: "Database is already empty." });
+        }
+
+        // 2. Wipe the table
+        await client.query(`DELETE FROM video_labelling_tasks`);
+
+        // Commit transaction
+        await client.query('COMMIT');
+
+        // 3. Generate CSV from the captured 'rows'
+        const headers = [
+          "URL", "Channel", "Content ID", "Video Title", "Token ID", 
+          "Data Entry Time", "Country where IP is located", "Province where IP is located", "The city where the IP is located", 
+          "Version", "User-defined data", "Request ID", "Results", "Risk Description", "Feedback",
+          // New Columns
+          "Moderation Label", "Moderation Remarks", "Moderated By", "Task Assigned Time", "Task Completed Time", "Status"
+        ];
+        
+        let csv = headers.join(",") + "\n";
+        
+        rows.forEach(row => {
+          const safe = (val) => val ? `"${String(val).replace(/"/g, '""')}"` : "";
+          const line = [
+            // Original
+            row.video_url, row.channel, row.content_id, row.video_title, row.token_id,
+            row.data_entry_time, row.ip_country, row.ip_province, row.ip_city,
+            row.version, row.user_defined_data, row.request_id, row.results, row.risk_description, row.feedback,
+            // Moderation
+            row.label, row.remarks, row.assigned_to, row.assigned_at, row.updated_at, row.status
+          ].map(safe).join(",");
+          csv += line + "\n";
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=moderation_export_full.csv');
+        return res.status(200).send(csv);
+
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e; // Re-throw to be caught by outer try/catch
       }
-
-      // Define CSV Headers (Original 15 + New Moderation Data)
-      const headers = [
-        "URL", "Channel", "Content ID", "Video Title", "Token ID", 
-        "Data Entry Time", "Country where IP is located", "Province where IP is located", "The city where the IP is located", 
-        "Version", "User-defined data", "Request ID", "Results", "Risk Description", "Feedback",
-        
-        // --- NEW COLUMNS ---
-        "Moderation Label", 
-        "Moderation Remarks", 
-        "Moderated By", 
-        "Task Assigned Time",   // <--- NEW
-        "Task Completed Time", 
-        "Status"
-      ];
-      
-      let csv = headers.join(",") + "\n";
-      
-      rows.forEach(row => {
-        const safe = (val) => val ? `"${String(val).replace(/"/g, '""')}"` : "";
-        
-        const line = [
-          // Original Data
-          row.video_url, row.channel, row.content_id, row.video_title, row.token_id,
-          row.data_entry_time, row.ip_country, row.ip_province, row.ip_city,
-          row.version, row.user_defined_data, row.request_id, row.results, row.risk_description, row.feedback,
-          
-          // Moderation Data
-          row.label,          
-          row.remarks,        
-          row.assigned_to,
-          row.assigned_at,    // <--- Assignment Time
-          row.updated_at,     // <--- Completion Time
-          row.status          
-        ].map(safe).join(",");
-        
-        csv += line + "\n";
-      });
-
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=moderation_export_full.csv');
-      return res.status(200).send(csv);
     }
 
   } catch (error) {
