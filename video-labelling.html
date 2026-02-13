@@ -8,83 +8,98 @@
     <style>
         .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
         .content-canvas { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 30px; }
-        .labelling-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
         
-        .btn-label { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background-color: var(--bg-body, #f4f6f8); border: 1px solid var(--border-color, #e1e4e8); border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: var(--text-muted, #57606a); transition: all 0.2s; text-align: left; }
+        /* --- LAYOUT GRID --- */
+        .split-view {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            height: 100%;
+        }
+
+        /* LEFT: VIDEO & CONTEXT */
+        .video-column {
+            flex: 3; /* Takes ~60% width */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .video-wrapper {
+            background: black;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .context-box {
+            background-color: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        /* RIGHT: ACTION PANEL (LABELS + REMARKS) */
+        .action-column {
+            flex: 2; /* Takes ~40% width */
+            background: white;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%; 
+            /* Optional: make it sticky if the page scrolls */
+            /* position: sticky; top: 20px; */
+        }
+
+        /* LABELLING BUTTONS */
+        .labelling-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; /* Stack vertically on right side */
+            gap: 12px; 
+        }
+        
+        .btn-label { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 12px 16px; background-color: #f6f8fa; 
+            border: 1px solid #d0d7de; border-radius: 6px; 
+            cursor: pointer; font-size: 0.95rem; font-weight: 600; 
+            color: #57606a; transition: all 0.2s; text-align: left; 
+        }
         .btn-label:hover { border-color: #0969da; background-color: #f1f8ff; color: #24292f; }
         .btn-label.selected { background-color: rgba(9, 105, 218, 0.1); border-color: #0969da; color: #0969da; box-shadow: 0 0 0 1px #0969da; }
+        
         .check-icon { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-label.selected .check-icon { border-color: #0969da; background-color: #0969da; }
         .check-icon svg { width: 12px; height: 12px; fill: white; display: none; }
         .btn-label.selected .check-icon svg { display: block; }
-        .labelling-textarea { width: 100%; padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background-color: #ffffff; color: #24292f; font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; margin-top: 8px; }
         
-        /* Button Styles */
+        /* REMARKS AREA */
+        .labelling-textarea { 
+            width: 100%; padding: 12px; border: 1px solid #d0d7de; 
+            border-radius: 6px; background-color: #ffffff; 
+            color: #24292f; font-size: 0.9rem; resize: vertical; 
+            min-height: 120px; outline: none; 
+            font-family: inherit;
+        }
+        .text-field-label { margin-bottom:6px; font-weight:bold; color:#24292f; font-size:0.85rem; display: block;}
+
+        /* HEADER BUTTONS */
         .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
         .btn-upload { background-color: #238636; }
         .btn-upload:hover { background-color: #1f732d; }
         .btn-export { background-color: #cf222e; margin-left: 10px; }
         .btn-export:hover { background-color: #a40e26; }
         
-        .btn-secondary { background-color: #6e7781; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-secondary { background-color: #6e7781; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;}
+        .btn-primary { background-color: #2da44e; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 2;}
         .btn-secondary:hover { background-color: #57606a; }
-
-        /* --- NEW LAYOUT STYLES --- */
-        .split-view {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-            align-items: flex-start;
-        }
-
-        /* Video Container (Left) */
-        .video-wrapper {
-            flex: 3; /* Takes up 60-70% width */
-            background: black;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        /* Transcript Container (Right) */
-        .transcript-wrapper {
-            flex: 2; /* Takes up remaining width */
-            background: #f6f8fa;
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-            height: 0; /* Hack for aspect ratio matching */
-            padding-bottom: 56.25%; /* Matches 16:9 Aspect Ratio roughly */
-            position: relative;
-        }
-
-        .transcript-content {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            overflow-y: auto;
-            padding: 15px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #24292f;
-        }
-
-        .transcript-line {
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .transcript-line:hover { background-color: #e1e4e8; }
-        .transcript-line.active { 
-            background-color: #ddf4ff; 
-            border-left: 3px solid #0969da;
-            color: #0969da;
-            font-weight: 600;
-        }
-        .ts-time { font-size: 0.75rem; color: #6e7781; margin-right: 8px; font-family: monospace; }
+        
+        .action-row { display: flex; gap: 10px; margin-top: auto; }
     </style>
 </head>
 <body>
@@ -133,7 +148,7 @@
         </div>
 
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
-            <div class="left-sidebar" style="width: 320px; flex-shrink:0;">
+            <div class="left-sidebar" style="width: 280px; flex-shrink:0;">
                 <div class="info-card">
                     <div class="info-header">Request Info</div>
                     <div class="info-row"><span class="label">Req ID:</span> <span class="value" id="info-req-id">--</span></div>
@@ -149,49 +164,44 @@
 
             <div class="content-canvas" style="background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 8px; flex-grow: 1;">
                 
-                <div class="section-header">VIDEO & TRANSCRIPT</div>
-                
                 <div class="split-view">
-                    <div class="video-wrapper">
-                        <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
-                    </div>
+                    
+                    <div class="video-column">
+                        <div class="section-header">VIDEO CONTENT</div>
+                        <div class="video-wrapper">
+                            <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
+                        </div>
 
-                    <div class="transcript-wrapper">
-                        <div class="transcript-content" id="transcript-box">
-                            <div style="color:#6e7781; text-align:center; margin-top:40px;">Generating Auto-Captions...</div>
+                        <div class="context-box">
+                            <div class="text-field-label">Video Title</div>
+                            <div id="text-top" style="margin-bottom: 10px; font-weight: 500;"></div>
+                            
+                            <div class="text-field-label">Feedback / Results</div>
+                            <div id="text-bottom" style="color: #57606a;"></div>
                         </div>
                     </div>
-                </div>
 
-                <div id="module-text" style="margin-top: 10px;">
-                    <div class="section-header">CONTEXT</div>
-                    <div style="margin-bottom: 15px;">
-                        <div class="text-field-label">Video Title</div>
-                        <div id="text-top" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
-                    </div>
-                    <div>
-                        <div class="text-field-label">Feedback / Results</div>
-                        <div id="text-bottom" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
-                    </div>
-                </div>
+                    <div class="action-column">
+                        <div class="section-header">CATEGORIZATION</div>
+                        
+                        <div class="labelling-grid">
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')"><span>Low Risk</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')"><span>High Risk</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')"><span>Critical</span><div class="check-icon">✓</div></button>
+                        </div>
 
-                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #d0d7de;">
-                    <div class="section-header">CATEGORIZATION</div>
-                    <div class="labelling-grid">
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')"><span>Low Risk</span><div class="check-icon">✓</div></button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')"><span>High Risk</span><div class="check-icon">✓</div></button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')"><span>Critical</span><div class="check-icon">✓</div></button>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <label class="text-field-label">Remarks</label>
-                        <textarea id="remarks" class="labelling-textarea" placeholder="Add moderation notes..."></textarea>
-                    </div>
-                </div>
+                        <div style="margin-top: 10px; flex-grow: 1;">
+                            <label class="text-field-label">Remarks</label>
+                            <textarea id="remarks" class="labelling-textarea" placeholder="Add moderation notes here..."></textarea>
+                        </div>
 
-                <div style="margin-top: 30px; border-top: 1px solid #d0d7de; padding-top: 20px; text-align: right;">
-                    <button onclick="VideoApp.submit(true)" class="btn-secondary">Submit & Leave</button>
-                    <button onclick="VideoApp.submit(false)" style="padding: 10px 20px; background: #2da44e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Submit & Next</button>
+                        <div class="action-row">
+                            <button onclick="VideoApp.submit(true)" class="btn-secondary">Save & Leave</button>
+                            <button onclick="VideoApp.submit(false)" class="btn-primary">Submit & Next</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -206,7 +216,6 @@
             currentTask: null,
             currentUser: null,
             isSubmitting: false,
-            transcriptLines: [],
             
             init() {
                 const userJson = localStorage.getItem('currentUser');
@@ -227,10 +236,6 @@
                         });
                     }
                 });
-
-                // Sync Transcript with Video
-                const vid = document.getElementById('main-video');
-                vid.addEventListener('timeupdate', () => this.updateTranscriptHighlight(vid.currentTime));
 
                 this.fetchNextTask();
             },
@@ -341,7 +346,6 @@
             },
 
             async fetchNextTask() {
-                // RESET UI
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'none';
@@ -392,61 +396,15 @@
                 
                 const vid = document.getElementById('main-video');
                 vid.src = task.video_url;
+                
+                // AUTOPLAY LOGIC
                 vid.load();
                 vid.play().catch(e => console.log("Autoplay blocked:", e));
-
-                // Generate Dummy Transcript
-                this.simulateTranscript();
 
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('workbench').style.display = 'flex';
                 }, 500);
-            },
-
-            // --- FAKE TRANSCRIPT LOGIC ---
-            simulateTranscript() {
-                const box = document.getElementById('transcript-box');
-                box.innerHTML = '';
-                
-                // Sample dummy data - in production, this would come from an API
-                const lines = [
-                    { time: 0, text: "[Music playing] Welcome back to the channel." },
-                    { time: 3, text: "Today we are discussing the recent events..." },
-                    { time: 6, text: "As you can see here, the situation is complex." },
-                    { time: 10, text: "Let's dive deeper into the details." },
-                    { time: 15, text: "This is exactly what we predicted last week." },
-                    { time: 20, text: "[Sound of crowd cheering]" },
-                    { time: 25, text: "Don't forget to like and subscribe." },
-                    { time: 30, text: "See you in the next video!" }
-                ];
-                
-                this.transcriptLines = lines;
-                
-                lines.forEach((line, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'transcript-line';
-                    div.id = `ts-line-${index}`;
-                    div.innerHTML = `<span class="ts-time">${new Date(line.time * 1000).toISOString().substr(14, 5)}</span> ${line.text}`;
-                    div.onclick = () => { document.getElementById('main-video').currentTime = line.time; };
-                    box.appendChild(div);
-                });
-            },
-
-            updateTranscriptHighlight(currentTime) {
-                this.transcriptLines.forEach((line, index) => {
-                    const el = document.getElementById(`ts-line-${index}`);
-                    // Highlight if current time is within this line's window (until next line)
-                    const nextTime = this.transcriptLines[index+1] ? this.transcriptLines[index+1].time : 9999;
-                    
-                    if (currentTime >= line.time && currentTime < nextTime) {
-                        el.classList.add('active');
-                        // Auto-scroll to active line
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else {
-                        el.classList.remove('active');
-                    }
-                });
             },
 
             selectLabel(btn, label) {
