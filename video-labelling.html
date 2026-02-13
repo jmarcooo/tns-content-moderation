@@ -8,52 +8,124 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     
     <style>
-        .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
+        /* --- TYPOGRAPHY & GLOBAL --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            color: #24292f;
+            line-height: 1.5;
+        }
+
+        .timer-badge { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 1rem; letter-spacing: 1px; font-weight: 600; }
         .content-canvas { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 30px; }
         
-        /* LAYOUT */
+        /* --- LAYOUT --- */
         .split-view { display: flex; gap: 24px; align-items: flex-start; height: 100%; }
         .video-column { flex: 3; display: flex; flex-direction: column; gap: 20px; }
-        .video-wrapper { background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; width: 100%; }
-        .context-box { background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px; padding: 15px; }
+        .video-wrapper { background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .context-box { background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; }
         .action-column { flex: 2; background: white; border: 1px solid #d0d7de; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px; height: 100%; }
 
-        /* SIDEBAR INFO STYLES */
-        .info-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
-        .info-header { font-weight: bold; color: #24292f; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #eaecef; padding-bottom: 4px; }
-        .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; align-items: center; }
-        .info-row .label { color: #57606a; font-weight: 500; }
-        .info-row .value { color: #24292f; font-family: monospace; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-        
-        /* COPY BUTTON STYLE */
-        .copy-btn {
-            background: none; border: none; cursor: pointer; padding: 2px 4px;
-            color: #0969da; font-size: 0.8rem; border-radius: 4px; transition: background 0.2s;
-            margin-left: 5px;
+        /* --- SIDEBAR INFO CARDS --- */
+        .info-card { 
+            background: #fff; 
+            border: 1px solid #e1e4e8; 
+            border-radius: 6px; 
+            padding: 16px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-        .copy-btn:hover { background-color: #f3f4f6; }
-        .copy-btn:active { transform: scale(0.95); }
+        .info-header { 
+            font-weight: 600; 
+            color: #24292f; 
+            margin-bottom: 12px; 
+            font-size: 0.85rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            border-bottom: 1px solid #eaecef; 
+            padding-bottom: 8px; 
+        }
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.9rem; 
+            margin-bottom: 8px; 
+            align-items: center; 
+        }
+        .info-row .label { color: #57606a; font-weight: 500; }
+        .info-row .value { 
+            color: #24292f; 
+            font-family: 'SFMono-Regular', Consolas, monospace; 
+            font-size: 0.85rem; 
+            text-align: right; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 140px; 
+        }
+        
+        /* --- COPY BUTTON (SVG) --- */
+        .copy-btn {
+            background: none; 
+            border: 1px solid transparent; 
+            cursor: pointer; 
+            padding: 4px;
+            color: #57606a; 
+            border-radius: 4px; 
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 6px;
+        }
+        .copy-btn:hover { background-color: #f3f4f6; color: #0969da; border-color: #e1e4e8; }
+        .copy-btn:active { transform: translateY(1px); }
+        .copy-btn svg { width: 14px; height: 14px; }
 
-        /* BUTTONS & INPUTS */
+        /* --- BUTTONS --- */
         .labelling-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        .btn-label { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #57606a; transition: all 0.2s; text-align: left; }
-        .btn-label:hover { border-color: #0969da; background-color: #f1f8ff; color: #24292f; }
-        .btn-label.selected { background-color: rgba(9, 105, 218, 0.1); border-color: #0969da; color: #0969da; box-shadow: 0 0 0 1px #0969da; }
-        .check-icon { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-label { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 12px 16px; background-color: #f6f8fa; 
+            border: 1px solid #d0d7de; border-radius: 6px; 
+            cursor: pointer; font-size: 0.95rem; font-weight: 500; 
+            color: #24292f; transition: all 0.2s; text-align: left; 
+        }
+        .btn-label:hover { border-color: #0969da; background-color: #f1f8ff; color: #0969da; }
+        .btn-label.selected { background-color: #f1f8ff; border-color: #0969da; color: #0969da; box-shadow: 0 0 0 1px #0969da; font-weight: 600; }
+        
+        .check-icon { width: 20px; height: 20px; border: 2px solid #d0d7de; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: white; }
         .btn-label.selected .check-icon { border-color: #0969da; background-color: #0969da; }
         .check-icon svg { width: 12px; height: 12px; fill: white; display: none; }
         .btn-label.selected .check-icon svg { display: block; }
-        .labelling-textarea { width: 100%; padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background-color: #ffffff; color: #24292f; font-size: 0.9rem; resize: vertical; min-height: 120px; outline: none; font-family: inherit; }
-        .text-field-label { margin-bottom:6px; font-weight:bold; color:#24292f; font-size:0.85rem; display: block;}
         
-        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+        .labelling-textarea { 
+            width: 100%; padding: 12px; border: 1px solid #d0d7de; 
+            border-radius: 6px; background-color: #ffffff; 
+            color: #24292f; font-size: 0.9rem; resize: vertical; 
+            min-height: 120px; outline: none; font-family: inherit; 
+            transition: border-color 0.2s;
+        }
+        .labelling-textarea:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1); }
+        .text-field-label { margin-bottom:8px; font-weight:600; color:#24292f; font-size:0.9rem; display: block;}
+        
+        /* HEADER BUTTONS (SVG) */
+        .btn-header { 
+            color: white; border: none; padding: 6px 16px; border-radius: 6px; 
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; 
+            display: flex; align-items: center; gap: 8px; text-decoration: none; 
+            transition: background 0.2s;
+        }
+        .btn-header svg { width: 16px; height: 16px; }
         .btn-upload { background-color: #238636; }
-        .btn-upload:hover { background-color: #1f732d; }
-        .btn-export { background-color: #cf222e; margin-left: 10px; }
-        .btn-export:hover { background-color: #a40e26; }
-        .btn-secondary { background-color: #6e7781; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;}
-        .btn-primary { background-color: #2da44e; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 2;}
-        .action-row { display: flex; gap: 10px; margin-top: auto; }
+        .btn-upload:hover { background-color: #2ea043; }
+        .btn-export { background-color: #da3633; margin-left: 10px; }
+        .btn-export:hover { background-color: #b62324; }
+        
+        .btn-secondary { background-color: #f3f4f6; color: #24292f; border: 1px solid #d0d7de; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; }
+        .btn-primary { background-color: #2da44e; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; }
+        .btn-secondary:hover { background-color: #e1e4e8; }
+        .btn-primary:hover { background-color: #2c974b; }
+        .action-row { display: flex; gap: 12px; margin-top: auto; }
     </style>
 </head>
 <body>
@@ -63,16 +135,20 @@
     <main class="main-content">
         <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
             <div>
-                <a href="#" onclick="VideoApp.handleBack(event)" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
-                <div style="display:flex; align-items:center; margin-top: 5px;">
-                    <h1 id="queue-title" style="margin:0; margin-right: 15px;">Video Labelling</h1>
+                <a href="#" onclick="VideoApp.handleBack(event)" style="text-decoration: none; color: #57606a; font-size: 0.9rem; font-weight: 500;">← Back to Queue</a>
+                <div style="display:flex; align-items:center; margin-top: 8px;">
+                    <h1 id="queue-title" style="margin:0; margin-right: 20px; font-size: 1.5rem;">Video Labelling</h1>
                     <div id="adminControls" style="display:none; align-items:center;">
+                        
                         <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
-                            ☁️ Upload Batch
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Upload Batch
                         </button>
                         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+                        
                         <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
-                            📥 Download & Wipe DB
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download & Wipe DB
                         </button>
                     </div>
                 </div>
@@ -94,7 +170,7 @@
         
         <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: #57606a;">
             <div style="font-size: 3rem;">🎉</div>
-            <h2 style="margin: 10px 0;">Queue Empty</h2>
+            <h2 style="margin: 10px 0; color: #24292f;">Queue Empty</h2>
             <p>Waiting for new batch upload.</p>
             <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Refresh</button>
         </div>
@@ -108,7 +184,9 @@
                         <span class="label">Post ID:</span> 
                         <div style="display:flex; align-items:center;">
                             <span class="value" id="info-id">--</span>
-                            <button class="copy-btn" onclick="VideoApp.copyText('info-id')" title="Copy ID">📋</button>
+                            <button class="copy-btn" onclick="VideoApp.copyText('info-id')" title="Copy ID">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
                         </div>
                     </div>
                     <div class="info-row"><span class="label">Tenant:</span> <span class="value" id="info-tenant">--</span></div>
@@ -123,7 +201,9 @@
                         <span class="label">Video UID:</span> 
                         <div style="display:flex; align-items:center;">
                             <span class="value" id="info-uid" title="">--</span>
-                            <button class="copy-btn" onclick="VideoApp.copyText('info-uid')" title="Copy UID">📋</button>
+                            <button class="copy-btn" onclick="VideoApp.copyText('info-uid')" title="Copy UID">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -135,22 +215,22 @@
                 <div class="split-view">
                     
                     <div class="video-column">
-                        <div class="section-header">VIDEO CONTENT</div>
+                        <div class="section-header" style="font-weight: 600; font-size: 0.9rem; color: #57606a;">VIDEO CONTENT</div>
                         <div class="video-wrapper">
                             <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
                         </div>
 
                         <div class="context-box">
                             <div class="text-field-label">Video Title</div>
-                            <div id="text-top" style="margin-bottom: 10px; font-weight: 500;"></div>
+                            <div id="text-top" style="margin-bottom: 12px; font-weight: 500; font-size: 1rem;"></div>
                             
                             <div class="text-field-label">Content / Description</div>
-                            <div id="text-bottom" style="color: #57606a;"></div>
+                            <div id="text-bottom" style="color: #57606a; font-size: 0.95rem;"></div>
                         </div>
                     </div>
 
                     <div class="action-column">
-                        <div class="section-header">CATEGORIZATION</div>
+                        <div class="section-header" style="font-weight: 600; font-size: 0.9rem; color: #57606a;">CATEGORIZATION</div>
                         
                         <div class="labelling-grid">
                             <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
@@ -246,10 +326,15 @@
 
             // --- HELPER: COPY TEXT ---
             copyText(elementId) {
-                const text = document.getElementById(elementId).innerText;
+                const el = document.getElementById(elementId);
+                const text = el.getAttribute('data-full') || el.innerText;
+                
                 if(text && text !== '--') {
                     navigator.clipboard.writeText(text).then(() => {
-                        // Optional: Show tooltip or toast
+                        const btn = el.nextElementSibling;
+                        const originalSVG = btn.innerHTML;
+                        btn.innerHTML = '✔️'; 
+                        setTimeout(() => btn.innerHTML = originalSVG, 1000);
                     });
                 }
             },
@@ -366,7 +451,9 @@
                 // RENDER SIDEBAR with Requested Formatting
                 
                 // 1. Post ID
-                document.getElementById('info-id').innerText = task.source_id || '--';
+                const idEl = document.getElementById('info-id');
+                idEl.innerText = task.source_id || '--';
+                idEl.setAttribute('data-full', task.source_id); // Ensure full ID copies
                 
                 // 2. Tenant
                 document.getElementById('info-tenant').innerText = task.tenant || '--';
@@ -384,8 +471,7 @@
                 
                 const uidEl = document.getElementById('info-uid');
                 uidEl.innerText = shortUid;
-                uidEl.title = uid; // Full UID on hover
-                // Store full UID in a data attribute for copying
+                uidEl.title = uid; 
                 uidEl.setAttribute('data-full', uid); 
 
                 // Context
@@ -404,22 +490,6 @@
                 }, 500);
             },
             
-            // Override copyText to handle the shortened UID logic
-            copyText(elementId) {
-                const el = document.getElementById(elementId);
-                // Check if we stored the full text in a data attribute (for shortened UIDs)
-                const text = el.getAttribute('data-full') || el.innerText;
-                
-                if(text && text !== '--') {
-                    navigator.clipboard.writeText(text).then(() => {
-                        // Visual feedback (optional)
-                        const originalColor = el.style.color;
-                        el.style.color = '#2da44e';
-                        setTimeout(() => el.style.color = originalColor, 500);
-                    });
-                }
-            },
-
             selectLabel(btn, label) {
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
