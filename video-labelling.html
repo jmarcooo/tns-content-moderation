@@ -9,96 +9,32 @@
         .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
         .content-canvas { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 30px; }
         
-        /* --- LAYOUT GRID --- */
-        .split-view {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-            height: 100%;
-        }
+        /* LAYOUT */
+        .split-view { display: flex; gap: 24px; align-items: flex-start; height: 100%; }
+        .video-column { flex: 3; display: flex; flex-direction: column; gap: 20px; }
+        .video-wrapper { background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; width: 100%; }
+        .context-box { background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px; padding: 15px; }
+        .action-column { flex: 2; background: white; border: 1px solid #d0d7de; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px; height: 100%; }
 
-        /* LEFT: VIDEO & CONTEXT */
-        .video-column {
-            flex: 3; /* Takes ~60% width */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .video-wrapper {
-            background: black;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 100%;
-        }
-
-        .context-box {
-            background-color: #f6f8fa;
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        /* RIGHT: ACTION PANEL (LABELS + REMARKS) */
-        .action-column {
-            flex: 2; /* Takes ~40% width */
-            background: white;
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            height: 100%; 
-            /* Optional: make it sticky if the page scrolls */
-            /* position: sticky; top: 20px; */
-        }
-
-        /* LABELLING BUTTONS */
-        .labelling-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; /* Stack vertically on right side */
-            gap: 12px; 
-        }
-        
-        .btn-label { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px 16px; background-color: #f6f8fa; 
-            border: 1px solid #d0d7de; border-radius: 6px; 
-            cursor: pointer; font-size: 0.95rem; font-weight: 600; 
-            color: #57606a; transition: all 0.2s; text-align: left; 
-        }
+        /* BUTTONS & INPUTS */
+        .labelling-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .btn-label { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #57606a; transition: all 0.2s; text-align: left; }
         .btn-label:hover { border-color: #0969da; background-color: #f1f8ff; color: #24292f; }
         .btn-label.selected { background-color: rgba(9, 105, 218, 0.1); border-color: #0969da; color: #0969da; box-shadow: 0 0 0 1px #0969da; }
-        
         .check-icon { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-label.selected .check-icon { border-color: #0969da; background-color: #0969da; }
         .check-icon svg { width: 12px; height: 12px; fill: white; display: none; }
         .btn-label.selected .check-icon svg { display: block; }
-        
-        /* REMARKS AREA */
-        .labelling-textarea { 
-            width: 100%; padding: 12px; border: 1px solid #d0d7de; 
-            border-radius: 6px; background-color: #ffffff; 
-            color: #24292f; font-size: 0.9rem; resize: vertical; 
-            min-height: 120px; outline: none; 
-            font-family: inherit;
-        }
+        .labelling-textarea { width: 100%; padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background-color: #ffffff; color: #24292f; font-size: 0.9rem; resize: vertical; min-height: 120px; outline: none; font-family: inherit; }
         .text-field-label { margin-bottom:6px; font-weight:bold; color:#24292f; font-size:0.85rem; display: block;}
-
-        /* HEADER BUTTONS */
+        
         .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
         .btn-upload { background-color: #238636; }
         .btn-upload:hover { background-color: #1f732d; }
         .btn-export { background-color: #cf222e; margin-left: 10px; }
         .btn-export:hover { background-color: #a40e26; }
-        
         .btn-secondary { background-color: #6e7781; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;}
         .btn-primary { background-color: #2da44e; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 2;}
-        .btn-secondary:hover { background-color: #57606a; }
-        
         .action-row { display: flex; gap: 10px; margin-top: auto; }
     </style>
 </head>
@@ -112,13 +48,11 @@
                 <a href="#" onclick="VideoApp.handleBack(event)" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
                 <div style="display:flex; align-items:center; margin-top: 5px;">
                     <h1 id="queue-title" style="margin:0; margin-right: 15px;">Video Labelling</h1>
-                    
                     <div id="adminControls" style="display:none; align-items:center;">
                         <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
                             ☁️ Upload Batch
                         </button>
                         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
-
                         <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
                             📥 Download & Wipe DB
                         </button>
@@ -150,15 +84,16 @@
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
             <div class="left-sidebar" style="width: 280px; flex-shrink:0;">
                 <div class="info-card">
-                    <div class="info-header">Request Info</div>
-                    <div class="info-row"><span class="label">Req ID:</span> <span class="value" id="info-req-id">--</span></div>
-                    <div class="info-row"><span class="label">Channel:</span> <span class="value" id="info-channel">--</span></div>
-                    <div class="info-row"><span class="label">Time:</span> <span class="value" id="info-time">--</span></div>
+                    <div class="info-header">Task Info</div>
+                    <div class="info-row"><span class="label">ID:</span> <span class="value" id="info-id">--</span></div>
+                    <div class="info-row"><span class="label">Tenant:</span> <span class="value" id="info-tenant">--</span></div>
+                    <div class="info-row"><span class="label">Duration:</span> <span class="value" id="info-duration">--</span></div>
                 </div>
                 <div class="info-card">
-                    <div class="info-header">Risk Analysis</div>
-                    <div class="info-row"><span class="label">Country:</span> <span class="value" id="info-country">--</span></div>
-                    <div class="info-row"><span class="label">Risk:</span> <span class="value" id="info-risk" style="color:red;">--</span></div>
+                    <div class="info-header">Source Info</div>
+                    <div class="info-row"><span class="label">Created By:</span> <span class="value" id="info-creator">--</span></div>
+                    <div class="info-row"><span class="label">Time:</span> <span class="value" id="info-time">--</span></div>
+                    <div class="info-row"><span class="label">Video UID:</span> <span class="value" id="info-uid" style="font-size:0.8rem">--</span></div>
                 </div>
             </div>
 
@@ -176,7 +111,7 @@
                             <div class="text-field-label">Video Title</div>
                             <div id="text-top" style="margin-bottom: 10px; font-weight: 500;"></div>
                             
-                            <div class="text-field-label">Feedback / Results</div>
+                            <div class="text-field-label">Content / Description</div>
                             <div id="text-bottom" style="color: #57606a;"></div>
                         </div>
                     </div>
@@ -221,32 +156,25 @@
                 const userJson = localStorage.getItem('currentUser');
                 if(!userJson) { window.location.href='login.html'; return; }
                 this.currentUser = JSON.parse(userJson);
-
-                if(this.currentUser.role === 'Admin') {
-                    document.getElementById('adminControls').style.display = 'flex';
-                }
-
+                if(this.currentUser.role === 'Admin') document.getElementById('adminControls').style.display = 'flex';
+                
                 window.addEventListener('beforeunload', () => {
                     if (this.currentTask && !this.isSubmitting) {
                         fetch('/api/video-tasks', {
                             method: 'PATCH',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ id: this.currentTask.id }),
+                            body: JSON.stringify({ id: this.currentTask.internal_id }),
                             keepalive: true
                         });
                     }
                 });
-
                 this.fetchNextTask();
             },
 
             async handleBack(e) {
                 e.preventDefault();
-                if (!this.currentTask) {
-                    window.location.href = 'content-labelling.html';
-                    return;
-                }
-                if (confirm("⚠️ Are you sure you want to leave?\n\nThis task will be released back to the queue.")) {
+                if (!this.currentTask) { window.location.href = 'content-labelling.html'; return; }
+                if (confirm("⚠️ Release task back to queue?")) {
                     this.isSubmitting = true; 
                     await this.releaseCurrentTask(); 
                     window.location.href = 'content-labelling.html';
@@ -259,9 +187,9 @@
                     await fetch('/api/video-tasks', {
                         method: 'PATCH',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ id: this.currentTask.id })
+                        body: JSON.stringify({ id: this.currentTask.internal_id })
                     });
-                } catch(e) { console.error("Failed to release task", e); }
+                } catch(e) { console.error("Release failed", e); }
             },
 
             startTimer() {
@@ -273,12 +201,10 @@
                 }, 1000);
             },
             stopTimer() {
-                if (this.timerInterval) {
-                    clearInterval(this.timerInterval);
-                    this.timerInterval = null;
-                }
+                if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
             },
 
+            // --- UPDATED CSV PARSER (9 COLUMNS) ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -288,25 +214,19 @@
                     const rows = text.split('\n').slice(1);
                     const tasks = rows.map(row => {
                         const c = row.split(',');
-                        if(c.length < 15) return null;
+                        if(c.length < 9) return null;
                         return {
-                            video_url: c[0]?.trim(),
-                            channel: c[1]?.trim(),
-                            content_id: c[2]?.trim(),
-                            video_title: c[3]?.trim(),
-                            token_id: c[4]?.trim(),
-                            data_entry_time: c[5]?.trim(),
-                            ip_country: c[6]?.trim(),
-                            ip_province: c[7]?.trim(),
-                            ip_city: c[8]?.trim(),
-                            version: c[9]?.trim(),
-                            user_defined_data: c[10]?.trim(),
-                            request_id: c[11]?.trim(),
-                            results: c[12]?.trim(),
-                            risk_description: c[13]?.trim(),
-                            feedback: c[14]?.trim()
+                            id: c[0]?.trim(),
+                            tenant: c[1]?.trim(),
+                            title: c[2]?.trim(),
+                            content: c[3]?.trim(),
+                            created_by: c[4]?.trim(),
+                            created_time: c[5]?.trim(),
+                            video_uid: c[6]?.trim(),
+                            video_duration: c[7]?.trim(),
+                            raw_media_url: c[8]?.trim()
                         };
-                    }).filter(t => t !== null && t.video_url && t.video_url.startsWith('http'));
+                    }).filter(t => t !== null && t.raw_media_url && t.raw_media_url.startsWith('http'));
 
                     if(tasks.length > 0) {
                         try {
@@ -320,18 +240,17 @@
                                 VideoApp.fetchNextTask();
                             } else alert("Upload failed.");
                         } catch(err) { alert("Error: " + err.message); }
-                    } else alert("No valid rows found.");
+                    } else alert("No valid rows found. Check column count (9).");
                 };
                 reader.readAsText(file);
             },
 
             async exportAndWipe() {
-                if(!confirm("⚠️ WARNING: Download & Delete?\n\nThis will export all data and clear the database.")) return;
+                if(!confirm("⚠️ Download results & Clear Queue?")) return;
                 try {
                     const res = await fetch('/api/video-tasks', { method: 'DELETE' });
-                    if(res.status === 404) { alert("Database is empty."); return; }
+                    if(res.status === 404) { alert("Database empty."); return; }
                     if(!res.ok) throw new Error("Export failed");
-
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -351,7 +270,6 @@
                 document.getElementById('empty-state').style.display = 'none';
                 document.getElementById('error-msg').style.display = 'none';
                 document.getElementById('retry-btn').style.display = 'none';
-                document.getElementById('loader-text').innerText = '⚡ Fetching task from database...';
 
                 this.selectedLabel = null;
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
@@ -359,12 +277,6 @@
 
                 try {
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
-                    
-                    if (!res.ok) {
-                         const errData = await res.json();
-                         throw new Error(errData.error || `Server Error: ${res.status}`);
-                    }
-
                     const data = await res.json();
                     
                     if(data.task) {
@@ -377,7 +289,7 @@
                     }
                 } catch(err) { 
                     console.error(err);
-                    document.getElementById('loader-text').innerText = '❌ Error Loading Task';
+                    document.getElementById('loader-text').innerText = '❌ Error';
                     document.getElementById('error-msg').style.display = 'block';
                     document.getElementById('error-msg').innerText = err.message;
                     document.getElementById('retry-btn').style.display = 'block';
@@ -386,18 +298,21 @@
 
             renderTask(task) {
                 this.currentTask = task; 
-                document.getElementById('info-req-id').innerText = task.request_id || '--';
-                document.getElementById('info-channel').innerText = task.channel || '--';
-                document.getElementById('info-time').innerText = task.data_entry_time || '--';
-                document.getElementById('info-country').innerText = task.ip_country || '--';
-                document.getElementById('info-risk').innerText = task.risk_description || '--';
-                document.getElementById('text-top').innerText = task.video_title || "No Title";
-                document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
+                // Render Sidebar Info
+                document.getElementById('info-id').innerText = task.source_id || '--';
+                document.getElementById('info-tenant').innerText = task.tenant || '--';
+                document.getElementById('info-duration').innerText = task.video_duration || '--';
+                document.getElementById('info-creator').innerText = task.created_by || '--';
+                document.getElementById('info-time').innerText = task.created_time || '--';
+                document.getElementById('info-uid').innerText = task.video_uid || '--';
+
+                // Render Context
+                document.getElementById('text-top').innerText = task.title || "No Title";
+                document.getElementById('text-bottom').innerText = task.content || "";
                 
+                // Video
                 const vid = document.getElementById('main-video');
-                vid.src = task.video_url;
-                
-                // AUTOPLAY LOGIC
+                vid.src = task.raw_media_url;
                 vid.load();
                 vid.play().catch(e => console.log("Autoplay blocked:", e));
 
@@ -422,7 +337,7 @@
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            id: this.currentTask.id, 
+                            id: this.currentTask.internal_id, // Use internal_id for updates
                             label: this.selectedLabel,
                             remarks: document.getElementById('remarks').value
                         })
@@ -431,9 +346,8 @@
                         this.count++;
                         document.getElementById('session-counter').innerText = this.count;
                         this.isSubmitting = false;
-
                         if (isLeaving) {
-                            alert("✅ Task submitted. Returning to dashboard.");
+                            alert("✅ Saved. Returning to dashboard.");
                             window.location.href = 'content-labelling.html';
                         } else {
                             this.fetchNextTask();
