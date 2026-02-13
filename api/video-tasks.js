@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // --- POST: Bulk Upload ---
+    // --- POST: Bulk Upload (15 Columns) ---
     if (req.method === 'POST') {
       const { tasks } = req.body;
       if (!tasks || tasks.length === 0) return res.status(400).json({ error: "No tasks provided" });
@@ -36,12 +36,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: `Successfully uploaded ${tasks.length} tasks.` });
     }
 
-    // --- GET: Fetch Next Pending Task ---
+    // --- GET: Fetch Next Task & Set Assignment Time ---
     if (req.method === 'GET') {
       const { username } = req.query;
+      
+      // We check if 'assigned_at' is already set to avoid overwriting it if the user refreshes
       const query = `
         UPDATE video_labelling_tasks
-        SET status = 'in_progress', assigned_to = $1, updated_at = NOW()
+        SET status = 'in_progress', 
+            assigned_to = $1, 
+            assigned_at = COALESCE(assigned_at, NOW()), 
+            updated_at = NOW()
         WHERE id = (
           SELECT id FROM video_labelling_tasks
           WHERE status = 'pending'
@@ -55,17 +60,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ task: rows[0] || null });
     }
 
-    // --- PUT: Submit Label ---
+    // --- PUT: Submit Label (Completion) ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
-      const query = `UPDATE video_labelling_tasks SET status = 'completed', label = $1, remarks = $2, updated_at = NOW() WHERE id = $3`;
+      // We update 'updated_at' here to mark the completion time
+      const query = `
+        UPDATE video_labelling_tasks 
+        SET status = 'completed', label = $1, remarks = $2, updated_at = NOW() 
+        WHERE id = $3
+      `;
       await client.query(query, [label, remarks, id]);
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: EXPORT & WIPE ---
+    // --- DELETE: EXPORT & WIPE (With Assignment Time) ---
     if (req.method === 'DELETE') {
-      // 1. Delete all rows and return them
       const query = `DELETE FROM video_labelling_tasks RETURNING *`;
       const { rows } = await client.query(query);
 
@@ -73,33 +82,46 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Database is already empty." });
       }
 
-      // 2. Convert to CSV
+      // Define CSV Headers (Original 15 + New Moderation Data)
       const headers = [
-        "id", "video_url", "label", "remarks", "moderator", "status", "timestamp",
-        "request_id", "channel", "content_id", "video_title", "token_id", 
-        "data_entry_time", "ip_country", "ip_province", "ip_city", 
-        "user_defined_data", "version", "original_results", "risk_description", "feedback"
+        "URL", "Channel", "Content ID", "Video Title", "Token ID", 
+        "Data Entry Time", "Country where IP is located", "Province where IP is located", "The city where the IP is located", 
+        "Version", "User-defined data", "Request ID", "Results", "Risk Description", "Feedback",
+        
+        // --- NEW COLUMNS ---
+        "Moderation Label", 
+        "Moderation Remarks", 
+        "Moderated By", 
+        "Task Assigned Time",   // <--- NEW
+        "Task Completed Time", 
+        "Status"
       ];
       
       let csv = headers.join(",") + "\n";
       
       rows.forEach(row => {
-        // Escape quotes and handle nulls
         const safe = (val) => val ? `"${String(val).replace(/"/g, '""')}"` : "";
         
         const line = [
-          row.id, row.video_url, row.label, row.remarks, row.assigned_to, row.status, row.updated_at,
-          row.request_id, row.channel, row.content_id, row.video_title, row.token_id,
+          // Original Data
+          row.video_url, row.channel, row.content_id, row.video_title, row.token_id,
           row.data_entry_time, row.ip_country, row.ip_province, row.ip_city,
-          row.user_defined_data, row.version, row.results, row.risk_description, row.feedback
+          row.version, row.user_defined_data, row.request_id, row.results, row.risk_description, row.feedback,
+          
+          // Moderation Data
+          row.label,          
+          row.remarks,        
+          row.assigned_to,
+          row.assigned_at,    // <--- Assignment Time
+          row.updated_at,     // <--- Completion Time
+          row.status          
         ].map(safe).join(",");
         
         csv += line + "\n";
       });
 
-      // 3. Send CSV text
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=moderation_export.csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=moderation_export_full.csv');
       return res.status(200).send(csv);
     }
 
