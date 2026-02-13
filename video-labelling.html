@@ -152,7 +152,7 @@
                 }, 1000);
             },
 
-            // --- UPLOAD CSV (Mapping 15 Cols) ---
+            // --- UPLOAD CSV (FIXED FOR YOUR FILE) ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -162,12 +162,17 @@
                     const rows = text.split('\n').slice(1); // Skip Header
                     
                     const tasks = rows.map(row => {
-                        const c = row.split(','); // Be careful with commas inside text
-                        if(c.length < 15) return null;
+                        // Handle CSV parsing (splitting by comma)
+                        // Note: This simple split works if your text fields don't contain commas.
+                        // If fields contain commas (e.g. "Title, with comma"), a regex parser is safer.
+                        const c = row.split(','); 
                         
-                        // MAPPING THE 15 COLUMNS
+                        // We need at least 15 columns for this to be valid
+                        if(c.length < 15) return null;
+
+                        // --- CORRECT MAPPING BASED ON YOUR FILE ---
                         return {
-                            request_id: c[0]?.trim(),
+                            video_url: c[0]?.trim(), // Index 0 is URL in your file
                             channel: c[1]?.trim(),
                             content_id: c[2]?.trim(),
                             video_title: c[3]?.trim(),
@@ -176,12 +181,12 @@
                             ip_country: c[6]?.trim(),
                             ip_province: c[7]?.trim(),
                             ip_city: c[8]?.trim(),
-                            user_defined_data: c[9]?.trim(),
-                            version: c[10]?.trim(),
-                            results: c[11]?.trim(),
-                            risk_description: c[12]?.trim(),
-                            feedback: c[13]?.trim(),
-                            video_url: c[14]?.trim() // URL is 15th
+                            version: c[9]?.trim(),
+                            user_defined_data: c[10]?.trim(),
+                            request_id: c[11]?.trim(),
+                            results: c[12]?.trim(),
+                            risk_description: c[13]?.trim(),
+                            feedback: c[14]?.trim()
                         };
                     }).filter(t => t !== null && t.video_url && t.video_url.startsWith('http'));
 
@@ -200,7 +205,7 @@
                             }
                         } catch(err) { alert("Error: " + err.message); }
                     } else {
-                        alert("No valid rows found. Check CSV format (15 columns expected).");
+                        alert("No valid rows found. Please check that the first column is the URL.");
                     }
                 };
                 reader.readAsText(file);
