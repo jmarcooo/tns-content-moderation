@@ -81,7 +81,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: Export & Wipe (Updated Headers) ---
+    // --- DELETE: Export & Wipe (Corrected Headers) ---
     if (req.method === 'DELETE') {
       try {
         await client.query('BEGIN');
@@ -96,7 +96,7 @@ export default async function handler(req, res) {
         await client.query(`DELETE FROM video_labelling_tasks`);
         await client.query('COMMIT');
 
-        // Headers matching your requirement
+        // Headers matching your EXACT requirement
         const headers = [
           "id", "tenant", "title", "content", "created_by", 
           "created_time", "video_uid", "video_duration", "raw_media_url",
@@ -109,9 +109,10 @@ export default async function handler(req, res) {
         rows.forEach(row => {
           const safe = (val) => val ? `"${String(val).replace(/"/g, '""')}"` : "";
           const line = [
+            // Original 9 Data Points
             row.source_id, row.tenant, row.title, row.content, row.created_by,
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
-            // Moderation Data
+            // 5 Moderation Data Points
             row.label, row.remarks, row.assigned_to, 
             row.assigned_at, row.updated_at, row.status
           ].map(safe).join(",");
