@@ -24,6 +24,9 @@
         .btn-upload:hover { background-color: #1f732d; }
         .btn-export { background-color: #cf222e; margin-left: 10px; }
         .btn-export:hover { background-color: #a40e26; }
+        
+        .btn-secondary { background-color: #6e7781; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-secondary:hover { background-color: #57606a; }
     </style>
 </head>
 <body>
@@ -33,7 +36,7 @@
     <main class="main-content">
         <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
             <div>
-                <a href="content-labelling.html" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
+                <a href="#" onclick="VideoApp.handleBack(event)" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
                 <div style="display:flex; align-items:center; margin-top: 5px;">
                     <h1 id="queue-title" style="margin:0; margin-right: 15px;">Video Labelling</h1>
                     
@@ -119,7 +122,8 @@
                 </div>
 
                 <div style="margin-top: 30px; border-top: 1px solid #d0d7de; padding-top: 20px; text-align: right;">
-                    <button onclick="VideoApp.submit()" style="padding: 10px 20px; background: #2da44e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Submit & Next</button>
+                    <button onclick="VideoApp.submit(true)" class="btn-secondary">Submit & Leave</button>
+                    <button onclick="VideoApp.submit(false)" style="padding: 10px 20px; background: #2da44e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Submit & Next</button>
                 </div>
             </div>
         </div>
@@ -129,10 +133,11 @@
         const VideoApp = {
             selectedLabel: null,
             timer: 0,
-            timerInterval: null, // Track the interval ID
+            timerInterval: null,
             count: 0,
             currentTask: null,
             currentUser: null,
+            isSubmitting: false, // Flag to prevent double actions
             
             init() {
                 const userJson = localStorage.getItem('currentUser');
@@ -143,13 +148,51 @@
                     document.getElementById('adminControls').style.display = 'flex';
                 }
 
-                // Initial fetch - Timer starts ONLY if task is found
+                // Safety: Release task on close/refresh
+                window.addEventListener('beforeunload', () => {
+                    if (this.currentTask && !this.isSubmitting) {
+                        // Use fetch with keepalive to ensure request completes even if tab closes
+                        fetch('/api/video-tasks', {
+                            method: 'PATCH',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ id: this.currentTask.id }),
+                            keepalive: true
+                        });
+                    }
+                });
+
                 this.fetchNextTask();
             },
 
-            // --- TIMER CONTROL FUNCTIONS ---
+            // --- SMART EXIT (Handle Back Button) ---
+            async handleBack(e) {
+                e.preventDefault();
+                if (!this.currentTask) {
+                    window.location.href = 'content-labelling.html';
+                    return;
+                }
+
+                if (confirm("⚠️ Are you sure you want to leave?\n\nThis task will be released back to the 'Pending' queue for others to pick up.")) {
+                    this.isSubmitting = true; // Stop auto-release from triggering redundantly
+                    await this.releaseCurrentTask(); 
+                    window.location.href = 'content-labelling.html';
+                }
+            },
+
+            // --- API: Release Task ---
+            async releaseCurrentTask() {
+                if(!this.currentTask) return;
+                try {
+                    await fetch('/api/video-tasks', {
+                        method: 'PATCH',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ id: this.currentTask.id })
+                    });
+                } catch(e) { console.error("Failed to release task", e); }
+            },
+
+            // --- TIMER LOGIC ---
             startTimer() {
-                // Prevent multiple intervals
                 if (this.timerInterval) return; 
                 this.timerInterval = setInterval(() => {
                     this.timer++;
@@ -157,7 +200,6 @@
                     if(document.getElementById('timer')) document.getElementById('timer').innerText = d.toISOString().substr(11, 8);
                 }, 1000);
             },
-
             stopTimer() {
                 if (this.timerInterval) {
                     clearInterval(this.timerInterval);
@@ -165,7 +207,7 @@
                 }
             },
 
-            // --- 1. UPLOAD ---
+            // --- STANDARD APP LOGIC ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -212,21 +254,13 @@
                 reader.readAsText(file);
             },
 
-            // --- 2. EXPORT & WIPE ---
             async exportAndWipe() {
-                if(!confirm("⚠️ WARNING: This will download all results and DELETE them from the database to clear the queue.\n\nAre you sure you want to proceed?")) return;
-
+                if(!confirm("⚠️ WARNING: Download & Delete?\n\nThis will export all data and clear the database.")) return;
                 try {
                     const res = await fetch('/api/video-tasks', { method: 'DELETE' });
-                    
-                    if(res.status === 404) {
-                        alert("Database is already empty.");
-                        return;
-                    }
-                    
+                    if(res.status === 404) { alert("Database is empty."); return; }
                     if(!res.ok) throw new Error("Export failed");
 
-                    // Trigger Download
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -235,21 +269,15 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-
-                    alert("✅ Data downloaded and queue cleared!");
+                    alert("✅ Done!");
                     location.reload(); 
-
-                } catch(err) {
-                    alert("Error exporting: " + err.message);
-                }
+                } catch(err) { alert("Error: " + err.message); }
             },
 
-            // --- 3. FETCH & RENDER ---
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'none';
-                
                 this.selectedLabel = null;
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
                 document.getElementById('remarks').value = '';
@@ -260,11 +288,11 @@
                     
                     if(data.task) {
                         this.renderTask(data.task);
-                        this.startTimer(); // START TIMER (Work is available)
+                        this.startTimer();
                     } else {
                         document.getElementById('loader').style.display = 'none';
                         document.getElementById('empty-state').style.display = 'flex';
-                        this.stopTimer(); // STOP TIMER (No work available)
+                        this.stopTimer();
                     }
                 } catch(err) { console.error(err); }
             },
@@ -287,33 +315,3 @@
             },
 
             selectLabel(btn, label) {
-                document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                this.selectedLabel = label;
-            },
-
-            async submit() {
-                if(!this.selectedLabel) { alert("Please select a category"); return; }
-                try {
-                    const res = await fetch('/api/video-tasks', {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            id: this.currentTask.id, 
-                            label: this.selectedLabel,
-                            remarks: document.getElementById('remarks').value
-                        })
-                    });
-                    if(res.ok) {
-                        this.count++;
-                        document.getElementById('session-counter').innerText = this.count;
-                        this.fetchNextTask();
-                    }
-                } catch(err) { alert("Error submitting"); }
-            }
-        };
-
-        window.addEventListener('DOMContentLoaded', () => VideoApp.init());
-    </script>
-</body>
-</html>
