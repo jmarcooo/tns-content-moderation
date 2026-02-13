@@ -17,8 +17,13 @@
         .check-icon svg { width: 12px; height: 12px; fill: white; display: none; }
         .btn-label.selected .check-icon svg { display: block; }
         .labelling-textarea { width: 100%; padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background-color: #ffffff; color: #24292f; font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; margin-top: 8px; }
-        .btn-upload-csv { background-color: #238636; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .btn-upload-csv:hover { background-color: #1f732d; }
+        
+        /* Button Styles */
+        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-upload { background-color: #238636; }
+        .btn-upload:hover { background-color: #1f732d; }
+        .btn-export { background-color: #cf222e; margin-left: 10px; }
+        .btn-export:hover { background-color: #a40e26; }
     </style>
 </head>
 <body>
@@ -29,19 +34,26 @@
         <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
             <div>
                 <a href="content-labelling.html" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
-                <div style="display:flex; align-items:center; gap: 15px; margin-top: 5px;">
-                    <h1 id="queue-title" style="margin:0;">Video Labelling (Shared Queue)</h1>
-                    <button id="adminUploadBtn" class="btn-upload-csv" onclick="document.getElementById('csvInput').click()" style="display:none;">
-                        ☁️ Upload to Database
-                    </button>
-                    <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+                <div style="display:flex; align-items:center; margin-top: 5px;">
+                    <h1 id="queue-title" style="margin:0; margin-right: 15px;">Video Labelling</h1>
+                    
+                    <div id="adminControls" style="display:none; align-items:center;">
+                        <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
+                            ☁️ Upload Batch
+                        </button>
+                        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+
+                        <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
+                            📥 Download & Wipe DB
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div style="display: flex; gap: 15px; align-items: center;">
                 <span class="badge status-Active" style="font-size:0.9rem;">Session Time: <span id="timer" class="timer-badge">00:00:00</span></span>
                 <span class="badge" style="background-color: #f6f8fa; border: 1px solid #d0d7de; color: #24292f; font-size:0.9rem;">
-                    Session Done: <span id="session-counter" style="font-weight:bold;">0</span>
+                    My Count: <span id="session-counter" style="font-weight:bold;">0</span>
                 </span>
             </div>
         </div>
@@ -52,33 +64,30 @@
         
         <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: #57606a;">
             <div style="font-size: 3rem;">🎉</div>
-            <h2 style="margin: 10px 0;">All caught up!</h2>
-            <p>The shared queue is empty.</p>
-            <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Check for new tasks</button>
+            <h2 style="margin: 10px 0;">Queue Empty</h2>
+            <p>Waiting for new batch upload.</p>
+            <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Refresh</button>
         </div>
 
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
-            
             <div class="left-sidebar" style="width: 320px; flex-shrink:0;">
                 <div class="info-card">
                     <div class="info-header">Request Info</div>
                     <div class="info-row"><span class="label">Req ID:</span> <span class="value" id="info-req-id">--</span></div>
                     <div class="info-row"><span class="label">Channel:</span> <span class="value" id="info-channel">--</span></div>
-                    <div class="info-row"><span class="label">Entry Time:</span> <span class="value" id="info-time">--</span></div>
+                    <div class="info-row"><span class="label">Time:</span> <span class="value" id="info-time">--</span></div>
                 </div>
                 <div class="info-card">
-                    <div class="info-header">Risk & Location</div>
+                    <div class="info-header">Risk Analysis</div>
                     <div class="info-row"><span class="label">Country:</span> <span class="value" id="info-country">--</span></div>
-                    <div class="info-row"><span class="label">City:</span> <span class="value" id="info-city">--</span></div>
-                    <div class="info-row"><span class="label">Risk Desc:</span> <span class="value" id="info-risk" style="color:red;">--</span></div>
+                    <div class="info-row"><span class="label">Risk:</span> <span class="value" id="info-risk" style="color:red;">--</span></div>
                 </div>
             </div>
 
             <div class="content-canvas" style="background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 8px; flex-grow: 1;">
-                
                 <div id="module-content">
                     <div class="section-header">VIDEO CONTENT</div>
-                    <div style="background:black; border-radius:8px; overflow:hidden; aspect-ratio:16/9; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                    <div style="background:black; border-radius:8px; overflow:hidden; aspect-ratio:16/9;">
                         <video id="main-video" controls style="width:100%; height:100%; display:block;"></video>
                     </div>
                 </div>
@@ -90,7 +99,7 @@
                         <div id="text-top" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
                     </div>
                     <div>
-                        <div class="text-field-label">Feedback / Results (From Source)</div>
+                        <div class="text-field-label">Feedback / Results</div>
                         <div id="text-bottom" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
                     </div>
                 </div>
@@ -98,20 +107,11 @@
                 <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #d0d7de;">
                     <div class="section-header">CATEGORIZATION</div>
                     <div class="labelling-grid">
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')">
-                            <span>Safe</span><div class="check-icon">✓</div>
-                        </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')">
-                            <span>Low Risk</span><div class="check-icon">✓</div>
-                        </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')">
-                            <span>High Risk</span><div class="check-icon">✓</div>
-                        </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')">
-                            <span>Critical</span><div class="check-icon">✓</div>
-                        </button>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')"><span>Low Risk</span><div class="check-icon">✓</div></button>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')"><span>High Risk</span><div class="check-icon">✓</div></button>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')"><span>Critical</span><div class="check-icon">✓</div></button>
                     </div>
-
                     <div style="margin-top: 20px;">
                         <label class="text-field-label">Remarks</label>
                         <textarea id="remarks" class="labelling-textarea" placeholder="Add moderation notes..."></textarea>
@@ -123,7 +123,6 @@
                 </div>
             </div>
         </div>
-
     </main>
 
     <script>
@@ -140,11 +139,10 @@
                 this.currentUser = JSON.parse(userJson);
 
                 if(this.currentUser.role === 'Admin') {
-                    document.getElementById('adminUploadBtn').style.display = 'flex';
+                    document.getElementById('adminControls').style.display = 'flex';
                 }
 
                 this.fetchNextTask();
-                
                 setInterval(() => {
                     this.timer++;
                     const d = new Date(null); d.setSeconds(this.timer);
@@ -152,27 +150,19 @@
                 }, 1000);
             },
 
-            // --- UPLOAD CSV (FIXED FOR YOUR FILE) ---
+            // --- 1. UPLOAD ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     const text = e.target.result;
-                    const rows = text.split('\n').slice(1); // Skip Header
-                    
+                    const rows = text.split('\n').slice(1);
                     const tasks = rows.map(row => {
-                        // Handle CSV parsing (splitting by comma)
-                        // Note: This simple split works if your text fields don't contain commas.
-                        // If fields contain commas (e.g. "Title, with comma"), a regex parser is safer.
-                        const c = row.split(','); 
-                        
-                        // We need at least 15 columns for this to be valid
+                        const c = row.split(',');
                         if(c.length < 15) return null;
-
-                        // --- CORRECT MAPPING BASED ON YOUR FILE ---
                         return {
-                            video_url: c[0]?.trim(), // Index 0 is URL in your file
+                            video_url: c[0]?.trim(),
                             channel: c[1]?.trim(),
                             content_id: c[2]?.trim(),
                             video_title: c[3]?.trim(),
@@ -200,17 +190,46 @@
                             if(res.ok) {
                                 alert(`✅ Uploaded ${tasks.length} tasks!`);
                                 VideoApp.fetchNextTask();
-                            } else {
-                                alert("Upload failed.");
-                            }
+                            } else alert("Upload failed.");
                         } catch(err) { alert("Error: " + err.message); }
-                    } else {
-                        alert("No valid rows found. Please check that the first column is the URL.");
-                    }
+                    } else alert("No valid rows found.");
                 };
                 reader.readAsText(file);
             },
 
+            // --- 2. EXPORT & WIPE ---
+            async exportAndWipe() {
+                if(!confirm("⚠️ WARNING: This will download all results and DELETE them from the database to clear the queue.\n\nAre you sure you want to proceed?")) return;
+
+                try {
+                    const res = await fetch('/api/video-tasks', { method: 'DELETE' });
+                    
+                    if(res.status === 404) {
+                        alert("Database is already empty.");
+                        return;
+                    }
+                    
+                    if(!res.ok) throw new Error("Export failed");
+
+                    // Trigger Download
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `moderation_batch_${new Date().toISOString().slice(0,10)}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    alert("✅ Data downloaded and queue cleared!");
+                    location.reload(); // Refresh to show empty state
+
+                } catch(err) {
+                    alert("Error exporting: " + err.message);
+                }
+            },
+
+            // --- 3. STANDARD OPERATIONS ---
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
@@ -222,11 +241,8 @@
                 try {
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
                     const data = await res.json();
-
-                    if(data.task) {
-                        this.currentTask = data.task;
-                        this.renderTask(data.task);
-                    } else {
+                    if(data.task) this.renderTask(data.task);
+                    else {
                         document.getElementById('loader').style.display = 'none';
                         document.getElementById('empty-state').style.display = 'flex';
                     }
@@ -234,21 +250,14 @@
             },
 
             renderTask(task) {
-                // Populate Sidebar
                 document.getElementById('info-req-id').innerText = task.request_id || '--';
                 document.getElementById('info-channel').innerText = task.channel || '--';
                 document.getElementById('info-time').innerText = task.data_entry_time || '--';
                 document.getElementById('info-country').innerText = task.ip_country || '--';
-                document.getElementById('info-city').innerText = task.ip_city || '--';
                 document.getElementById('info-risk').innerText = task.risk_description || '--';
-
-                // Populate Context Area
                 document.getElementById('text-top').innerText = task.video_title || "No Title";
                 document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
-                
-                // Load Video
-                const vid = document.getElementById('main-video');
-                vid.src = task.video_url;
+                document.getElementById('main-video').src = task.video_url;
 
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
@@ -264,13 +273,12 @@
 
             async submit() {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
-                
                 try {
                     const res = await fetch('/api/video-tasks', {
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            id: this.currentTask.id,
+                            id: this.currentTask.id, // Fixed: use this.currentTask.id, not this.task.id
                             label: this.selectedLabel,
                             remarks: document.getElementById('remarks').value
                         })
@@ -281,6 +289,25 @@
                         this.fetchNextTask();
                     }
                 } catch(err) { alert("Error submitting"); }
+            },
+            
+            // Fix: Store task reference in render
+            renderTask(task) {
+                this.currentTask = task; // Save reference
+                document.getElementById('info-req-id').innerText = task.request_id || '--';
+                // ... (Rest of render logic same as above)
+                document.getElementById('info-channel').innerText = task.channel || '--';
+                document.getElementById('info-time').innerText = task.data_entry_time || '--';
+                document.getElementById('info-country').innerText = task.ip_country || '--';
+                document.getElementById('info-risk').innerText = task.risk_description || '--';
+                document.getElementById('text-top').innerText = task.video_title || "No Title";
+                document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
+                document.getElementById('main-video').src = task.video_url;
+
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('workbench').style.display = 'flex';
+                }, 500);
             }
         };
 
