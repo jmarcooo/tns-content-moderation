@@ -63,6 +63,8 @@
 
         <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 60vh; font-size: 1.2rem; color: #57606a;">
             <div id="loader-text">⚡ Fetching task from database...</div>
+            <div id="error-msg" style="color:red; margin-top:15px; display:none; max-width: 400px; text-align: center;"></div>
+            <button id="retry-btn" onclick="VideoApp.fetchNextTask()" style="margin-top:15px; padding:8px 16px; cursor:pointer; display:none;">Retry</button>
         </div>
         
         <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: #57606a;">
@@ -137,7 +139,7 @@
             count: 0,
             currentTask: null,
             currentUser: null,
-            isSubmitting: false, // Flag to prevent double actions
+            isSubmitting: false,
             
             init() {
                 const userJson = localStorage.getItem('currentUser');
@@ -151,7 +153,6 @@
                 // Safety: Release task on close/refresh
                 window.addEventListener('beforeunload', () => {
                     if (this.currentTask && !this.isSubmitting) {
-                        // Use fetch with keepalive to ensure request completes even if tab closes
                         fetch('/api/video-tasks', {
                             method: 'PATCH',
                             headers: {'Content-Type': 'application/json'},
@@ -164,7 +165,7 @@
                 this.fetchNextTask();
             },
 
-            // --- SMART EXIT (Handle Back Button) ---
+            // --- SMART EXIT ---
             async handleBack(e) {
                 e.preventDefault();
                 if (!this.currentTask) {
@@ -172,14 +173,13 @@
                     return;
                 }
 
-                if (confirm("⚠️ Are you sure you want to leave?\n\nThis task will be released back to the 'Pending' queue for others to pick up.")) {
-                    this.isSubmitting = true; // Stop auto-release from triggering redundantly
+                if (confirm("⚠️ Are you sure you want to leave?\n\nThis task will be released back to the queue.")) {
+                    this.isSubmitting = true; 
                     await this.releaseCurrentTask(); 
                     window.location.href = 'content-labelling.html';
                 }
             },
 
-            // --- API: Release Task ---
             async releaseCurrentTask() {
                 if(!this.currentTask) return;
                 try {
@@ -207,7 +207,7 @@
                 }
             },
 
-            // --- STANDARD APP LOGIC ---
+            // --- STANDARD LOGIC ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
@@ -275,15 +275,26 @@
             },
 
             async fetchNextTask() {
+                // RESET UI
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('error-msg').style.display = 'none';
+                document.getElementById('retry-btn').style.display = 'none';
+                document.getElementById('loader-text').innerText = '⚡ Fetching task from database...';
+
                 this.selectedLabel = null;
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
                 document.getElementById('remarks').value = '';
 
                 try {
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
+                    
+                    if (!res.ok) {
+                         const errData = await res.json();
+                         throw new Error(errData.error || `Server Error: ${res.status}`);
+                    }
+
                     const data = await res.json();
                     
                     if(data.task) {
@@ -294,7 +305,13 @@
                         document.getElementById('empty-state').style.display = 'flex';
                         this.stopTimer();
                     }
-                } catch(err) { console.error(err); }
+                } catch(err) { 
+                    console.error(err);
+                    document.getElementById('loader-text').innerText = '❌ Error Loading Task';
+                    document.getElementById('error-msg').style.display = 'block';
+                    document.getElementById('error-msg').innerText = err.message;
+                    document.getElementById('retry-btn').style.display = 'block';
+                }
             },
 
             renderTask(task) {
@@ -315,3 +332,45 @@
             },
 
             selectLabel(btn, label) {
+                document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                this.selectedLabel = label;
+            },
+
+            async submit(isLeaving) {
+                if(!this.selectedLabel) { alert("Please select a category"); return; }
+                this.isSubmitting = true;
+
+                try {
+                    const res = await fetch('/api/video-tasks', {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            id: this.currentTask.id, 
+                            label: this.selectedLabel,
+                            remarks: document.getElementById('remarks').value
+                        })
+                    });
+                    if(res.ok) {
+                        this.count++;
+                        document.getElementById('session-counter').innerText = this.count;
+                        this.isSubmitting = false;
+
+                        if (isLeaving) {
+                            alert("✅ Task submitted. Returning to dashboard.");
+                            window.location.href = 'content-labelling.html';
+                        } else {
+                            this.fetchNextTask();
+                        }
+                    }
+                } catch(err) { 
+                    this.isSubmitting = false; 
+                    alert("Error submitting"); 
+                }
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => VideoApp.init());
+    </script>
+</body>
+</html>
