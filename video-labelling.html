@@ -3,387 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Labelling Task</title>
+    <title>Video Labelling Task (Shared Queue)</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     
     <style>
-        /* --- GLOBAL & TYPOGRAPHY --- */
-        :root {
-            --bg-body: #f8f9fa; /* Softer background */
-            --bg-card: #ffffff;
-            --text-main: #212529;
-            --text-muted: #6c757d;
-            --border-color: #dee2e6;
-            --accent-color: #0d6efd;
-            --tag-bg: #e7f1ff;
-            --tag-text: #0c63e4;
-            --header-height: 60px;
+        /* --- TYPOGRAPHY & GLOBAL --- */
+        body, button, input, textarea, select, .value, .label {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #24292f;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* --- LIGHT MODE VARIABLES (Default) --- */
+        :root {
+            --bg-body: #ffffff;
+            --bg-canvas: #f6f8fa;
+            --bg-card: #ffffff;
+            --text-main: #24292f;
+            --text-muted: #57606a;
+            --border-color: #d0d7de;
+            --accent-color: #0969da;
+            --btn-sec-bg: #f6f8fa;
+            --btn-sec-hover: #f3f4f6;
+            --tag-bg: #ddf4ff;
+            --tag-text: #0969da;
+        }
+
+        /* --- DARK MODE --- */
         body.dark-mode {
             --bg-body: #0d1117;
+            --bg-canvas: #161b22;
             --bg-card: #161b22;
             --text-main: #c9d1d9;
             --text-muted: #8b949e;
             --border-color: #30363d;
             --accent-color: #58a6ff;
-            --tag-bg: #1f252e;
+            --btn-sec-bg: #21262d;
+            --btn-sec-hover: #30363d;
+            --tag-bg: #1f6feb26;
             --tag-text: #58a6ff;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Prevent page scroll */
+        body { background-color: var(--bg-body); color: var(--text-main); margin: 0; }
+
+        .timer-badge { 
+            font-family: "Inter", -apple-system, sans-serif; 
+            font-variant-numeric: tabular-nums;
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            color: var(--text-main); 
+        }
+        
+        .content-canvas { 
+            display: flex; flex-direction: column; height: 100vh; 
+            overflow: hidden; /* Prevent body scroll, let children scroll */
+            padding: 20px 32px; background-color: var(--bg-body); box-sizing: border-box; 
+        }
+        
+        /* --- LAYOUT --- */
+        .split-view { display: flex; gap: 24px; align-items: stretch; height: 100%; overflow: hidden; }
+        
+        /* LEFT COLUMN (Video) */
+        .video-column { 
+            flex: 3; display: flex; flex-direction: column; gap: 16px; 
+            height: 100%; overflow: hidden;
+        }
+        .video-wrapper { 
+            background: black; border-radius: 8px; overflow: hidden; 
+            aspect-ratio: 16/9; width: 100%; flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        
+        /* ADAPTIVE CONTEXT BOX (Fills remaining space) */
+        .context-box { 
+            background-color: var(--bg-canvas); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; padding: 16px; 
+            flex-grow: 1; /* Key to filling space */
+            overflow-y: auto; /* Scroll internally if content is long */
+            display: flex; flex-direction: column;
+        }
+        
+        /* RIGHT COLUMN (Actions) */
+        .action-column { 
+            flex: 2; 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; padding: 20px; 
+            display: flex; flex-direction: column; gap: 16px; height: 100%; 
+            overflow-y: auto; /* Scroll if actions overflow */
         }
 
-        /* --- HEADER --- */
-        .app-header {
-            height: var(--header-height);
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            flex-shrink: 0;
+        /* --- SIDEBAR INFO CARDS --- */
+        .info-card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 12px 14px; 
+            margin-bottom: 12px; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            z-index: 10;
         }
+        .info-header { font-weight: 700; color: var(--text-main); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-row { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 6px; align-items: center; }
+        .info-row .label { color: var(--text-muted); font-weight: 500; }
+        .info-row .value { color: var(--text-main); font-weight: 400; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 
-        .header-left, .header-right { display: flex; align-items: center; gap: 16px; }
+        .value-wrapper { display: flex; align-items: center; justify-content: flex-end; }
+        .copy-btn { background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); border-radius: 3px; margin-right: 6px; }
+        .copy-btn:hover { background-color: var(--bg-canvas); color: var(--accent-color); }
+        .copy-btn svg { width: 12px; height: 12px; stroke-width: 2; }
+
+        /* --- LABELLING & TAGGING --- */
+        .section-header { font-weight: 700; font-size: 0.8rem; color: var(--text-main); text-transform: uppercase; margin-bottom: 10px; }
         
-        .app-title { font-weight: 700; font-size: 1.1rem; margin: 0; letter-spacing: -0.5px; }
+        .labelling-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+        .btn-label { 
+            display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; 
+            background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; 
+            cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-main); transition: all 0.2s; 
+        }
+        .btn-label:hover { border-color: var(--accent-color); background-color: var(--bg-canvas); }
+        .btn-label.selected { background-color: rgba(9, 105, 218, 0.05); border-color: var(--accent-color); color: var(--accent-color); font-weight: 600; }
+        .check-icon { width: 16px; height: 16px; border: 2px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-card); }
+        .btn-label.selected .check-icon { border-color: var(--accent-color); background-color: var(--accent-color); }
+        .check-icon svg { width: 9px; height: 9px; fill: white; display: none; }
+        .btn-label.selected .check-icon svg { display: block; }
+
+        /* TAG INPUT STYLES */
+        .tag-container {
+            border: 1px solid var(--border-color); border-radius: 6px; padding: 8px;
+            background-color: var(--bg-card); display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
+            min-height: 42px; align-items: center;
+        }
+        .tag-container:focus-within { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(9,105,218,0.1); }
         
-        .back-link { 
-            text-decoration: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; 
-            display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px;
-            transition: background 0.2s;
+        .tag {
+            background-color: var(--tag-bg); color: var(--tag-text); font-size: 0.8rem; font-weight: 500;
+            padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;
         }
-        .back-link:hover { background: var(--border-color); color: var(--text-main); }
-
-        .stat-badge { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-        .stat-value { color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-weight: 600; }
-
-        /* --- MAIN LAYOUT (GRID) --- */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 260px 1fr 340px; /* Sidebar | Video | Controls */
-            height: calc(100vh - var(--header-height));
-            overflow: hidden;
-        }
-
-        /* COLUMN 1: SIDEBAR INFO */
-        .col-sidebar {
-            background: var(--bg-body);
-            border-right: 1px solid var(--border-color);
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        /* COLUMN 2: VIDEO STAGE */
-        .col-video {
-            background: #000; /* Theater mode feel */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .video-container {
-            flex-grow: 1; /* Video takes max height */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            padding: 20px;
-        }
-        
-        video {
-            max-width: 100%;
-            max-height: 100%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            outline: none;
-        }
-
-        .video-meta-panel {
-            background: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            height: 30%; /* Fixed height for context */
-            min-height: 150px;
-            max-height: 300px;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        /* COLUMN 3: CONTROL PANEL */
-        .col-actions {
-            background: var(--bg-card);
-            border-left: 1px solid var(--border-color);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-        }
-
-        /* --- COMPONENTS --- */
-        
-        /* Info Cards */
-        .info-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-        .info-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .info-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
-        .info-item:last-child { margin-bottom: 0; }
-        .info-key { color: var(--text-muted); }
-        .info-val { font-weight: 500; text-align: right; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* Copy Button */
-        .copy-btn {
-            background: transparent; border: none; cursor: pointer; color: var(--text-muted);
-            padding: 2px; margin-right: 4px; display: flex; align-items: center;
-        }
-        .copy-btn:hover { color: var(--accent-color); }
-        .copy-btn svg { width: 14px; height: 14px; }
-
-        /* Label Buttons */
-        .label-group { display: grid; gap: 8px; }
-        .label-btn {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-body);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-        .label-btn:hover { border-color: var(--accent-color); background: #fff; }
-        .label-btn.active {
-            background: #eef6fc; border-color: var(--accent-color); color: var(--accent-color);
-        }
-        .check-circle {
-            width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-color);
-            display: flex; align-items: center; justify-content: center; background: #fff;
-        }
-        .label-btn.active .check-circle { border-color: var(--accent-color); background: var(--accent-color); }
-        .check-circle svg { width: 10px; height: 10px; fill: white; display: none; }
-        .label-btn.active .check-circle svg { display: block; }
-
-        /* Tags Input */
-        .tags-wrapper {
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 10px;
-            background: var(--bg-body);
-            min-height: 80px;
-            display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
-            cursor: text;
-        }
-        .tags-wrapper:focus-within { border-color: var(--accent-color); background: #fff; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); }
-        
-        .tag-chip {
-            background: var(--tag-bg); color: var(--tag-text);
-            font-size: 0.85rem; font-weight: 500; padding: 4px 10px; border-radius: 16px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .tag-remove { cursor: pointer; opacity: 0.6; font-size: 1rem; line-height: 1; }
+        .tag-remove { cursor: pointer; font-weight: bold; opacity: 0.6; }
         .tag-remove:hover { opacity: 1; }
         
-        .tag-input-field {
-            border: none; background: transparent; outline: none;
-            flex-grow: 1; min-width: 100px; font-size: 0.9rem; color: var(--text-main);
+        .tag-input {
+            border: none; outline: none; flex-grow: 1; background: transparent; 
+            font-size: 0.9rem; color: var(--text-main); padding: 4px; min-width: 120px;
         }
 
-        /* Action Footer */
-        .action-footer {
-            margin-top: auto; /* Push to bottom */
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
+        .labelling-textarea { 
+            width: 100%; padding: 10px; border: 1px solid var(--border-color); 
+            border-radius: 6px; background-color: var(--bg-card); color: var(--text-main); 
+            font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; box-sizing: border-box;
         }
+        .labelling-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(9,105,218,0.1); }
+        .text-field-label { margin-bottom:6px; font-weight:600; color:var(--text-main); font-size:0.85rem; display: block;}
         
-        .btn-main {
-            border: none; border-radius: 6px; padding: 12px;
-            font-weight: 600; font-size: 0.9rem; cursor: pointer;
-            transition: filter 0.2s;
-        }
-        .btn-submit { background: var(--accent-color); color: white; }
-        .btn-submit:hover { filter: brightness(1.1); }
-        .btn-save { background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-save:hover { background: var(--border-color); }
+        /* HEADER & ACTIONS */
+        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-upload { background-color: #238636; } .btn-upload:hover { background-color: #2ea043; }
+        .btn-export { background-color: #cf222e; margin-left: 10px; } .btn-export:hover { background-color: #d93f48; }
+        
+        .btn-secondary { background-color: var(--btn-sec-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-primary { background-color: #1f883d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--btn-sec-hover); border-color: #8b949e; }
+        .btn-primary:hover { background-color: #1a7f37; }
+        .action-row { display: flex; gap: 10px; margin-top: auto; }
 
-        /* Loader & Empty States */
-        #loader, #empty-state {
-            position: fixed; top: var(--header-height); left: 0; right: 0; bottom: 0;
-            background: var(--bg-body); z-index: 50;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        
-        /* Header Buttons */
-        .btn-icon { background: none; border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; color: var(--text-main); }
-        .btn-icon:hover { background: var(--border-color); }
+        #queue-title { color: var(--text-main); margin: 0; margin-right: 20px; font-size: 1.4rem; letter-spacing: -0.5px; font-weight: 600; }
+        .header-link { text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .header-link:hover { color: var(--accent-color); }
     </style>
 </head>
 <body>
 
-    <header class="app-header">
-        <div class="header-left">
-            <a href="#" onclick="VideoApp.handleBack(event)" class="back-link">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back to Queue
-            </a>
-            <h1 class="app-title">Video Labelling</h1>
-        </div>
-        
-        <div class="header-right">
-            <div id="adminControls" style="display:none; gap:8px;">
-                <button class="btn-icon" onclick="document.getElementById('csvInput').click()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload
-                </button>
-                <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
-                
-                <button class="btn-icon" onclick="VideoApp.exportAndWipe()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Export
-                </button>
-            </div>
-            <div class="stat-badge">
-                <span>Time:</span> <span id="timer" class="stat-value">00:00:00</span>
-            </div>
-            <div class="stat-badge">
-                <span>Count:</span> <span id="session-counter" class="stat-value">0</span>
-            </div>
-        </div>
-    </header>
+    <script src="sidebar.js"></script>
 
-    <div id="loader">
-        <div style="font-size: 1.2rem; font-weight: 500; margin-bottom: 10px;">⚡ Fetching next task...</div>
-        <div id="error-msg" style="color: #dc3545; display:none;"></div>
-        <button id="retry-btn" onclick="VideoApp.fetchNextTask()" class="btn-save" style="margin-top:15px; display:none;">Retry</button>
-    </div>
-
-    <div id="empty-state" style="display: none;">
-        <div style="font-size: 3rem; margin-bottom: 16px;">🎉</div>
-        <h2 style="margin:0;">Queue Empty</h2>
-        <p style="color: var(--text-muted);">Waiting for new batch upload.</p>
-        <button onclick="VideoApp.fetchNextTask()" class="btn-save" style="margin-top:20px;">Refresh</button>
-    </div>
-
-    <div id="workbench" class="main-grid" style="display:none;">
-        
-        <aside class="col-sidebar">
-            <div class="info-card">
-                <div class="info-label">Task Details</div>
-                <div class="info-item">
-                    <span class="info-key">Post ID</span>
-                    <div style="display:flex; align-items:center;">
-                        <button class="copy-btn" onclick="VideoApp.copyText('info-id')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                        <span class="info-val" id="info-id">--</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <span class="info-key">Tenant</span>
-                    <span class="info-val" id="info-tenant">--</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-key">Duration</span>
-                    <span class="info-val" id="info-duration">--</span>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-label">Source Info</div>
-                <div class="info-item">
-                    <span class="info-key">Created By</span>
-                    <div style="display:flex; align-items:center;">
-                        <button class="copy-btn" onclick="VideoApp.copyText('info-creator')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                        <span class="info-val" id="info-creator">--</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <span class="info-key">Time</span>
-                    <span class="info-val" id="info-time">--</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-key">UID</span>
-                    <div style="display:flex; align-items:center;">
-                        <button class="copy-btn" onclick="VideoApp.copyText('info-uid')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                        <span class="info-val" id="info-uid">--</span>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="col-video">
-            <div class="video-container">
-                <video id="main-video" controls autoplay></video>
-            </div>
-            <div class="video-meta-panel">
-                <div style="font-weight: 700; margin-bottom: 8px;">Video Title</div>
-                <div id="text-top" style="margin-bottom: 16px; color: var(--text-main);"></div>
-                
-                <div style="font-weight: 700; margin-bottom: 8px;">Description / Content</div>
-                <div id="text-bottom" style="color: var(--text-muted); line-height: 1.6; font-size: 0.9rem;"></div>
-            </div>
-        </main>
-
-        <aside class="col-actions">
+    <main class="main-content">
+        <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
             <div>
-                <div class="info-label" style="margin-bottom: 12px;">Categorization</div>
-                <div class="label-group">
-                    <div class="label-btn" onclick="VideoApp.selectLabel(this, 'Safe')">
-                        <span>Safe</span>
-                        <div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    </div>
-                    <div class="label-btn" onclick="VideoApp.selectLabel(this, 'Low Risk')">
-                        <span>Low Risk</span>
-                        <div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    </div>
-                    <div class="label-btn" onclick="VideoApp.selectLabel(this, 'High Risk')">
-                        <span>High Risk</span>
-                        <div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    </div>
-                    <div class="label-btn" onclick="VideoApp.selectLabel(this, 'Critical')">
-                        <span>Critical</span>
-                        <div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <a href="#" onclick="VideoApp.handleBack(event)" class="header-link">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Back to Queue
+                </a>
+                <div style="display:flex; align-items:center; margin-top: 10px;">
+                    <h1 id="queue-title">Video Labelling</h1>
+                    <div id="adminControls" style="display:none; align-items:center;">
+                        <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Upload
+                        </button>
+                        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+                        <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Batch Download & Wipe DB
+                        </button>
                     </div>
                 </div>
             </div>
+            
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <span style="font-size:0.85rem; color: var(--text-muted);">Handling Time: <span id="timer" class="timer-badge">00:00:00</span></span>
+                <span style="font-size:0.85rem; color: var(--text-muted);">My Count: <span id="session-counter" style="color:var(--text-main); font-weight:bold;">0</span></span>
+            </div>
+        </div>
 
-            <div style="flex-grow: 1; display: flex; flex-direction: column;">
-                <div class="info-label" style="margin-bottom: 12px;">Tags</div>
-                <div class="tags-wrapper" onclick="document.getElementById('tag-input').focus()">
-                    <div id="tags-container" style="display: contents;"></div>
-                    <input type="text" id="tag-input" class="tag-input-field" placeholder="Add tags..." onkeydown="VideoApp.handleTagInput(event)">
+        <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 60vh; font-size: 1.1rem; color: var(--text-muted);">
+            <div id="loader-text" style="margin-bottom: 10px;">⚡ Fetching task...</div>
+            <div id="error-msg" style="color:#cf222e; margin-top:10px; display:none; max-width: 400px; text-align: center; font-size: 0.9rem;"></div>
+            <button id="retry-btn" onclick="VideoApp.fetchNextTask()" style="margin-top:15px; padding:8px 16px; cursor:pointer; display:none; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main); border-radius:6px;">Retry</button>
+        </div>
+        <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: var(--text-muted);">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+            <h2 style="margin: 0; color: var(--text-main);">Queue Empty</h2>
+            <p style="margin-top: 5px;">Waiting for new batch upload.</p>
+            <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:8px 20px; background:var(--bg-canvas); border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">Refresh</button>
+        </div>
+
+        <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px; height: 100%; padding-bottom: 20px;">
+            <div class="left-sidebar" style="width: 260px; flex-shrink:0;">
+                <div class="info-card">
+                    <div class="info-header">Task Details</div>
+                    <div class="info-row"><span class="label">Post ID:</span> <div class="value-wrapper"><button class="copy-btn" onclick="VideoApp.copyText('info-id')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></button><span class="value" id="info-id">--</span></div></div>
+                    <div class="info-row"><span class="label">Tenant:</span> <span class="value" id="info-tenant">--</span></div>
+                    <div class="info-row"><span class="label">Duration:</span> <span class="value" id="info-duration">--</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">Source Info</div>
+                    <div class="info-row"><span class="label">Created by:</span> <div class="value-wrapper"><button class="copy-btn" onclick="VideoApp.copyText('info-creator')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></button><span class="value" id="info-creator">--</span></div></div>
+                    <div class="info-row"><span class="label">Time:</span> <span class="value" id="info-time">--</span></div>
+                    <div class="info-row"><span class="label">Video UID:</span> <div class="value-wrapper"><button class="copy-btn" onclick="VideoApp.copyText('info-uid')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></button><span class="value" id="info-uid">--</span></div></div>
                 </div>
             </div>
 
-            <div class="action-footer">
-                <button class="btn-main btn-save" onclick="VideoApp.submit(true)">Submit & Leave</button>
-                <button class="btn-main btn-submit" onclick="VideoApp.submit(false)">Submit & Next</button>
-            </div>
-        </aside>
+            <div class="content-canvas" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; flex-grow: 1; padding: 0;">
+                <div class="split-view" style="padding: 24px;">
+                    
+                    <div class="video-column">
+                        <div class="section-header">VIDEO CONTENT</div>
+                        <div class="video-wrapper">
+                            <video id="main-video" controls autoplay style="width:100%; height:100%; display:block;"></video>
+                        </div>
+                        <div class="context-box">
+                            <div class="text-field-label">Video Title</div>
+                            <div id="text-top" style="margin-bottom: 16px; font-weight: 400; color: var(--text-main); font-size: 0.9rem;"></div>
+                            <div class="text-field-label">Content / Description</div>
+                            <div id="text-bottom" style="color: var(--text-muted); line-height: 1.5; font-size: 0.9rem;"></div>
+                        </div>
+                    </div>
 
-    </div>
+                    <div class="action-column" style="border:none; padding: 0; background: transparent;">
+                        <div class="section-header">CATEGORIZATION</div>
+                        <div class="labelling-grid">
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')"><span>Safe</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')"><span>Low Risk</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')"><span>High Risk</span><div class="check-icon">✓</div></button>
+                            <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')"><span>Critical</span><div class="check-icon">✓</div></button>
+                        </div>
+
+                        <div style="flex-grow: 1;">
+                            <label class="text-field-label">Tags</label>
+                            <div class="tag-container" onclick="document.getElementById('tag-input').focus()">
+                                <div id="tags-wrapper" style="display:contents;"></div>
+                                <input type="text" id="tag-input" class="tag-input" placeholder="Add tags (enter)..." onkeydown="VideoApp.handleTagInput(event)">
+                            </div>
+
+                            <label class="text-field-label" style="margin-top:12px;">Notes</label>
+                            <textarea id="remarks" class="labelling-textarea" placeholder="Additional details..."></textarea>
+                        </div>
+
+                        <div class="action-row">
+                            <button onclick="VideoApp.submit(true)" class="btn-secondary">Submit & Leave</button>
+                            <button onclick="VideoApp.submit(false)" class="btn-primary">Submit & Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <script>
         const VideoApp = {
@@ -415,9 +312,9 @@
             stopTimer() { if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; } },
 
             formatDuration(seconds) { if(!seconds || isNaN(seconds)) return "00:00:00"; const secNum = parseInt(seconds, 10); const h = Math.floor(secNum / 3600); const m = Math.floor((secNum - h * 3600) / 60); const s = secNum - h * 3600 - m * 60; return `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; },
-            copyText(id) { const el = document.getElementById(id); const txt = el.getAttribute('data-full') || el.innerText; if(txt && txt!=='--') navigator.clipboard.writeText(txt); },
+            copyText(id) { const el = document.getElementById(id); const txt = el.getAttribute('data-full') || el.innerText; if(txt && txt!=='--') navigator.clipboard.writeText(txt).then(()=>{ const btn=el.previousElementSibling; const orig=btn.innerHTML; btn.innerHTML='✔️'; setTimeout(()=>btn.innerHTML=orig,1000); }); },
 
-            // --- TAGGING ---
+            // --- TAGGING LOGIC ---
             handleTagInput(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -433,10 +330,13 @@
                 }
             },
             renderTags() {
-                const wrapper = document.getElementById('tags-container');
-                wrapper.innerHTML = this.tags.map((t, i) => `<div class="tag-chip">${t}<span class="tag-remove" onclick="VideoApp.removeTag(${i})">×</span></div>`).join('');
+                const wrapper = document.getElementById('tags-wrapper');
+                wrapper.innerHTML = this.tags.map((t, i) => `<div class="tag">${t}<span class="tag-remove" onclick="VideoApp.removeTag(${i})">×</span></div>`).join('');
             },
-            removeTag(index) { this.tags.splice(index, 1); this.renderTags(); },
+            removeTag(index) {
+                this.tags.splice(index, 1);
+                this.renderTags();
+            },
 
             uploadCSV(input) {
                 const file = input.files[0]; if(!file) return;
@@ -452,8 +352,8 @@
 
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex'; document.getElementById('workbench').style.display = 'none'; document.getElementById('empty-state').style.display = 'none';
-                this.selectedLabel = null; document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('active'));
-                this.tags = []; this.renderTags();
+                this.selectedLabel = null; document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
+                document.getElementById('remarks').value = ''; this.tags = []; this.renderTags();
 
                 try { const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); const data = await res.json();
                     if(data.task) { this.renderTask(data.task); this.startTimer(); } else { document.getElementById('loader').style.display = 'none'; document.getElementById('empty-state').style.display = 'flex'; this.stopTimer(); }
@@ -472,15 +372,17 @@
                 document.getElementById('text-top').innerText = task.title || "No Title"; document.getElementById('text-bottom').innerText = task.content || "";
                 const vid = document.getElementById('main-video'); vid.src = task.raw_media_url; vid.load(); vid.play().catch(()=>{});
                 
-                setTimeout(() => { document.getElementById('loader').style.display = 'none'; document.getElementById('workbench').style.display = 'grid'; }, 500);
+                setTimeout(() => { document.getElementById('loader').style.display = 'none'; document.getElementById('workbench').style.display = 'flex'; }, 500);
             },
 
-            selectLabel(btn, label) { document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); this.selectedLabel = label; },
+            selectLabel(btn, label) { document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); this.selectedLabel = label; },
 
             async submit(isLeaving) {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
-                const finalRemarks = `Tags: ${this.tags.join(', ')}`;
+                
+                // Combine Tags + Notes into Remarks field
+                const finalRemarks = `[Tags: ${this.tags.join(', ')}] ${document.getElementById('remarks').value}`;
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
                     if(res.ok) { this.count++; document.getElementById('session-counter').innerText = this.count; this.isSubmitting = false; if (isLeaving) { alert("✅ Submitted."); window.location.href = 'content-labelling.html'; } else { this.fetchNextTask(); } }
