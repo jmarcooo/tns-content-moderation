@@ -129,6 +129,7 @@
         const VideoApp = {
             selectedLabel: null,
             timer: 0,
+            timerInterval: null, // Track the interval ID
             count: 0,
             currentTask: null,
             currentUser: null,
@@ -142,12 +143,26 @@
                     document.getElementById('adminControls').style.display = 'flex';
                 }
 
+                // Initial fetch - Timer starts ONLY if task is found
                 this.fetchNextTask();
-                setInterval(() => {
+            },
+
+            // --- TIMER CONTROL FUNCTIONS ---
+            startTimer() {
+                // Prevent multiple intervals
+                if (this.timerInterval) return; 
+                this.timerInterval = setInterval(() => {
                     this.timer++;
                     const d = new Date(null); d.setSeconds(this.timer);
                     if(document.getElementById('timer')) document.getElementById('timer').innerText = d.toISOString().substr(11, 8);
                 }, 1000);
+            },
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
             },
 
             // --- 1. UPLOAD ---
@@ -222,18 +237,19 @@
                     document.body.removeChild(a);
 
                     alert("✅ Data downloaded and queue cleared!");
-                    location.reload(); // Refresh to show empty state
+                    location.reload(); 
 
                 } catch(err) {
                     alert("Error exporting: " + err.message);
                 }
             },
 
-            // --- 3. STANDARD OPERATIONS ---
+            // --- 3. FETCH & RENDER ---
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'none';
+                
                 this.selectedLabel = null;
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
                 document.getElementById('remarks').value = '';
@@ -241,15 +257,20 @@
                 try {
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
                     const data = await res.json();
-                    if(data.task) this.renderTask(data.task);
-                    else {
+                    
+                    if(data.task) {
+                        this.renderTask(data.task);
+                        this.startTimer(); // START TIMER (Work is available)
+                    } else {
                         document.getElementById('loader').style.display = 'none';
                         document.getElementById('empty-state').style.display = 'flex';
+                        this.stopTimer(); // STOP TIMER (No work available)
                     }
                 } catch(err) { console.error(err); }
             },
 
             renderTask(task) {
+                this.currentTask = task; 
                 document.getElementById('info-req-id').innerText = task.request_id || '--';
                 document.getElementById('info-channel').innerText = task.channel || '--';
                 document.getElementById('info-time').innerText = task.data_entry_time || '--';
@@ -278,7 +299,7 @@
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            id: this.currentTask.id, // Fixed: use this.currentTask.id, not this.task.id
+                            id: this.currentTask.id, 
                             label: this.selectedLabel,
                             remarks: document.getElementById('remarks').value
                         })
@@ -289,25 +310,6 @@
                         this.fetchNextTask();
                     }
                 } catch(err) { alert("Error submitting"); }
-            },
-            
-            // Fix: Store task reference in render
-            renderTask(task) {
-                this.currentTask = task; // Save reference
-                document.getElementById('info-req-id').innerText = task.request_id || '--';
-                // ... (Rest of render logic same as above)
-                document.getElementById('info-channel').innerText = task.channel || '--';
-                document.getElementById('info-time').innerText = task.data_entry_time || '--';
-                document.getElementById('info-country').innerText = task.ip_country || '--';
-                document.getElementById('info-risk').innerText = task.risk_description || '--';
-                document.getElementById('text-top').innerText = task.video_title || "No Title";
-                document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
-                document.getElementById('main-video').src = task.video_url;
-
-                setTimeout(() => {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('workbench').style.display = 'flex';
-                }, 500);
             }
         };
 
