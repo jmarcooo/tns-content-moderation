@@ -7,7 +7,6 @@ const pool = new Pool({
 });
 
 export default async function handler(req, res) {
-  // We must use the same client instance for transactions
   const client = await pool.connect();
 
   try {
@@ -59,7 +58,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ task: rows[0] || null });
     }
 
-    // --- PUT: Submit Label ---
+    // --- PUT: Submit Label (Complete) ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
       const query = `
@@ -71,13 +70,24 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: EXPORT & WIPE (ROBUST TRANSACTION) ---
+    // --- PATCH: Release Task (Abandon/Reset) ---
+    // This sets the task back to 'pending' if the user leaves without finishing
+    if (req.method === 'PATCH') {
+      const { id } = req.body;
+      const query = `
+        UPDATE video_labelling_tasks
+        SET status = 'pending', assigned_to = NULL, assigned_at = NULL
+        WHERE id = $1 AND status = 'in_progress'
+      `; 
+      // Note: "AND status = 'in_progress'" prevents us from accidentally resetting a completed task
+      await client.query(query, [id]);
+      return res.status(200).json({ success: true });
+    }
+
+    // --- DELETE: Export & Wipe ---
     if (req.method === 'DELETE') {
       try {
-        // Start Transaction
         await client.query('BEGIN');
-
-        // 1. Get all data FIRST (Locking rows to ensure we have the latest state)
         const selectQuery = `SELECT * FROM video_labelling_tasks ORDER BY id ASC FOR UPDATE`;
         const { rows } = await client.query(selectQuery);
 
@@ -86,18 +96,13 @@ export default async function handler(req, res) {
              return res.status(404).json({ error: "Database is already empty." });
         }
 
-        // 2. Wipe the table
         await client.query(`DELETE FROM video_labelling_tasks`);
-
-        // Commit transaction
         await client.query('COMMIT');
 
-        // 3. Generate CSV from the captured 'rows'
         const headers = [
           "URL", "Channel", "Content ID", "Video Title", "Token ID", 
           "Data Entry Time", "Country where IP is located", "Province where IP is located", "The city where the IP is located", 
           "Version", "User-defined data", "Request ID", "Results", "Risk Description", "Feedback",
-          // New Columns
           "Moderation Label", "Moderation Remarks", "Moderated By", "Task Assigned Time", "Task Completed Time", "Status"
         ];
         
@@ -106,11 +111,9 @@ export default async function handler(req, res) {
         rows.forEach(row => {
           const safe = (val) => val ? `"${String(val).replace(/"/g, '""')}"` : "";
           const line = [
-            // Original
             row.video_url, row.channel, row.content_id, row.video_title, row.token_id,
             row.data_entry_time, row.ip_country, row.ip_province, row.ip_city,
             row.version, row.user_defined_data, row.request_id, row.results, row.risk_description, row.feedback,
-            // Moderation
             row.label, row.remarks, row.assigned_to, row.assigned_at, row.updated_at, row.status
           ].map(safe).join(",");
           csv += line + "\n";
@@ -122,7 +125,7 @@ export default async function handler(req, res) {
 
       } catch (e) {
         await client.query('ROLLBACK');
-        throw e; // Re-throw to be caught by outer try/catch
+        throw e;
       }
     }
 
