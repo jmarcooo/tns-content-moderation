@@ -3,40 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Labelling Task</title>
+    <title>Video Labelling Task (Shared Queue)</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* --- PAGE SPECIFIC CSS --- */
         .timer-badge { font-family: monospace; font-size: 1rem; letter-spacing: 1px; font-weight: bold; }
         .content-canvas { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 30px; }
         .labelling-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
-        
-        .btn-label { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 15px 20px; background-color: var(--bg-body, #f4f6f8); 
-            border: 1px solid var(--border-color, #e1e4e8); border-radius: 8px; 
-            cursor: pointer; font-size: 0.95rem; font-weight: 600; 
-            color: var(--text-muted, #57606a); transition: all 0.2s; text-align: left; 
-        }
+        .btn-label { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background-color: var(--bg-body, #f4f6f8); border: 1px solid var(--border-color, #e1e4e8); border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: var(--text-muted, #57606a); transition: all 0.2s; text-align: left; }
         .btn-label:hover { border-color: #0969da; background-color: #f1f8ff; color: #24292f; }
-        .btn-label.selected { 
-            background-color: rgba(9, 105, 218, 0.1); border-color: #0969da; 
-            color: #0969da; box-shadow: 0 0 0 1px #0969da; 
-        }
-
+        .btn-label.selected { background-color: rgba(9, 105, 218, 0.1); border-color: #0969da; color: #0969da; box-shadow: 0 0 0 1px #0969da; }
         .check-icon { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-label.selected .check-icon { border-color: #0969da; background-color: #0969da; }
         .check-icon svg { width: 12px; height: 12px; fill: white; display: none; }
         .btn-label.selected .check-icon svg { display: block; }
-        
-        .labelling-textarea { 
-            width: 100%; padding: 12px; border: 1px solid #d0d7de; 
-            border-radius: 6px; background-color: #ffffff; 
-            color: #24292f; font-size: 0.9rem; resize: vertical; 
-            min-height: 80px; outline: none; margin-top: 8px; 
-        }
-        .labelling-textarea:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1); }
-        .text-field-label { margin-bottom:4px; font-weight:bold; color:#24292f; font-size:0.85rem; }
+        .labelling-textarea { width: 100%; padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background-color: #ffffff; color: #24292f; font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; margin-top: 8px; }
+        .btn-upload-csv { background-color: #238636; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .btn-upload-csv:hover { background-color: #1f732d; }
     </style>
 </head>
 <body>
@@ -47,33 +29,48 @@
         <div class="header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
             <div>
                 <a href="content-labelling.html" style="text-decoration: none; color: #57606a; font-size: 0.9rem;">← Back to Queue</a>
-                <h1 id="queue-title" style="margin-top: 5px;">Video Labelling</h1>
+                <div style="display:flex; align-items:center; gap: 15px; margin-top: 5px;">
+                    <h1 id="queue-title" style="margin:0;">Video Labelling (Shared Queue)</h1>
+                    <button id="adminUploadBtn" class="btn-upload-csv" onclick="document.getElementById('csvInput').click()" style="display:none;">
+                        ☁️ Upload to Database
+                    </button>
+                    <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
+                </div>
             </div>
+            
             <div style="display: flex; gap: 15px; align-items: center;">
                 <span class="badge status-Active" style="font-size:0.9rem;">Session Time: <span id="timer" class="timer-badge">00:00:00</span></span>
                 <span class="badge" style="background-color: #f6f8fa; border: 1px solid #d0d7de; color: #24292f; font-size:0.9rem;">
-                    Labelled: <span id="session-counter" style="font-weight:bold;">0</span>
+                    Session Done: <span id="session-counter" style="font-weight:bold;">0</span>
                 </span>
             </div>
         </div>
 
         <div id="loader" style="display: flex; flex-direction:column; justify-content: center; align-items: center; height: 60vh; font-size: 1.2rem; color: #57606a;">
-            <div id="loader-text">⚡ Fetching video...</div>
+            <div id="loader-text">⚡ Fetching task from database...</div>
+        </div>
+        
+        <div id="empty-state" style="display: none; flex-direction:column; justify-content: center; align-items: center; height: 60vh; color: #57606a;">
+            <div style="font-size: 3rem;">🎉</div>
+            <h2 style="margin: 10px 0;">All caught up!</h2>
+            <p>The shared queue is empty.</p>
+            <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Check for new tasks</button>
         </div>
 
         <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px;">
             
             <div class="left-sidebar" style="width: 320px; flex-shrink:0;">
                 <div class="info-card">
-                    <div class="info-header">Video Info</div>
-                    <div class="info-row"><span class="label">Video ID:</span> <span class="value" id="info-id">--</span></div>
-                    <div class="info-row"><span class="label">Duration:</span> <span class="value" id="info-duration">--</span></div>
-                    <div class="info-row"><span class="label">Resolution:</span> <span class="value" id="info-res">1080p</span></div>
+                    <div class="info-header">Request Info</div>
+                    <div class="info-row"><span class="label">Req ID:</span> <span class="value" id="info-req-id">--</span></div>
+                    <div class="info-row"><span class="label">Channel:</span> <span class="value" id="info-channel">--</span></div>
+                    <div class="info-row"><span class="label">Entry Time:</span> <span class="value" id="info-time">--</span></div>
                 </div>
                 <div class="info-card">
-                    <div class="info-header">Publisher Info</div>
-                    <div class="info-row"><span class="label">Username:</span> <span class="value" id="info-user">--</span></div>
-                    <div class="info-row"><span class="label">Followers:</span> <span class="value" id="info-followers">--</span></div>
+                    <div class="info-header">Risk & Location</div>
+                    <div class="info-row"><span class="label">Country:</span> <span class="value" id="info-country">--</span></div>
+                    <div class="info-row"><span class="label">City:</span> <span class="value" id="info-city">--</span></div>
+                    <div class="info-row"><span class="label">Risk Desc:</span> <span class="value" id="info-risk" style="color:red;">--</span></div>
                 </div>
             </div>
 
@@ -93,39 +90,36 @@
                         <div id="text-top" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
                     </div>
                     <div>
-                        <div class="text-field-label">Description</div>
+                        <div class="text-field-label">Feedback / Results (From Source)</div>
                         <div id="text-bottom" style="padding: 10px; background: #f6f8fa; border-radius: 6px;"></div>
                     </div>
                 </div>
 
                 <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #d0d7de;">
                     <div class="section-header">CATEGORIZATION</div>
-                    <div style="font-size: 0.85rem; color: #57606a; margin-bottom: 10px;">Select the primary category.</div>
-                    
                     <div class="labelling-grid">
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'high_qual')">
-                            <span>High Quality</span><div class="check-icon">✓</div>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Safe')">
+                            <span>Safe</span><div class="check-icon">✓</div>
                         </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'education')">
-                            <span>Education</span><div class="check-icon">✓</div>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Low Risk')">
+                            <span>Low Risk</span><div class="check-icon">✓</div>
                         </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'entertainment')">
-                            <span>Entertainment</span><div class="check-icon">✓</div>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'High Risk')">
+                            <span>High Risk</span><div class="check-icon">✓</div>
                         </button>
-                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'news')">
-                            <span>News</span><div class="check-icon">✓</div>
+                        <button class="btn-label" onclick="VideoApp.selectLabel(this, 'Critical')">
+                            <span>Critical</span><div class="check-icon">✓</div>
                         </button>
                     </div>
 
                     <div style="margin-top: 20px;">
                         <label class="text-field-label">Remarks</label>
-                        <textarea id="remarks" class="labelling-textarea" placeholder="Optional notes..."></textarea>
+                        <textarea id="remarks" class="labelling-textarea" placeholder="Add moderation notes..."></textarea>
                     </div>
                 </div>
 
                 <div style="margin-top: 30px; border-top: 1px solid #d0d7de; padding-top: 20px; text-align: right;">
-                    <button onclick="VideoApp.loadNext()" style="padding: 10px 20px; background: white; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; margin-right: 10px;">Skip</button>
-                    <button onclick="VideoApp.submit()" style="padding: 10px 20px; background: #2da44e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Submit</button>
+                    <button onclick="VideoApp.submit()" style="padding: 10px 20px; background: #2da44e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Submit & Next</button>
                 </div>
             </div>
         </div>
@@ -137,60 +131,124 @@
             selectedLabel: null,
             timer: 0,
             count: 0,
+            currentTask: null,
+            currentUser: null,
             
             init() {
-                console.log("App Initializing...");
-                // Force UI to show after 2 seconds even if video fails
-                setTimeout(() => {
-                    const loader = document.getElementById('loader');
-                    if(loader && loader.style.display !== 'none') {
-                        this.showUI();
-                        console.warn("Forced UI Load");
-                    }
-                }, 1500);
+                const userJson = localStorage.getItem('currentUser');
+                if(!userJson) { window.location.href='login.html'; return; }
+                this.currentUser = JSON.parse(userJson);
 
-                this.loadNext();
+                if(this.currentUser.role === 'Admin') {
+                    document.getElementById('adminUploadBtn').style.display = 'flex';
+                }
+
+                this.fetchNextTask();
+                
                 setInterval(() => {
                     this.timer++;
                     const d = new Date(null); d.setSeconds(this.timer);
-                    const timerEl = document.getElementById('timer');
-                    if(timerEl) timerEl.innerText = d.toISOString().substr(11, 8);
+                    if(document.getElementById('timer')) document.getElementById('timer').innerText = d.toISOString().substr(11, 8);
                 }, 1000);
             },
 
-            loadNext() {
-                // Show Loader
+            // --- UPLOAD CSV (Mapping 15 Cols) ---
+            uploadCSV(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n').slice(1); // Skip Header
+                    
+                    const tasks = rows.map(row => {
+                        const c = row.split(','); // Be careful with commas inside text
+                        if(c.length < 15) return null;
+                        
+                        // MAPPING THE 15 COLUMNS
+                        return {
+                            request_id: c[0]?.trim(),
+                            channel: c[1]?.trim(),
+                            content_id: c[2]?.trim(),
+                            video_title: c[3]?.trim(),
+                            token_id: c[4]?.trim(),
+                            data_entry_time: c[5]?.trim(),
+                            ip_country: c[6]?.trim(),
+                            ip_province: c[7]?.trim(),
+                            ip_city: c[8]?.trim(),
+                            user_defined_data: c[9]?.trim(),
+                            version: c[10]?.trim(),
+                            results: c[11]?.trim(),
+                            risk_description: c[12]?.trim(),
+                            feedback: c[13]?.trim(),
+                            video_url: c[14]?.trim() // URL is 15th
+                        };
+                    }).filter(t => t !== null && t.video_url && t.video_url.startsWith('http'));
+
+                    if(tasks.length > 0) {
+                        try {
+                            const res = await fetch('/api/video-tasks', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ tasks })
+                            });
+                            if(res.ok) {
+                                alert(`✅ Uploaded ${tasks.length} tasks!`);
+                                VideoApp.fetchNextTask();
+                            } else {
+                                alert("Upload failed.");
+                            }
+                        } catch(err) { alert("Error: " + err.message); }
+                    } else {
+                        alert("No valid rows found. Check CSV format (15 columns expected).");
+                    }
+                };
+                reader.readAsText(file);
+            },
+
+            async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex';
                 document.getElementById('workbench').style.display = 'none';
-
-                // Reset Inputs
+                document.getElementById('empty-state').style.display = 'none';
                 this.selectedLabel = null;
                 document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
                 document.getElementById('remarks').value = '';
 
-                // Fake Data Generation
-                const id = Math.floor(Math.random() * 888888) + 111111;
-                
-                // DATA BINDING
-                document.getElementById('info-id').innerText = id;
-                document.getElementById('info-duration').innerText = "00:45";
-                document.getElementById('info-user').innerText = "Demo_User_" + Math.floor(Math.random()*100);
-                document.getElementById('info-followers').innerText = Math.floor(Math.random()*50000);
-                
-                document.getElementById('text-top').innerText = "Sample Video Title " + id;
-                document.getElementById('text-bottom').innerText = "This is a test description for the video labelling task.";
+                try {
+                    const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
+                    const data = await res.json();
 
-                // VIDEO SOURCE (Using reliable Wikimedia source)
-                const vid = document.getElementById('main-video');
-                vid.src = "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm";
-                
-                // Simulate Network Delay then Show
-                setTimeout(() => this.showUI(), 800);
+                    if(data.task) {
+                        this.currentTask = data.task;
+                        this.renderTask(data.task);
+                    } else {
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('empty-state').style.display = 'flex';
+                    }
+                } catch(err) { console.error(err); }
             },
 
-            showUI() {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('workbench').style.display = 'flex';
+            renderTask(task) {
+                // Populate Sidebar
+                document.getElementById('info-req-id').innerText = task.request_id || '--';
+                document.getElementById('info-channel').innerText = task.channel || '--';
+                document.getElementById('info-time').innerText = task.data_entry_time || '--';
+                document.getElementById('info-country').innerText = task.ip_country || '--';
+                document.getElementById('info-city').innerText = task.ip_city || '--';
+                document.getElementById('info-risk').innerText = task.risk_description || '--';
+
+                // Populate Context Area
+                document.getElementById('text-top').innerText = task.video_title || "No Title";
+                document.getElementById('text-bottom').innerText = `Results: ${task.results} | Feedback: ${task.feedback}`;
+                
+                // Load Video
+                const vid = document.getElementById('main-video');
+                vid.src = task.video_url;
+
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('workbench').style.display = 'flex';
+                }, 500);
             },
 
             selectLabel(btn, label) {
@@ -199,15 +257,28 @@
                 this.selectedLabel = label;
             },
 
-            submit() {
+            async submit() {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
-                this.count++;
-                document.getElementById('session-counter').innerText = this.count;
-                this.loadNext();
+                
+                try {
+                    const res = await fetch('/api/video-tasks', {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            id: this.currentTask.id,
+                            label: this.selectedLabel,
+                            remarks: document.getElementById('remarks').value
+                        })
+                    });
+                    if(res.ok) {
+                        this.count++;
+                        document.getElementById('session-counter').innerText = this.count;
+                        this.fetchNextTask();
+                    }
+                } catch(err) { alert("Error submitting"); }
             }
         };
 
-        // Start App immediately
         window.addEventListener('DOMContentLoaded', () => VideoApp.init());
     </script>
 </body>
