@@ -144,13 +144,7 @@
 
     <script>
         const VideoApp = {
-            selectedLabel: null,
-            timer: 0,
-            timerInterval: null,
-            count: 0,
-            currentTask: null,
-            currentUser: null,
-            isSubmitting: false,
+            selectedLabel: null, timer: 0, timerInterval: null, count: 0, currentTask: null, currentUser: null, isSubmitting: false,
             
             init() {
                 const userJson = localStorage.getItem('currentUser');
@@ -160,12 +154,7 @@
                 
                 window.addEventListener('beforeunload', () => {
                     if (this.currentTask && !this.isSubmitting) {
-                        fetch('/api/video-tasks', {
-                            method: 'PATCH',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ id: this.currentTask.internal_id }),
-                            keepalive: true
-                        });
+                        fetch('/api/video-tasks', { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id }), keepalive: true });
                     }
                 });
                 this.fetchNextTask();
@@ -175,72 +164,79 @@
                 e.preventDefault();
                 if (!this.currentTask) { window.location.href = 'content-labelling.html'; return; }
                 if (confirm("⚠️ Release task back to queue?")) {
-                    this.isSubmitting = true; 
-                    await this.releaseCurrentTask(); 
-                    window.location.href = 'content-labelling.html';
+                    this.isSubmitting = true; await this.releaseCurrentTask(); window.location.href = 'content-labelling.html';
                 }
             },
+            async releaseCurrentTask() { if(!this.currentTask) return; try { await fetch('/api/video-tasks', { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id }) }); } catch(e) {} },
 
-            async releaseCurrentTask() {
-                if(!this.currentTask) return;
-                try {
-                    await fetch('/api/video-tasks', {
-                        method: 'PATCH',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ id: this.currentTask.internal_id })
-                    });
-                } catch(e) { console.error("Release failed", e); }
-            },
+            startTimer() { if (this.timerInterval) return; this.timerInterval = setInterval(() => { this.timer++; const d = new Date(null); d.setSeconds(this.timer); if(document.getElementById('timer')) document.getElementById('timer').innerText = d.toISOString().substr(11, 8); }, 1000); },
+            stopTimer() { if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; } },
 
-            startTimer() {
-                if (this.timerInterval) return; 
-                this.timerInterval = setInterval(() => {
-                    this.timer++;
-                    const d = new Date(null); d.setSeconds(this.timer);
-                    if(document.getElementById('timer')) document.getElementById('timer').innerText = d.toISOString().substr(11, 8);
-                }, 1000);
-            },
-            stopTimer() {
-                if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
-            },
-
-            // --- UPDATED CSV PARSER (9 COLUMNS) ---
+            // --- SMART CSV PARSER (Detects Format) ---
             uploadCSV(input) {
                 const file = input.files[0];
                 if(!file) return;
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     const text = e.target.result;
-                    const rows = text.split('\n').slice(1);
-                    const tasks = rows.map(row => {
-                        const c = row.split(',');
-                        if(c.length < 9) return null;
-                        return {
-                            id: c[0]?.trim(),
-                            tenant: c[1]?.trim(),
-                            title: c[2]?.trim(),
-                            content: c[3]?.trim(),
-                            created_by: c[4]?.trim(),
-                            created_time: c[5]?.trim(),
-                            video_uid: c[6]?.trim(),
-                            video_duration: c[7]?.trim(),
-                            raw_media_url: c[8]?.trim()
-                        };
-                    }).filter(t => t !== null && t.raw_media_url && t.raw_media_url.startsWith('http'));
+                    const rows = text.split('\n');
+                    const header = rows[0].toLowerCase();
+                    const dataRows = rows.slice(1);
+                    
+                    let tasks = [];
+
+                    // --- DETECTION LOGIC ---
+                    if (header.includes('raw_media_url') || header.includes('video_uid')) {
+                        // NEW FORMAT (9 Columns)
+                        console.log("Detected New 9-Column Format");
+                        tasks = dataRows.map(row => {
+                            const c = row.split(',');
+                            if(c.length < 9) return null;
+                            return {
+                                id: c[0]?.trim(),
+                                tenant: c[1]?.trim(),
+                                title: c[2]?.trim(),
+                                content: c[3]?.trim(),
+                                created_by: c[4]?.trim(),
+                                created_time: c[5]?.trim(),
+                                video_uid: c[6]?.trim(),
+                                video_duration: c[7]?.trim(),
+                                raw_media_url: c[8]?.trim()
+                            };
+                        });
+                    } else if (header.includes('url') && header.includes('channel')) {
+                        // OLD FORMAT (15 Columns) -> MAP TO NEW
+                        console.log("Detected Old 15-Column Format -> Mapping to New");
+                        tasks = dataRows.map(row => {
+                            const c = row.split(',');
+                            if(c.length < 15) return null;
+                            return {
+                                // MAPPING OLD -> NEW
+                                id: c[2]?.trim(),              // Content ID -> ID
+                                tenant: c[1]?.trim(),          // Channel -> Tenant
+                                title: c[3]?.trim(),           // Video Title -> Title
+                                content: c[10]?.trim(),        // User Data -> Content
+                                created_by: c[4]?.trim(),      // Token ID -> Created By
+                                created_time: c[5]?.trim(),    // Entry Time -> Created Time
+                                video_uid: c[11]?.trim(),      // Request ID -> Video UID
+                                video_duration: "00:00",       // Default
+                                raw_media_url: c[0]?.trim()    // URL -> Raw Media URL
+                            };
+                        });
+                    } else {
+                        alert("❌ Unknown CSV Format. Please check headers.");
+                        return;
+                    }
+
+                    // Filter valid rows
+                    tasks = tasks.filter(t => t !== null && t.raw_media_url && t.raw_media_url.startsWith('http'));
 
                     if(tasks.length > 0) {
                         try {
-                            const res = await fetch('/api/video-tasks', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({ tasks })
-                            });
-                            if(res.ok) {
-                                alert(`✅ Uploaded ${tasks.length} tasks!`);
-                                VideoApp.fetchNextTask();
-                            } else alert("Upload failed.");
+                            const res = await fetch('/api/video-tasks', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ tasks }) });
+                            if(res.ok) { alert(`✅ Uploaded ${tasks.length} tasks!`); VideoApp.fetchNextTask(); } else alert("Upload failed.");
                         } catch(err) { alert("Error: " + err.message); }
-                    } else alert("No valid rows found. Check column count (9).");
+                    } else alert("No valid rows found.");
                 };
                 reader.readAsText(file);
             },
@@ -253,14 +249,8 @@
                     if(!res.ok) throw new Error("Export failed");
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `moderation_batch_${new Date().toISOString().slice(0,10)}.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    alert("✅ Done!");
-                    location.reload(); 
+                    const a = document.createElement('a'); a.href = url; a.download = `moderation_batch_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    alert("✅ Done!"); location.reload(); 
                 } catch(err) { alert("Error: " + err.message); }
             },
 
@@ -278,15 +268,8 @@
                 try {
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`);
                     const data = await res.json();
-                    
-                    if(data.task) {
-                        this.renderTask(data.task);
-                        this.startTimer();
-                    } else {
-                        document.getElementById('loader').style.display = 'none';
-                        document.getElementById('empty-state').style.display = 'flex';
-                        this.stopTimer();
-                    }
+                    if(data.task) { this.renderTask(data.task); this.startTimer(); } 
+                    else { document.getElementById('loader').style.display = 'none'; document.getElementById('empty-state').style.display = 'flex'; this.stopTimer(); }
                 } catch(err) { 
                     console.error(err);
                     document.getElementById('loader-text').innerText = '❌ Error';
@@ -315,11 +298,7 @@
                 vid.src = task.raw_media_url;
                 vid.load();
                 vid.play().catch(e => console.log("Autoplay blocked:", e));
-
-                setTimeout(() => {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('workbench').style.display = 'flex';
-                }, 500);
+                setTimeout(() => { document.getElementById('loader').style.display = 'none'; document.getElementById('workbench').style.display = 'flex'; }, 500);
             },
 
             selectLabel(btn, label) {
@@ -331,35 +310,15 @@
             async submit(isLeaving) {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
-
                 try {
-                    const res = await fetch('/api/video-tasks', {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            id: this.currentTask.internal_id, // Use internal_id for updates
-                            label: this.selectedLabel,
-                            remarks: document.getElementById('remarks').value
-                        })
-                    });
+                    const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: document.getElementById('remarks').value }) });
                     if(res.ok) {
-                        this.count++;
-                        document.getElementById('session-counter').innerText = this.count;
-                        this.isSubmitting = false;
-                        if (isLeaving) {
-                            alert("✅ Saved. Returning to dashboard.");
-                            window.location.href = 'content-labelling.html';
-                        } else {
-                            this.fetchNextTask();
-                        }
+                        this.count++; document.getElementById('session-counter').innerText = this.count; this.isSubmitting = false;
+                        if (isLeaving) { alert("✅ Saved."); window.location.href = 'content-labelling.html'; } else { this.fetchNextTask(); }
                     }
-                } catch(err) { 
-                    this.isSubmitting = false; 
-                    alert("Error submitting"); 
-                }
+                } catch(err) { this.isSubmitting = false; alert("Error submitting"); }
             }
         };
-
         window.addEventListener('DOMContentLoaded', () => VideoApp.init());
     </script>
 </body>
