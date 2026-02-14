@@ -381,8 +381,8 @@
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
                 
-                // Combine Tags + Notes into Remarks field
-                const finalRemarks = `[Tags: ${this.tags.join(', ')}] ${document.getElementById('remarks').value}`;
+                // CHANGED: Only submit tags, removing "[Tags: ]" prefix and notes input
+                const finalRemarks = this.tags.join(', ');
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
                     if(res.ok) { this.count++; document.getElementById('session-counter').innerText = this.count; this.isSubmitting = false; if (isLeaving) { alert("✅ Submitted."); window.location.href = 'content-labelling.html'; } else { this.fetchNextTask(); } }
