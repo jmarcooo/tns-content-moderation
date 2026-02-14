@@ -23,7 +23,7 @@
             <h1>Content Labelling</h1>
             <div style="text-align: right; margin-left: 20px;">
                 <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
-                <strong style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">2,105</strong>
+                <strong id="header-total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">0</strong>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
             </div>
 
             <div id="queue-video" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='video-labelling.html'">
-                <div class="col-tenant"><span class="badge-tenant">Video Team</span></div>
+                <div class="col-tenant"><span class="badge-tenant">TNS Team</span></div>
                 <div class="col-name">Video Labelling</div>
                 <div class="col-pending">528 <span class="sub-text">Items</span></div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
@@ -79,6 +79,31 @@
                 if (el) el.style.display = 'none';
             });
         }
+
+        // --- DYNAMIC TOTAL PENDING CALCULATION ---
+        function updateTotalPending() {
+            let total = 0;
+            // Get all queue items
+            const rows = document.querySelectorAll('.queue-list-item');
+            
+            rows.forEach(row => {
+                // Only count rows that are NOT hidden (style.display != 'none')
+                if (row.style.display !== 'none') {
+                    // Extract number from text (e.g. "528 Items" -> 528)
+                    const pendingText = row.querySelector('.col-pending').innerText;
+                    // Remove commas and non-digits, then parse
+                    const count = parseInt(pendingText.replace(/[^\d]/g, ''), 10) || 0;
+                    total += count;
+                }
+            });
+
+            // Update the header element
+            document.getElementById('header-total-pending').innerText = total.toLocaleString();
+        }
+
+        // Run calculation after hiding elements
+        updateTotalPending();
+
     </script>
 </body>
 </html>
