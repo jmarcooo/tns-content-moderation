@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // --- POST: Upload 9 Columns ---
+    // --- POST: Upload (Added upload_time) ---
     if (req.method === 'POST') {
       const { tasks } = req.body;
       if (!tasks || tasks.length === 0) return res.status(400).json({ error: "No tasks provided" });
@@ -22,12 +22,13 @@ export default async function handler(req, res) {
             t.id, t.tenant, t.title, t.content, t.created_by,
             t.created_time, t.video_uid, t.video_duration, t.raw_media_url
         );
-        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9})`;
+        // CHANGED: Added NOW() at the end for upload_time
+        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, NOW())`;
       }).join(', ');
 
       const query = `
         INSERT INTO video_labelling_tasks 
-        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url)
+        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url, upload_time)
         VALUES ${placeholders}
       `;
 
@@ -57,12 +58,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ task: rows[0] || null });
     }
 
-    // --- PUT: Submit Label ---
+    // --- PUT: Submit Label (Added turnaround_time & handling_time) ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
+      
+      // CHANGED: Added calculations for turnaround_time and handling_time
       const query = `
         UPDATE video_labelling_tasks 
-        SET status = 'completed', label = $1, remarks = $2, updated_at = NOW() 
+        SET status = 'completed', 
+            label = $1, 
+            remarks = $2, 
+            updated_at = NOW(),
+            turnaround_time = (NOW() - upload_time),
+            handling_time = (NOW() - assigned_at)
         WHERE internal_id = $3
       `;
       await client.query(query, [label, remarks, id]);
@@ -81,7 +89,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: Export & Wipe ---
+    // --- DELETE: Export & Wipe (Added new columns to export) ---
     if (req.method === 'DELETE') {
       try {
         await client.query('BEGIN');
@@ -96,12 +104,13 @@ export default async function handler(req, res) {
         await client.query(`DELETE FROM video_labelling_tasks`);
         await client.query('COMMIT');
 
-        // Headers: 9 Data Columns + 5 Moderation Columns
+        // CHANGED: Added new columns to headers
         const headers = [
           "id", "tenant", "title", "content", "created_by", 
           "created_time", "video_uid", "video_duration", "raw_media_url",
           "Moderation Label", "Moderation Remarks", "Moderated By", 
-          "Task Assigned Time", "Task Completed Time", "Status"
+          "Task Assigned Time", "Task Completed Time", "Status",
+          "Upload Time", "Turnaround Time", "Handling Time"
         ];
         
         let csv = headers.join(",") + "\n";
@@ -113,7 +122,9 @@ export default async function handler(req, res) {
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
             // Moderation Data
             row.label, row.remarks, row.assigned_to, 
-            row.assigned_at, row.updated_at, row.status
+            row.assigned_at, row.updated_at, row.status,
+            // CHANGED: Added new column data
+            row.upload_time, row.turnaround_time, row.handling_time
           ].map(safe).join(",");
           csv += line + "\n";
         });
