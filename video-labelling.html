@@ -57,7 +57,7 @@
         }
         
         .content-canvas { 
-            display: flex; flex-direction: column; height: 100%; /* CHANGED: Was 100vh */
+            display: flex; flex-direction: column; height: 100%; 
             overflow: hidden; /* Prevent body scroll, let children scroll */
             padding: 20px 32px; background-color: var(--bg-body); box-sizing: border-box; 
         }
@@ -151,12 +151,6 @@
             font-size: 0.9rem; color: var(--text-main); padding: 4px; min-width: 120px;
         }
 
-        .labelling-textarea { 
-            width: 100%; padding: 10px; border: 1px solid var(--border-color); 
-            border-radius: 6px; background-color: var(--bg-card); color: var(--text-main); 
-            font-size: 0.9rem; resize: vertical; min-height: 80px; outline: none; box-sizing: border-box;
-        }
-        .labelling-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(9,105,218,0.1); }
         .text-field-label { margin-bottom:6px; font-weight:600; color:var(--text-main); font-size:0.85rem; display: block;}
         
         /* HEADER & ACTIONS */
@@ -267,9 +261,6 @@
                                 <div id="tags-wrapper" style="display:contents;"></div>
                                 <input type="text" id="tag-input" class="tag-input" placeholder="Add tags (enter)..." onkeydown="VideoApp.handleTagInput(event)">
                             </div>
-
-                            <label class="text-field-label" style="margin-top:12px;">Notes</label>
-                            <textarea id="remarks" class="labelling-textarea" placeholder="Additional details..."></textarea>
                         </div>
 
                         <div class="action-row">
@@ -353,7 +344,7 @@
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex'; document.getElementById('workbench').style.display = 'none'; document.getElementById('empty-state').style.display = 'none';
                 this.selectedLabel = null; document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
-                document.getElementById('remarks').value = ''; this.tags = []; this.renderTags();
+                this.tags = []; this.renderTags();
 
                 try { const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); const data = await res.json();
                     if(data.task) { this.renderTask(data.task); this.startTimer(); } else { document.getElementById('loader').style.display = 'none'; document.getElementById('empty-state').style.display = 'flex'; this.stopTimer(); }
@@ -381,7 +372,7 @@
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
                 
-                // CHANGED: Only submit tags, removing "[Tags: ]" prefix and notes input
+                // CHANGED: Only submit tags, no notes and no [Tags: ] wrapper
                 const finalRemarks = this.tags.join(', ');
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
