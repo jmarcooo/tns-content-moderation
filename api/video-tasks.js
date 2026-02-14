@@ -35,44 +35,62 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: `Successfully uploaded ${tasks.length} tasks.` });
     }
 
-    // --- GET: Fetch Next Task & Remaining Count ---
+    // --- GET: Fetch Next Task (Prioritizing In-Progress) ---
     if (req.method === 'GET') {
       const { username } = req.query;
 
-      // 1. Fetch Next Task
-      const taskQuery = `
-        UPDATE video_labelling_tasks
-        SET status = 'in_progress', 
-            assigned_to = $1, 
-            assigned_at = COALESCE(assigned_at, NOW()), 
-            updated_at = NOW()
-        WHERE internal_id = (
-          SELECT internal_id FROM video_labelling_tasks
-          WHERE status = 'pending'
-          ORDER BY internal_id ASC
-          FOR UPDATE SKIP LOCKED
-          LIMIT 1
-        )
-        RETURNING *
+      // 1. First, check if this user already has an unfinished task
+      const existingTaskQuery = `
+        SELECT * FROM video_labelling_tasks 
+        WHERE assigned_to = $1 AND status = 'in_progress'
+        ORDER BY assigned_at ASC
+        LIMIT 1
       `;
+      
+      const existingRes = await client.query(existingTaskQuery, [username]);
+      
+      let task = null;
 
-      // 2. Count Remaining
+      if (existingRes.rows.length > 0) {
+        // RESUME: User has a task in progress, return it
+        task = existingRes.rows[0];
+      } else {
+        // NEW: No active task, fetch and lock the next pending one
+        const newTaskQuery = `
+          UPDATE video_labelling_tasks
+          SET status = 'in_progress', 
+              assigned_to = $1, 
+              assigned_at = COALESCE(assigned_at, NOW()), 
+              updated_at = NOW()
+          WHERE internal_id = (
+            SELECT internal_id FROM video_labelling_tasks
+            WHERE status = 'pending'
+            ORDER BY internal_id ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT 1
+          )
+          RETURNING *
+        `;
+        const newRes = await client.query(newTaskQuery, [username]);
+        task = newRes.rows[0] || null;
+      }
+
+      // 2. Count Remaining (Pending + In Progress)
       const countQuery = `
         SELECT COUNT(*) as remaining 
         FROM video_labelling_tasks 
         WHERE status IN ('pending', 'in_progress')
       `;
 
-      const taskRes = await client.query(taskQuery, [username]);
       const countRes = await client.query(countQuery);
 
       return res.status(200).json({ 
-        task: taskRes.rows[0] || null,
+        task: task,
         remaining: parseInt(countRes.rows[0].remaining) || 0
       });
     }
 
-    // --- PUT: Submit Label (FIXED: Restored Time Calculations) ---
+    // --- PUT: Submit Label (With Time Tracking) ---
     if (req.method === 'PUT') {
       try {
         const { id, label, remarks } = req.body;
@@ -81,7 +99,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Task ID is missing from request." });
         }
 
-        // Added handling_time and turnaround_time calculations
         const query = `
             UPDATE video_labelling_tasks 
             SET status = 'completed', 
