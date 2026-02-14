@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Admin Portal</title>
+    <title>Login - AdminPanel</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -25,14 +25,25 @@
             text-align: center; 
         }
         
+        /* Added style for the brand icon to match sidebar look */
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-header);
+            margin-bottom: 10px;
+        }
+
         .sidebar { display: none; } 
     </style>
 </head>
 <body>
 
     <div class="login-card">
-        <span style="font-size: 3rem;">🛡️</span>
-        <h2 style="color: var(--text-header); margin: 10px 0;">Admin Portal</h2>
+        <svg class="brand-icon" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/>
+        </svg>
+        
+        <h2 style="color: var(--text-header); margin: 0 0 10px 0;">AdminPanel</h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in to continue</p>
 
         <form id="loginForm">
