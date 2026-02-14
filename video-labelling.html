@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Labelling Task (Shared Queue)</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    
     <style>
         /* --- TYPOGRAPHY & GLOBAL --- */
         body, button, input, textarea, select, .value, .label {
@@ -154,10 +152,6 @@
         .text-field-label { margin-bottom:6px; font-weight:600; color:var(--text-main); font-size:0.85rem; display: block;}
         
         /* HEADER & ACTIONS */
-        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-        .btn-upload { background-color: #238636; } .btn-upload:hover { background-color: #2ea043; }
-        .btn-export { background-color: #cf222e; margin-left: 10px; } .btn-export:hover { background-color: #d93f48; }
-        
         .btn-secondary { background-color: var(--btn-sec-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; font-size: 0.9rem; }
         .btn-primary { background-color: #1f883d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; font-size: 0.9rem; }
         .btn-secondary:hover { background-color: var(--btn-sec-hover); border-color: #8b949e; }
@@ -183,17 +177,6 @@
                 </a>
                 <div style="display:flex; align-items:center; margin-top: 10px;">
                     <h1 id="queue-title">Video Labelling</h1>
-                    <div id="adminControls" style="display:none; align-items:center;">
-                        <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Upload
-                        </button>
-                        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="VideoApp.uploadCSV(this)">
-                        <button class="btn-header btn-export" onclick="VideoApp.exportAndWipe()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Batch Download & Wipe DB
-                        </button>
-                    </div>
                 </div>
             </div>
             
@@ -282,7 +265,7 @@
                 const userJson = sessionStorage.getItem('currentUser');
                 if(!userJson) { window.location.href='login.html'; return; }
                 this.currentUser = JSON.parse(userJson);
-                if(this.currentUser.role === 'Admin') document.getElementById('adminControls').style.display = 'flex';
+                // Removed Admin controls init
                 
                 window.addEventListener('beforeunload', () => {
                     if (this.currentTask && !this.isSubmitting) {
@@ -330,17 +313,7 @@
                 this.renderTags();
             },
 
-            uploadCSV(input) {
-                const file = input.files[0]; if(!file) return;
-                Papa.parse(file, { header: true, skipEmptyLines: true, complete: async function(results) {
-                    const tasks = []; results.data.forEach(row => { if (row.id && row.raw_media_url) tasks.push({ id: row.id.trim(), tenant: row.tenant||'', title: row.title||'', content: row.content||'', created_by: row.created_by||'', created_time: row.created_time||'', video_uid: row.video_uid||'', video_duration: row.video_duration||'', raw_media_url: row.raw_media_url.trim() }); });
-                    if (tasks.length === 0) { alert("❌ No valid rows."); return; }
-                    if (!confirm(`Ready to upload ${tasks.length} tasks.`)) return;
-                    try { const res = await fetch('/api/video-tasks', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ tasks }) }); if(res.ok) { alert("✅ Uploaded!"); VideoApp.fetchNextTask(); } else alert("Upload failed."); } catch(err) { alert("Network Error"); }
-                }, error: function(err) { alert("CSV Error"); } });
-            },
-
-            async exportAndWipe() { if(!confirm("⚠️ Download & Delete?")) return; try { const res = await fetch('/api/video-tasks', { method: 'DELETE' }); if(res.status===404){alert("Empty.");return;} if(!res.ok)throw new Error("Failed"); const b=await res.blob(); const u=window.URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`batch_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("✅ Done!"); location.reload(); } catch(e){alert("Error");} },
+            // --- REMOVED UPLOAD/EXPORT FUNCTIONS FROM HERE ---
 
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex'; 
@@ -356,11 +329,8 @@
                     const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); 
                     const data = await res.json();
                     
-                    // Update the remaining count display
                     const remainingEl = document.getElementById('tasks-remaining');
-                    if (remainingEl) {
-                        remainingEl.innerText = data.remaining.toLocaleString();
-                    }
+                    if (remainingEl) remainingEl.innerText = data.remaining.toLocaleString();
 
                     if(data.task) { 
                         this.renderTask(data.task); 
@@ -395,18 +365,14 @@
 
             async submit(isLeaving) {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
-                if(this.isSubmitting) return; // Prevent double submission
+                if(this.isSubmitting) return; 
                 this.isSubmitting = true;
                 
-                // --- UI LOADING STATE ---
                 const btnLeave = document.getElementById('btn-submit-leave');
                 const btnNext = document.getElementById('btn-submit-next');
-                
-                // Disable buttons to prevent multiple clicks
                 if(btnLeave) btnLeave.disabled = true;
                 if(btnNext) btnNext.disabled = true;
 
-                // Change text to show loading state
                 if(isLeaving && btnLeave) {
                     btnLeave.dataset.originalText = btnLeave.innerText; 
                     btnLeave.innerHTML = '⏳ Submitting...';
@@ -439,7 +405,6 @@
                             alert("✅ Submitted."); 
                             window.location.href = 'content-labelling.html'; 
                         } else { 
-                            // Only fetch next if successful
                             await this.fetchNextTask(); 
                         } 
                     } else {
@@ -449,9 +414,6 @@
                     alert("Error submitting: " + err.message); 
                     console.error("Full Submit Error:", err);
                 } finally {
-                    // Reset UI State (Only if not leaving, or if error occurred)
-                    // If we are leaving and success, the page redirects so this doesn't matter much, 
-                    // but if it failed, we must re-enable.
                     if (!isLeaving || (isLeaving && document.getElementById('btn-submit-leave').innerText.includes('Submitting'))) {
                         this.isSubmitting = false;
                         if(btnLeave) {
