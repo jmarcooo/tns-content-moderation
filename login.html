@@ -1,9 +1,54 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Admin Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: var(--bg-body); 
+        }
+        
+        .login-card { 
+            width: 100%; 
+            max-width: 350px; 
+            background: var(--bg-card);      
+            padding: 2rem; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: var(--shadow);
+            text-align: center; 
+        }
+        
+        .sidebar { display: none; } 
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <span style="font-size: 3rem;">🛡️</span>
+        <h2 style="color: var(--text-header); margin: 10px 0;">Admin Portal</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in to continue</p>
+
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" id="btn-login" class="btn-primary" style="width:100%; margin-top:15px;">Sign In</button>
+            <p id="error-msg" style="color:#f85149; margin-top:10px; display:none; font-size: 0.9rem;">❌ Invalid credentials</p>
+        </form>
+    </div>
+
+    <script>
         // 1. CLEAR OLD SESSION
-        // CHANGED: Clear sessionStorage instead of localStorage
+        // CHANGED: Use sessionStorage so it clears on browser close
         sessionStorage.removeItem('currentUser'); 
 
-        // 2. CHECK THEME (Keep localStorage for preferences like theme)
+        // 2. CHECK THEME (Keep localStorage for preferences)
         const savedTheme = localStorage.getItem('appTheme') || 'light';
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
 
@@ -32,6 +77,7 @@
                 const users = await response.json();
                 
                 // Find matching user
+                // (Note: In a full production app, verify passwords on the server side)
                 const user = users.find(u => u.username === uInput && u.password === pInput);
 
                 if (user) {
@@ -39,7 +85,7 @@
                     const safeUser = { ...user };
                     delete safeUser.password;
                     
-                    // CHANGED: Use sessionStorage
+                    // CHANGED: Save to sessionStorage
                     sessionStorage.setItem('currentUser', JSON.stringify(safeUser));
                     window.location.href = 'home.html';
                 } else {
