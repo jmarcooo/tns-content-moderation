@@ -57,7 +57,7 @@
         }
         
         .content-canvas { 
-            display: flex; flex-direction: column; height: 100vh; 
+            display: flex; flex-direction: column; height: 100%; /* CHANGED: Was 100vh */
             overflow: hidden; /* Prevent body scroll, let children scroll */
             padding: 20px 32px; background-color: var(--bg-body); box-sizing: border-box; 
         }
@@ -220,7 +220,7 @@
             <button onclick="VideoApp.fetchNextTask()" style="margin-top:20px; padding:8px 20px; background:var(--bg-canvas); border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">Refresh</button>
         </div>
 
-        <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px; height: 100%; padding-bottom: 20px;">
+        <div id="workbench" class="workbench-container" style="display: none; align-items: flex-start; gap: 24px; padding-bottom: 20px;">
             <div class="left-sidebar" style="width: 260px; flex-shrink:0;">
                 <div class="info-card">
                     <div class="info-header">Task Details</div>
@@ -287,7 +287,7 @@
             selectedLabel: null, timer: 0, timerInterval: null, count: 0, currentTask: null, currentUser: null, isSubmitting: false, tags: [],
             
             init() {
-                const userJson = localStorage.getItem('currentUser');
+                const userJson = sessionStorage.getItem('currentUser');
                 if(!userJson) { window.location.href='login.html'; return; }
                 this.currentUser = JSON.parse(userJson);
                 if(this.currentUser.role === 'Admin') document.getElementById('adminControls').style.display = 'flex';
