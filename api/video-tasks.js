@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const client = await pool.connect();
 
   try {
-    // --- POST: Upload (Added upload_time) ---
+    // --- POST: Upload ---
     if (req.method === 'POST') {
       const { tasks } = req.body;
       if (!tasks || tasks.length === 0) return res.status(400).json({ error: "No tasks provided" });
@@ -22,12 +22,12 @@ export default async function handler(req, res) {
             t.id, t.tenant, t.title, t.content, t.created_by,
             t.created_time, t.video_uid, t.video_duration, t.raw_media_url
         );
-        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, NOW())`;
+        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9})`;
       }).join(', ');
 
       const query = `
         INSERT INTO video_labelling_tasks 
-        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url, upload_time)
+        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url)
         VALUES ${placeholders}
       `;
 
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { username } = req.query;
 
-      // 1. Query to fetch and lock the next pending task
+      // 1. Fetch Next Task
       const taskQuery = `
         UPDATE video_labelling_tasks
         SET status = 'in_progress', 
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
         RETURNING *
       `;
 
-      // 2. Query to count all tasks that are not yet completed
+      // 2. Count Remaining
       const countQuery = `
         SELECT COUNT(*) as remaining 
         FROM video_labelling_tasks 
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- PUT: Submit Label (Added turnaround_time & handling_time) ---
+    // --- PUT: Submit Label (FIXED: Removed time columns) ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
       
@@ -81,9 +81,7 @@ export default async function handler(req, res) {
         SET status = 'completed', 
             label = $1, 
             remarks = $2, 
-            updated_at = NOW(),
-            turnaround_time = (NOW() - upload_time),
-            handling_time = (NOW() - assigned_at)
+            updated_at = NOW()
         WHERE internal_id = $3
       `;
       await client.query(query, [label, remarks, id]);
@@ -121,8 +119,7 @@ export default async function handler(req, res) {
           "id", "tenant", "title", "content", "created_by", 
           "created_time", "video_uid", "video_duration", "raw_media_url",
           "Moderation Label", "Moderation Remarks", "Moderated By", 
-          "Task Assigned Time", "Task Completed Time", "Status",
-          "Upload Time", "Turnaround Time", "Handling Time"
+          "Task Assigned Time", "Task Completed Time", "Status"
         ];
         
         let csv = headers.join(",") + "\n";
@@ -133,8 +130,7 @@ export default async function handler(req, res) {
             row.source_id, row.tenant, row.title, row.content, row.created_by,
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
             row.label, row.remarks, row.assigned_to, 
-            row.assigned_at, row.updated_at, row.status,
-            row.upload_time, row.turnaround_time, row.handling_time
+            row.assigned_at, row.updated_at, row.status
           ].map(safe).join(",");
           csv += line + "\n";
         });
