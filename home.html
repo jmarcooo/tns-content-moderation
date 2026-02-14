@@ -54,46 +54,51 @@
 
     <script src="sidebar.js"></script>
     <script>
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) window.location.href = 'login.html';
+        // CHANGED: Use sessionStorage instead of localStorage
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
-        // --- TRANSLATION LOGIC ---
-        const LANG = localStorage.getItem('appLang') || 'en';
-        const DICT = {
-            en: { 
-                overview: "Overview", 
-                welcome: "Welcome back, ", 
-                totalUsers: "Total Users", 
-                flagged: "Flagged Comments", 
-                pending: "Pending Reviews", 
-                activity: "Activity Log",
-                trend1: "▲ 12% from last week",
-                trend2: "▼ 5% from yesterday",
-                trend3: "⚠ Requires attention"
-            },
-            zh: { 
-                overview: "总览", 
-                welcome: "欢迎回来，", 
-                totalUsers: "总用户数", 
-                flagged: "被标记评论", 
-                pending: "待审核", 
-                activity: "活动日志",
-                trend1: "▲ 上周增长 12%",
-                trend2: "▼ 昨日下降 5%",
-                trend3: "⚠ 需要注意"
-            }
-        };
-        const T = DICT[LANG];
+        // Redundant check (sidebar.js handles it too), but good for safety
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        } else {
+            // --- TRANSLATION LOGIC ---
+            const LANG = localStorage.getItem('appLang') || 'en';
+            const DICT = {
+                en: { 
+                    overview: "Overview", 
+                    welcome: "Welcome back, ", 
+                    totalUsers: "Total Users", 
+                    flagged: "Flagged Comments", 
+                    pending: "Pending Reviews", 
+                    activity: "Activity Log",
+                    trend1: "▲ 12% from last week",
+                    trend2: "▼ 5% from yesterday",
+                    trend3: "⚠ Requires attention"
+                },
+                zh: { 
+                    overview: "总览", 
+                    welcome: "欢迎回来，", 
+                    totalUsers: "总用户数", 
+                    flagged: "被标记评论", 
+                    pending: "待审核", 
+                    activity: "活动日志",
+                    trend1: "▲ 上周增长 12%",
+                    trend2: "▼ 昨日下降 5%",
+                    trend3: "⚠ 需要注意"
+                }
+            };
+            const T = DICT[LANG];
 
-        document.getElementById('welcome-text').innerText = T.welcome + currentUser.name;
-        document.getElementById('txt-overview').innerText = T.overview;
-        document.getElementById('txt-total-users').innerText = T.totalUsers;
-        document.getElementById('txt-flagged').innerText = T.flagged;
-        document.getElementById('txt-pending').innerText = T.pending;
-        document.getElementById('txt-activity').innerText = T.activity;
-        document.getElementById('txt-trend-1').innerText = T.trend1;
-        document.getElementById('txt-trend-2').innerText = T.trend2;
-        document.getElementById('txt-trend-3').innerText = T.trend3;
+            document.getElementById('welcome-text').innerText = T.welcome + currentUser.name;
+            document.getElementById('txt-overview').innerText = T.overview;
+            document.getElementById('txt-total-users').innerText = T.totalUsers;
+            document.getElementById('txt-flagged').innerText = T.flagged;
+            document.getElementById('txt-pending').innerText = T.pending;
+            document.getElementById('txt-activity').innerText = T.activity;
+            document.getElementById('txt-trend-1').innerText = T.trend1;
+            document.getElementById('txt-trend-2').innerText = T.trend2;
+            document.getElementById('txt-trend-3').innerText = T.trend3;
+        }
     </script>
 </body>
 </html>
