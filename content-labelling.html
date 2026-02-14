@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Content Labelling</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         .icon-svg { width: 14px; height: 14px; fill: currentColor; vertical-align: middle; margin-right: 4px; opacity: 0.7; }
         .back-nav { margin-bottom: 15px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; text-decoration: none; }
@@ -12,10 +13,8 @@
         .loading-count { opacity: 0.5; font-style: italic; }
 
         /* --- TABLE LAYOUT --- */
-        /* Updated Grid Template to include Completion Rate */
         .grid-layout { display: grid; grid-template-columns: 130px 2.5fr 1fr 1fr 100px; gap: 15px; align-items: center; }
 
-        /* Unified Header Styles */
         .list-header-row { 
             padding: 0 20px; margin-bottom: 8px; 
         }
@@ -27,19 +26,14 @@
             letter-spacing: 0.5px;
         }
 
-        /* Action Column Alignment */
-        .col-action { 
-            display: flex; 
-            justify-content: center; /* Center horizontally */
-            align-items: center;
-        }
-        
-        .col-completion {
-            font-family: "Inter", monospace;
-            font-size: 0.9rem;
-            color: var(--text-main);
-            font-weight: 500;
-        }
+        .col-action { display: flex; justify-content: center; align-items: center; }
+        .col-completion { font-family: "Inter", monospace; font-size: 0.9rem; color: var(--text-main); font-weight: 500; }
+
+        /* --- ADMIN BUTTONS --- */
+        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; margin-left: 10px; }
+        .btn-upload { background-color: #238636; } .btn-upload:hover { background-color: #2ea043; }
+        .btn-export { background-color: #cf222e; } .btn-export:hover { background-color: #d93f48; }
+        #admin-controls { display: none; align-items: center; margin-left: auto; }
     </style>
 </head>
 <body>
@@ -50,11 +44,31 @@
         
         <a href="moderation.html" class="back-nav">← Back to Dashboard</a>
 
-        <div class="header">
-            <h1>Content Labelling</h1>
-            <div style="text-align: right; margin-left: 20px;">
-                <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
-                <strong id="header-total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">...</strong>
+        <div class="header" style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <h1>Content Labelling</h1>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <div id="admin-controls">
+                    <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px; margin:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload CSV
+                    </button>
+                    <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="App.uploadCSV(this)">
+                    
+                    <button class="btn-header btn-export" onclick="App.exportAndWipe()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px; margin:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Wipe & Download
+                    </button>
+                    
+                    <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 15px;"></div>
+                </div>
+
+                <div style="text-align: right;">
+                    <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
+                    <strong id="header-total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">...</strong>
+                </div>
             </div>
         </div>
 
@@ -108,87 +122,141 @@
     <script>
         const user = Auth.requireLogin();
 
-        // --- 1. ROLE BASED VISIBILITY ---
-        if (user.role === 'Moderator') {
-            const hiddenQueues = ['queue-dynamic-post', 'queue-image', 'queue-text'];
-            hiddenQueues.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'none';
-            });
-        }
+        const App = {
+            init() {
+                this.checkRoles();
+                this.updateTotalPending();
+                this.fetchVideoStats();
+            },
 
-        // --- 2. DYNAMIC TOTAL PENDING CALCULATION ---
-        function updateTotalPending() {
-            let total = 0;
-            const rows = document.querySelectorAll('.queue-list-item');
-            
-            rows.forEach(row => {
-                // Only count rows that are visible
-                if (row.style.display !== 'none') {
-                    let countText = "";
-                    if (row.id === 'queue-video') {
-                         countText = document.getElementById('video-pending-count').innerText;
-                    } else {
-                         countText = row.querySelector('.col-pending').innerText;
-                    }
-
-                    if(countText.includes("Loading") || countText.includes("Error")) countText = "0";
-                    const count = parseInt(countText.replace(/[^\d]/g, ''), 10) || 0;
-                    total += count;
+            checkRoles() {
+                // Hide Data Team queues for Moderators
+                if (user.role === 'Moderator') {
+                    const hiddenQueues = ['queue-dynamic-post', 'queue-image', 'queue-text'];
+                    hiddenQueues.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
                 }
-            });
+                // Show Admin Controls for Admins
+                if (user.role === 'Admin') {
+                    document.getElementById('admin-controls').style.display = 'flex';
+                }
+            },
 
-            document.getElementById('header-total-pending').innerText = total.toLocaleString();
-        }
-
-        // --- 3. FETCH REAL DATABASE STATS FOR VIDEO ---
-        async function fetchVideoStats() {
-            const countSpan = document.getElementById('video-pending-count');
-            const rateSpan = document.getElementById('video-completion-rate');
-            
-            // Allow fetch even if hidden, so we have data if permissions change, 
-            // but primarily useful for Mods/Admins
-            if (!countSpan) return;
-
-            try {
-                const res = await fetch('/api/video-tasks');
-                const data = await res.json();
-
-                if (data.remaining !== undefined) {
-                    // Update Pending Count
-                    countSpan.innerText = data.remaining.toLocaleString();
-                    countSpan.classList.remove('loading-count');
-                    
-                    // Update Completion Rate
-                    const total = data.total || 0;
-                    const completed = data.completed || 0;
-                    let percentage = 0;
-                    
-                    if (total > 0) {
-                        percentage = Math.round((completed / total) * 100);
+            updateTotalPending() {
+                let total = 0;
+                const rows = document.querySelectorAll('.queue-list-item');
+                rows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        let countText = "";
+                        if (row.id === 'queue-video') {
+                             countText = document.getElementById('video-pending-count').innerText;
+                        } else {
+                             countText = row.querySelector('.col-pending').innerText;
+                        }
+                        if(countText.includes("Loading") || countText.includes("Error")) countText = "0";
+                        const count = parseInt(countText.replace(/[^\d]/g, ''), 10) || 0;
+                        total += count;
                     }
-                    
-                    rateSpan.innerText = `${percentage}%`;
-                    
-                    // Add color coding for rate
-                    if(percentage >= 80) rateSpan.style.color = '#238636'; // Green
-                    else if (percentage >= 50) rateSpan.style.color = '#d29922'; // Orange
-                    else rateSpan.style.color = '#text-main';
+                });
+                document.getElementById('header-total-pending').innerText = total.toLocaleString();
+            },
 
-                    // Recalculate header total
-                    updateTotalPending();
-                } 
-            } catch (err) {
-                console.error("Failed to fetch video stats:", err);
-                countSpan.innerText = "Error";
-                countSpan.style.color = "#cf222e";
+            async fetchVideoStats() {
+                const countSpan = document.getElementById('video-pending-count');
+                const rateSpan = document.getElementById('video-completion-rate');
+                if (!countSpan) return;
+
+                try {
+                    const res = await fetch('/api/video-tasks');
+                    const data = await res.json();
+
+                    if (data.remaining !== undefined) {
+                        countSpan.innerText = data.remaining.toLocaleString();
+                        countSpan.classList.remove('loading-count');
+                        
+                        const total = data.total || 0;
+                        const completed = data.completed || 0;
+                        let percentage = 0;
+                        if (total > 0) percentage = Math.round((completed / total) * 100);
+                        
+                        rateSpan.innerText = `${percentage}%`;
+                        if(percentage >= 80) rateSpan.style.color = '#238636';
+                        else if (percentage >= 50) rateSpan.style.color = '#d29922';
+                        else rateSpan.style.color = 'var(--text-main)';
+
+                        this.updateTotalPending();
+                    } 
+                } catch (err) {
+                    console.error("Failed to fetch video stats:", err);
+                    countSpan.innerText = "Error";
+                }
+            },
+
+            // --- ADMIN FUNCTIONS ---
+            uploadCSV(input) {
+                const file = input.files[0]; if(!file) return;
+                Papa.parse(file, { header: true, skipEmptyLines: true, complete: async function(results) {
+                    const tasks = []; 
+                    results.data.forEach(row => { 
+                        if (row.id && row.raw_media_url) {
+                            tasks.push({ 
+                                id: row.id.trim(), 
+                                tenant: row.tenant||'', 
+                                title: row.title||'', 
+                                content: row.content||'', 
+                                created_by: row.created_by||'', 
+                                created_time: row.created_time||'', 
+                                video_uid: row.video_uid||'', 
+                                video_duration: row.video_duration||'', 
+                                raw_media_url: row.raw_media_url.trim() 
+                            });
+                        }
+                    });
+                    
+                    if (tasks.length === 0) { alert("❌ No valid rows found."); return; }
+                    if (!confirm(`Ready to upload ${tasks.length} tasks?`)) return;
+                    
+                    try { 
+                        const res = await fetch('/api/video-tasks', { 
+                            method: 'POST', 
+                            headers: {'Content-Type': 'application/json'}, 
+                            body: JSON.stringify({ tasks }) 
+                        }); 
+                        if(res.ok) { 
+                            alert("✅ Uploaded successfully!"); 
+                            location.reload(); // Refresh to show new counts
+                        } else {
+                            alert("Upload failed."); 
+                        }
+                    } catch(err) { alert("Network Error"); }
+                }, error: function(err) { alert("CSV Error"); } });
+            },
+
+            async exportAndWipe() { 
+                if(!confirm("⚠️ WARNING: This will DOWNLOAD all data and then DELETE it from the database.\n\nAre you sure?")) return; 
+                try { 
+                    const res = await fetch('/api/video-tasks', { method: 'DELETE' }); 
+                    if(res.status===404){ alert("Database is already empty."); return; } 
+                    if(!res.ok) throw new Error("Failed"); 
+                    
+                    const b = await res.blob(); 
+                    const u = window.URL.createObjectURL(b); 
+                    const a = document.createElement('a'); 
+                    a.href = u; 
+                    a.download = `moderation_export_${new Date().toISOString().slice(0,10)}.csv`; 
+                    document.body.appendChild(a); 
+                    a.click(); 
+                    document.body.removeChild(a); 
+                    
+                    alert("✅ Database wiped and backup downloaded."); 
+                    location.reload(); 
+                } catch(e){ alert("Error during wipe/export."); } 
             }
-        }
+        };
 
-        // Initialize
-        updateTotalPending();
-        fetchVideoStats();
-
+        App.init();
     </script>
 </body>
 </html>
