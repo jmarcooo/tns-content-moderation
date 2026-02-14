@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Labelling Task (Shared Queue)</title>
     <link rel="stylesheet" href="style.css">
+    
     <style>
         /* --- TYPOGRAPHY & GLOBAL --- */
         body, button, input, textarea, select, .value, .label {
@@ -265,9 +266,9 @@
                 const userJson = sessionStorage.getItem('currentUser');
                 if(!userJson) { window.location.href='login.html'; return; }
                 this.currentUser = JSON.parse(userJson);
-                // Removed Admin controls init
                 
                 window.addEventListener('beforeunload', () => {
+                    // Only release if we have a task AND we are NOT currently submitting.
                     if (this.currentTask && !this.isSubmitting) {
                         fetch('/api/video-tasks', { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id }), keepalive: true });
                     }
@@ -289,7 +290,6 @@
             formatDuration(seconds) { if(!seconds || isNaN(seconds)) return "00:00:00"; const secNum = parseInt(seconds, 10); const h = Math.floor(secNum / 3600); const m = Math.floor((secNum - h * 3600) / 60); const s = secNum - h * 3600 - m * 60; return `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; },
             copyText(id) { const el = document.getElementById(id); const txt = el.getAttribute('data-full') || el.innerText; if(txt && txt!=='--') navigator.clipboard.writeText(txt).then(()=>{ const btn=el.previousElementSibling; const orig=btn.innerHTML; btn.innerHTML='✔️'; setTimeout(()=>btn.innerHTML=orig,1000); }); },
 
-            // --- TAGGING LOGIC ---
             handleTagInput(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -312,8 +312,6 @@
                 this.tags.splice(index, 1);
                 this.renderTags();
             },
-
-            // --- REMOVED UPLOAD/EXPORT FUNCTIONS FROM HERE ---
 
             async fetchNextTask() {
                 document.getElementById('loader').style.display = 'flex'; 
@@ -402,9 +400,21 @@
                         if (counter) counter.innerText = this.count;
                         
                         if (isLeaving) { 
+                            // IMPORTANT: Do NOT set isSubmitting = false here.
+                            // We WANT it to be true so beforeunload doesn't fire.
                             alert("✅ Submitted."); 
                             window.location.href = 'content-labelling.html'; 
                         } else { 
+                            // If we stay, then we reset the flag
+                            this.isSubmitting = false;
+                            if(btnNext) {
+                                btnNext.disabled = false;
+                                if(btnNext.dataset.originalText) btnNext.innerText = btnNext.dataset.originalText;
+                            }
+                            if(btnLeave) {
+                                btnLeave.disabled = false;
+                                if(btnLeave.dataset.originalText) btnLeave.innerText = btnLeave.dataset.originalText;
+                            }
                             await this.fetchNextTask(); 
                         } 
                     } else {
@@ -412,20 +422,10 @@
                     }
                 } catch(err) { 
                     alert("Error submitting: " + err.message); 
-                    console.error("Full Submit Error:", err);
-                } finally {
-                    if (!isLeaving || (isLeaving && document.getElementById('btn-submit-leave').innerText.includes('Submitting'))) {
-                        this.isSubmitting = false;
-                        if(btnLeave) {
-                            btnLeave.disabled = false;
-                            if(btnLeave.dataset.originalText) btnLeave.innerText = btnLeave.dataset.originalText;
-                        }
-                        if(btnNext) {
-                            btnNext.disabled = false;
-                            if(btnNext.dataset.originalText) btnNext.innerText = btnNext.dataset.originalText;
-                        }
-                    }
-                }
+                    this.isSubmitting = false; // Reset on error so they can try again
+                    if(btnLeave) { btnLeave.disabled = false; if(btnLeave.dataset.originalText) btnLeave.innerText = btnLeave.dataset.originalText; }
+                    if(btnNext) { btnNext.disabled = false; if(btnNext.dataset.originalText) btnNext.innerText = btnNext.dataset.originalText; }
+                } 
             }
         };
         window.addEventListener('DOMContentLoaded', () => VideoApp.init());
