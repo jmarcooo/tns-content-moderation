@@ -35,11 +35,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: `Successfully uploaded ${tasks.length} tasks.` });
     }
 
-    // --- GET: Fetch Next Task (Prioritizing In-Progress) ---
+    // --- GET: Fetch Next Task & Stats ---
     if (req.method === 'GET') {
       const { username } = req.query;
 
-      // 1. First, check if this user already has an unfinished task
+      // 1. Fetch Task Logic (Prioritize In-Progress)
       const existingTaskQuery = `
         SELECT * FROM video_labelling_tasks 
         WHERE assigned_to = $1 AND status = 'in_progress'
@@ -48,14 +48,11 @@ export default async function handler(req, res) {
       `;
       
       const existingRes = await client.query(existingTaskQuery, [username]);
-      
       let task = null;
 
       if (existingRes.rows.length > 0) {
-        // RESUME: User has a task in progress, return it
         task = existingRes.rows[0];
       } else {
-        // NEW: No active task, fetch and lock the next pending one
         const newTaskQuery = `
           UPDATE video_labelling_tasks
           SET status = 'in_progress', 
@@ -75,29 +72,32 @@ export default async function handler(req, res) {
         task = newRes.rows[0] || null;
       }
 
-      // 2. Count Remaining (Pending + In Progress)
-      const countQuery = `
-        SELECT COUNT(*) as remaining 
-        FROM video_labelling_tasks 
-        WHERE status IN ('pending', 'in_progress')
+      // 2. Count Stats (Completed, Remaining, Total)
+      const statsQuery = `
+        SELECT 
+            COUNT(*) FILTER (WHERE status IN ('pending', 'in_progress')) as remaining,
+            COUNT(*) FILTER (WHERE status = 'completed') as completed,
+            COUNT(*) as total
+        FROM video_labelling_tasks
       `;
 
-      const countRes = await client.query(countQuery);
+      const statsRes = await client.query(statsQuery);
+      const stats = statsRes.rows[0];
 
       return res.status(200).json({ 
         task: task,
-        remaining: parseInt(countRes.rows[0].remaining) || 0
+        remaining: parseInt(stats.remaining) || 0,
+        completed: parseInt(stats.completed) || 0,
+        total: parseInt(stats.total) || 0
       });
     }
 
-    // --- PUT: Submit Label (With Time Tracking) ---
+    // --- PUT: Submit Label ---
     if (req.method === 'PUT') {
       try {
         const { id, label, remarks } = req.body;
         
-        if (!id) {
-            return res.status(400).json({ error: "Task ID is missing from request." });
-        }
+        if (!id) return res.status(400).json({ error: "Task ID is missing." });
 
         const query = `
             UPDATE video_labelling_tasks 
@@ -112,12 +112,9 @@ export default async function handler(req, res) {
         
         const result = await client.query(query, [label, remarks, id]);
         
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: `Task ${id} not found or update failed.` });
-        }
+        if (result.rowCount === 0) return res.status(404).json({ error: `Task ${id} not found.` });
 
         return res.status(200).json({ success: true });
-        
       } catch (putError) {
         console.error("Database Update Error:", putError);
         return res.status(500).json({ error: putError.message });
