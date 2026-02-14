@@ -35,28 +35,28 @@
                 <div class="col-action">ACTION</div>
             </div>
 
-            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-dynamic-post" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Dynamic Post Labelling</div>
                 <div class="col-pending">842 <span class="sub-text">Items</span></div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='video-labelling.html'">
+            <div id="queue-video" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='video-labelling.html'">
                 <div class="col-tenant"><span class="badge-tenant">Video Team</span></div>
                 <div class="col-name">Video Labelling</div>
                 <div class="col-pending">528 <span class="sub-text">Items</span></div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-image" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Image Labelling</div>
                 <div class="col-pending">420 <span class="sub-text">Items</span></div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-text" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Text Labelling</div>
                 <div class="col-pending">315 <span class="sub-text">Items</span></div>
@@ -67,6 +67,18 @@
     </main>
 
     <script src="auth.js"></script>
-    <script>Auth.requireLogin();</script>
+    <script>
+        const user = Auth.requireLogin();
+
+        // --- ROLE BASED VISIBILITY ---
+        // Hide Data Team queues for Moderators
+        if (user.role === 'Moderator') {
+            const hiddenQueues = ['queue-dynamic-post', 'queue-image', 'queue-text'];
+            hiddenQueues.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+        }
+    </script>
 </body>
 </html>
