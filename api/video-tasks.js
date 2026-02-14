@@ -22,7 +22,6 @@ export default async function handler(req, res) {
             t.id, t.tenant, t.title, t.content, t.created_by,
             t.created_time, t.video_uid, t.video_duration, t.raw_media_url
         );
-        // CHANGED: Added NOW() at the end for upload_time
         return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, NOW())`;
       }).join(', ');
 
@@ -36,10 +35,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: `Successfully uploaded ${tasks.length} tasks.` });
     }
 
-    // --- GET: Fetch Next Task ---
+    // --- GET: Fetch Next Task & Remaining Count ---
     if (req.method === 'GET') {
       const { username } = req.query;
-      const query = `
+
+      // 1. Query to fetch and lock the next pending task
+      const taskQuery = `
         UPDATE video_labelling_tasks
         SET status = 'in_progress', 
             assigned_to = $1, 
@@ -54,15 +55,27 @@ export default async function handler(req, res) {
         )
         RETURNING *
       `;
-      const { rows } = await client.query(query, [username]);
-      return res.status(200).json({ task: rows[0] || null });
+
+      // 2. Query to count all tasks that are not yet completed
+      const countQuery = `
+        SELECT COUNT(*) as remaining 
+        FROM video_labelling_tasks 
+        WHERE status IN ('pending', 'in_progress')
+      `;
+
+      const taskRes = await client.query(taskQuery, [username]);
+      const countRes = await client.query(countQuery);
+
+      return res.status(200).json({ 
+        task: taskRes.rows[0] || null,
+        remaining: parseInt(countRes.rows[0].remaining) || 0
+      });
     }
 
     // --- PUT: Submit Label (Added turnaround_time & handling_time) ---
     if (req.method === 'PUT') {
       const { id, label, remarks } = req.body;
       
-      // CHANGED: Added calculations for turnaround_time and handling_time
       const query = `
         UPDATE video_labelling_tasks 
         SET status = 'completed', 
@@ -89,7 +102,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- DELETE: Export & Wipe (Added new columns to export) ---
+    // --- DELETE: Export & Wipe ---
     if (req.method === 'DELETE') {
       try {
         await client.query('BEGIN');
@@ -104,7 +117,6 @@ export default async function handler(req, res) {
         await client.query(`DELETE FROM video_labelling_tasks`);
         await client.query('COMMIT');
 
-        // CHANGED: Added new columns to headers
         const headers = [
           "id", "tenant", "title", "content", "created_by", 
           "created_time", "video_uid", "video_duration", "raw_media_url",
@@ -120,10 +132,8 @@ export default async function handler(req, res) {
           const line = [
             row.source_id, row.tenant, row.title, row.content, row.created_by,
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
-            // Moderation Data
             row.label, row.remarks, row.assigned_to, 
             row.assigned_at, row.updated_at, row.status,
-            // CHANGED: Added new column data
             row.upload_time, row.turnaround_time, row.handling_time
           ].map(safe).join(",");
           csv += line + "\n";
