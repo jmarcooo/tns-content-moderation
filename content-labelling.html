@@ -9,8 +9,37 @@
         .icon-svg { width: 14px; height: 14px; fill: currentColor; vertical-align: middle; margin-right: 4px; opacity: 0.7; }
         .back-nav { margin-bottom: 15px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; text-decoration: none; }
         .back-nav:hover { color: var(--accent-blue); }
-        /* Added a loading style for the count */
         .loading-count { opacity: 0.5; font-style: italic; }
+
+        /* --- TABLE LAYOUT --- */
+        /* Updated Grid Template to include Completion Rate */
+        .grid-layout { display: grid; grid-template-columns: 130px 2.5fr 1fr 1fr 100px; gap: 15px; align-items: center; }
+
+        /* Unified Header Styles */
+        .list-header-row { 
+            padding: 0 20px; margin-bottom: 8px; 
+        }
+        .list-header-row > div {
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+
+        /* Action Column Alignment */
+        .col-action { 
+            display: flex; 
+            justify-content: center; /* Center horizontally */
+            align-items: center;
+        }
+        
+        .col-completion {
+            font-family: "Inter", monospace;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -30,38 +59,45 @@
         </div>
 
         <div class="queue-container list-mode">
-            <div class="list-header-row" style="grid-template-columns: 150px 2.5fr 1fr 100px;">
+            <div class="list-header-row grid-layout">
                 <div class="col-tenant">SOURCE</div>
                 <div class="col-name">QUEUE NAME</div>
                 <div class="col-pending">PENDING</div>
+                <div class="col-completion">COMPLETION RATE</div>
                 <div class="col-action">ACTION</div>
             </div>
 
-            <div id="queue-dynamic-post" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-dynamic-post" class="queue-list-item grid-layout" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Dynamic Post Labelling</div>
                 <div class="col-pending">842 <span class="sub-text">Items</span></div>
+                <div class="col-completion">45%</div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div id="queue-video" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='video-labelling.html'">
+            <div id="queue-video" class="queue-list-item grid-layout" onclick="window.location.href='video-labelling.html'">
                 <div class="col-tenant"><span class="badge-tenant">TNS Team</span></div>
                 <div class="col-name">Video Labelling</div>
-                <div class="col-pending"><span id="video-pending-count" class="loading-count">Loading...</span> <span class="sub-text">Items</span></div>
+                <div class="col-pending">
+                    <span id="video-pending-count" class="loading-count">Loading...</span> <span class="sub-text">Items</span>
+                </div>
+                <div class="col-completion" id="video-completion-rate">--%</div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div id="queue-image" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-image" class="queue-list-item grid-layout" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Image Labelling</div>
                 <div class="col-pending">420 <span class="sub-text">Items</span></div>
+                <div class="col-completion">62%</div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
 
-            <div id="queue-text" class="queue-list-item" style="grid-template-columns: 150px 2.5fr 1fr 100px;" onclick="window.location.href='labelling-review.html'">
+            <div id="queue-text" class="queue-list-item grid-layout" onclick="window.location.href='labelling-review.html'">
                 <div class="col-tenant"><span class="badge-tenant">Data Team</span></div>
                 <div class="col-name">Text Labelling</div>
                 <div class="col-pending">315 <span class="sub-text">Items</span></div>
+                <div class="col-completion">33%</div>
                 <div class="col-action"><button class="btn-review">Start</button></div>
             </div>
         </div>
@@ -89,21 +125,14 @@
             rows.forEach(row => {
                 // Only count rows that are visible
                 if (row.style.display !== 'none') {
-                    const pendingDiv = row.querySelector('.col-pending');
-                    // We only want the direct text node or the span that holds the number, not the "Items" sub-text
-                    // Note: The Video queue uses a specific span ID now.
                     let countText = "";
                     if (row.id === 'queue-video') {
                          countText = document.getElementById('video-pending-count').innerText;
                     } else {
-                         // For hardcoded ones, just grab the raw text and clean it
-                         countText = pendingDiv.innerText;
+                         countText = row.querySelector('.col-pending').innerText;
                     }
 
-                    // If it says "Loading...", treat it as 0 for now
-                    if(countText.includes("Loading")) countText = "0";
-
-                    // Remove commas and non-digits, then parse
+                    if(countText.includes("Loading") || countText.includes("Error")) countText = "0";
                     const count = parseInt(countText.replace(/[^\d]/g, ''), 10) || 0;
                     total += count;
                 }
@@ -112,39 +141,53 @@
             document.getElementById('header-total-pending').innerText = total.toLocaleString();
         }
 
-
-        // --- 3. FETCH REAL DATABASE COUNT FOR VIDEO ---
-        async function fetchVideoCount() {
+        // --- 3. FETCH REAL DATABASE STATS FOR VIDEO ---
+        async function fetchVideoStats() {
             const countSpan = document.getElementById('video-pending-count');
-            if (!countSpan || user.role !== 'Moderator' && user.role !== 'Admin') return;
+            const rateSpan = document.getElementById('video-completion-rate');
+            
+            // Allow fetch even if hidden, so we have data if permissions change, 
+            // but primarily useful for Mods/Admins
+            if (!countSpan) return;
 
             try {
-                // We call the existing API. We don't need to provide a username just to get the total count.
                 const res = await fetch('/api/video-tasks');
                 const data = await res.json();
 
                 if (data.remaining !== undefined) {
-                    // Update text and remove loading class
+                    // Update Pending Count
                     countSpan.innerText = data.remaining.toLocaleString();
                     countSpan.classList.remove('loading-count');
                     
-                    // IMPORTANT: Recalculate header total now that we have the real number
+                    // Update Completion Rate
+                    const total = data.total || 0;
+                    const completed = data.completed || 0;
+                    let percentage = 0;
+                    
+                    if (total > 0) {
+                        percentage = Math.round((completed / total) * 100);
+                    }
+                    
+                    rateSpan.innerText = `${percentage}%`;
+                    
+                    // Add color coding for rate
+                    if(percentage >= 80) rateSpan.style.color = '#238636'; // Green
+                    else if (percentage >= 50) rateSpan.style.color = '#d29922'; // Orange
+                    else rateSpan.style.color = '#text-main';
+
+                    // Recalculate header total
                     updateTotalPending();
-                } else {
-                     throw new Error("Invalid data format");
-                }
+                } 
             } catch (err) {
-                console.error("Failed to fetch video tasks count:", err);
+                console.error("Failed to fetch video stats:", err);
                 countSpan.innerText = "Error";
                 countSpan.style.color = "#cf222e";
             }
         }
 
         // Initialize
-        // 1. Run calculation once immediately for hardcoded values (and placeholders)
         updateTotalPending();
-        // 2. Fetch the real data for video queue
-        fetchVideoCount();
+        fetchVideoStats();
 
     </script>
 </body>
