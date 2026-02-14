@@ -22,12 +22,12 @@ export default async function handler(req, res) {
             t.id, t.tenant, t.title, t.content, t.created_by,
             t.created_time, t.video_uid, t.video_duration, t.raw_media_url
         );
-        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9})`;
+        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, NOW())`;
       }).join(', ');
 
       const query = `
         INSERT INTO video_labelling_tasks 
-        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url)
+        (source_id, tenant, title, content, created_by, created_time, video_uid, video_duration, raw_media_url, upload_time)
         VALUES ${placeholders}
       `;
 
@@ -72,20 +72,37 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- PUT: Submit Label (FIXED: Removed time columns) ---
+    // --- PUT: Submit Label (Enhanced Error Handling) ---
     if (req.method === 'PUT') {
-      const { id, label, remarks } = req.body;
-      
-      const query = `
-        UPDATE video_labelling_tasks 
-        SET status = 'completed', 
-            label = $1, 
-            remarks = $2, 
-            updated_at = NOW()
-        WHERE internal_id = $3
-      `;
-      await client.query(query, [label, remarks, id]);
-      return res.status(200).json({ success: true });
+      try {
+        const { id, label, remarks } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ error: "Task ID is missing from request." });
+        }
+
+        const query = `
+            UPDATE video_labelling_tasks 
+            SET status = 'completed', 
+                label = $1, 
+                remarks = $2, 
+                updated_at = NOW()
+            WHERE internal_id = $3
+        `;
+        
+        const result = await client.query(query, [label, remarks, id]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: `Task ${id} not found or update failed.` });
+        }
+
+        return res.status(200).json({ success: true });
+        
+      } catch (putError) {
+        console.error("Database Update Error:", putError);
+        // Return the specific SQL error message to the frontend
+        return res.status(500).json({ error: putError.message });
+      }
     }
 
     // --- PATCH: Release Task ---
@@ -119,7 +136,8 @@ export default async function handler(req, res) {
           "id", "tenant", "title", "content", "created_by", 
           "created_time", "video_uid", "video_duration", "raw_media_url",
           "Moderation Label", "Moderation Remarks", "Moderated By", 
-          "Task Assigned Time", "Task Completed Time", "Status"
+          "Task Assigned Time", "Task Completed Time", "Status",
+          "Upload Time"
         ];
         
         let csv = headers.join(",") + "\n";
@@ -130,7 +148,8 @@ export default async function handler(req, res) {
             row.source_id, row.tenant, row.title, row.content, row.created_by,
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
             row.label, row.remarks, row.assigned_to, 
-            row.assigned_at, row.updated_at, row.status
+            row.assigned_at, row.updated_at, row.status,
+            row.upload_time
           ].map(safe).join(",");
           csv += line + "\n";
         });
