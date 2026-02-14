@@ -38,9 +38,12 @@ export default async function handler(req, res) {
     // --- GET: Fetch Next Task & Stats ---
     if (req.method === 'GET') {
       const { username } = req.query;
+      
+      // FIXED: Stats-only fetch (when username is missing/null) shouldn't try to assign tasks
+      // But if this is a "workbench" fetch, username is required.
+      // We'll separate logic slightly.
 
-      // 0. AUTO-FIX: Release stuck tasks ("Ghost" tasks)
-      // Resets tasks that are 'in_progress' but have NO assignee OR are stale (>24h)
+      // 0. AUTO-FIX: Release stuck tasks
       const cleanupQuery = `
         UPDATE video_labelling_tasks
         SET status = 'pending', assigned_to = NULL, assigned_at = NULL
@@ -49,38 +52,42 @@ export default async function handler(req, res) {
       `;
       await client.query(cleanupQuery);
 
-      // 1. Fetch Task Logic (Prioritize In-Progress for THIS user)
-      const existingTaskQuery = `
-        SELECT * FROM video_labelling_tasks 
-        WHERE assigned_to = $1 AND status = 'in_progress'
-        ORDER BY assigned_at ASC
-        LIMIT 1
-      `;
-      
-      const existingRes = await client.query(existingTaskQuery, [username]);
       let task = null;
 
-      if (existingRes.rows.length > 0) {
-        task = existingRes.rows[0];
-      } else {
-        // Lock and assign the next pending task
-        const newTaskQuery = `
-          UPDATE video_labelling_tasks
-          SET status = 'in_progress', 
-              assigned_to = $1, 
-              assigned_at = COALESCE(assigned_at, NOW()), 
-              updated_at = NOW()
-          WHERE internal_id = (
-            SELECT internal_id FROM video_labelling_tasks
-            WHERE status = 'pending'
-            ORDER BY internal_id ASC
-            FOR UPDATE SKIP LOCKED
+      // Only attempt to fetch/assign a task if a valid username is provided
+      if (username && username !== 'undefined' && username !== 'null') {
+          // 1. Fetch Task Logic (Prioritize In-Progress for THIS user)
+          const existingTaskQuery = `
+            SELECT * FROM video_labelling_tasks 
+            WHERE assigned_to = $1 AND status = 'in_progress'
+            ORDER BY assigned_at ASC
             LIMIT 1
-          )
-          RETURNING *
-        `;
-        const newRes = await client.query(newTaskQuery, [username]);
-        task = newRes.rows[0] || null;
+          `;
+          
+          const existingRes = await client.query(existingTaskQuery, [username]);
+
+          if (existingRes.rows.length > 0) {
+            task = existingRes.rows[0];
+          } else {
+            // Lock and assign the next pending task
+            const newTaskQuery = `
+              UPDATE video_labelling_tasks
+              SET status = 'in_progress', 
+                  assigned_to = $1, 
+                  assigned_at = COALESCE(assigned_at, NOW()), 
+                  updated_at = NOW()
+              WHERE internal_id = (
+                SELECT internal_id FROM video_labelling_tasks
+                WHERE status = 'pending'
+                ORDER BY internal_id ASC
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+              )
+              RETURNING *
+            `;
+            const newRes = await client.query(newTaskQuery, [username]);
+            task = newRes.rows[0] || null;
+          }
       }
 
       // 2. Count Stats
@@ -103,14 +110,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- PUT: Submit Label (FIXED: Time calculation in Seconds) ---
+    // --- PUT: Submit Label ---
     if (req.method === 'PUT') {
       try {
         const { id, label, remarks } = req.body;
         
         if (!id) return res.status(400).json({ error: "Task ID is missing." });
 
-        // UPDATED: Used EXTRACT(EPOCH FROM ...) :: INTEGER to save raw seconds
         const query = `
             UPDATE video_labelling_tasks 
             SET status = 'completed', 
