@@ -39,7 +39,18 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { username } = req.query;
 
-      // 1. Fetch Task Logic (Prioritize In-Progress)
+      // 0. AUTO-FIX: Release stuck tasks
+      // This resets any task that is 'in_progress' but has NO assignee (ghost task)
+      // It also resets tasks that have been 'in_progress' for > 24 hours (stale)
+      const cleanupQuery = `
+        UPDATE video_labelling_tasks
+        SET status = 'pending', assigned_to = NULL, assigned_at = NULL
+        WHERE (status = 'in_progress' AND assigned_to IS NULL)
+           OR (status = 'in_progress' AND updated_at < NOW() - INTERVAL '24 hours')
+      `;
+      await client.query(cleanupQuery);
+
+      // 1. Fetch Task Logic (Prioritize In-Progress for THIS user)
       const existingTaskQuery = `
         SELECT * FROM video_labelling_tasks 
         WHERE assigned_to = $1 AND status = 'in_progress'
@@ -53,6 +64,7 @@ export default async function handler(req, res) {
       if (existingRes.rows.length > 0) {
         task = existingRes.rows[0];
       } else {
+        // Lock and assign the next pending task
         const newTaskQuery = `
           UPDATE video_labelling_tasks
           SET status = 'in_progress', 
@@ -72,7 +84,7 @@ export default async function handler(req, res) {
         task = newRes.rows[0] || null;
       }
 
-      // 2. Count Stats (Completed, Remaining, Total)
+      // 2. Count Stats
       const statsQuery = `
         SELECT 
             COUNT(*) FILTER (WHERE status IN ('pending', 'in_progress')) as remaining,
@@ -92,21 +104,22 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- PUT: Submit Label ---
+    // --- PUT: Submit Label (FIXED: Time calculation in Seconds) ---
     if (req.method === 'PUT') {
       try {
         const { id, label, remarks } = req.body;
         
         if (!id) return res.status(400).json({ error: "Task ID is missing." });
 
+        // UPDATED: Used EXTRACT(EPOCH FROM ...) :: INTEGER to save raw seconds
         const query = `
             UPDATE video_labelling_tasks 
             SET status = 'completed', 
                 label = $1, 
                 remarks = $2, 
                 updated_at = NOW(),
-                handling_time = (NOW() - assigned_at),
-                turnaround_time = (NOW() - upload_time)
+                handling_time = EXTRACT(EPOCH FROM (NOW() - assigned_at))::INTEGER,
+                turnaround_time = EXTRACT(EPOCH FROM (NOW() - upload_time))::INTEGER
             WHERE internal_id = $3
         `;
         
@@ -153,7 +166,7 @@ export default async function handler(req, res) {
           "created_time", "video_uid", "video_duration", "raw_media_url",
           "Moderation Label", "Moderation Remarks", "Moderated By", 
           "Task Assigned Time", "Task Completed Time", "Status",
-          "Upload Time", "Handling Time", "Turnaround Time"
+          "Upload Time", "Handling Time (sec)", "Turnaround Time (sec)"
         ];
         
         let csv = headers.join(",") + "\n";
