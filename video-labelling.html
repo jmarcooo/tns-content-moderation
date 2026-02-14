@@ -162,6 +162,7 @@
         .btn-primary { background-color: #1f883d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 2; transition: all 0.2s; font-size: 0.9rem; }
         .btn-secondary:hover { background-color: var(--btn-sec-hover); border-color: #8b949e; }
         .btn-primary:hover { background-color: #1a7f37; }
+        .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
         .action-row { display: flex; gap: 10px; margin-top: auto; }
 
         #queue-title { color: var(--text-main); margin: 0; margin-right: 20px; font-size: 1.4rem; letter-spacing: -0.5px; font-weight: 600; }
@@ -264,8 +265,8 @@
                         </div>
 
                         <div class="action-row">
-                            <button onclick="VideoApp.submit(true)" class="btn-secondary">Submit & Leave</button>
-                            <button onclick="VideoApp.submit(false)" class="btn-primary">Submit & Next</button>
+                            <button id="btn-submit-leave" onclick="VideoApp.submit(true)" class="btn-secondary">Submit & Leave</button>
+                            <button id="btn-submit-next" onclick="VideoApp.submit(false)" class="btn-primary">Submit & Next</button>
                         </div>
                     </div>
                 </div>
@@ -394,8 +395,26 @@
 
             async submit(isLeaving) {
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
+                if(this.isSubmitting) return; // Prevent double submission
                 this.isSubmitting = true;
                 
+                // --- UI LOADING STATE ---
+                const btnLeave = document.getElementById('btn-submit-leave');
+                const btnNext = document.getElementById('btn-submit-next');
+                
+                // Disable buttons to prevent multiple clicks
+                if(btnLeave) btnLeave.disabled = true;
+                if(btnNext) btnNext.disabled = true;
+
+                // Change text to show loading state
+                if(isLeaving && btnLeave) {
+                    btnLeave.dataset.originalText = btnLeave.innerText; 
+                    btnLeave.innerHTML = '⏳ Submitting...';
+                } else if(!isLeaving && btnNext) {
+                    btnNext.dataset.originalText = btnNext.innerText; 
+                    btnNext.innerHTML = '⏳ Submitting...';
+                }
+
                 const finalRemarks = this.tags.join(', ');
 
                 try { 
@@ -409,31 +428,41 @@
                         }) 
                     });
 
-                    // Parse JSON response regardless of status
                     const data = await res.json();
 
                     if(res.ok) { 
                         this.count++; 
-                        // FIXED: Check existence of session-counter before updating
                         const counter = document.getElementById('session-counter');
                         if (counter) counter.innerText = this.count;
                         
-                        this.isSubmitting = false; 
                         if (isLeaving) { 
                             alert("✅ Submitted."); 
                             window.location.href = 'content-labelling.html'; 
                         } else { 
-                            this.fetchNextTask(); 
+                            // Only fetch next if successful
+                            await this.fetchNextTask(); 
                         } 
                     } else {
-                        // Throw specific error from backend
                         throw new Error(data.error || "Submit failed");
                     }
                 } catch(err) { 
-                    this.isSubmitting = false; 
-                    // Show specific error in alert
                     alert("Error submitting: " + err.message); 
                     console.error("Full Submit Error:", err);
+                } finally {
+                    // Reset UI State (Only if not leaving, or if error occurred)
+                    // If we are leaving and success, the page redirects so this doesn't matter much, 
+                    // but if it failed, we must re-enable.
+                    if (!isLeaving || (isLeaving && document.getElementById('btn-submit-leave').innerText.includes('Submitting'))) {
+                        this.isSubmitting = false;
+                        if(btnLeave) {
+                            btnLeave.disabled = false;
+                            if(btnLeave.dataset.originalText) btnLeave.innerText = btnLeave.dataset.originalText;
+                        }
+                        if(btnNext) {
+                            btnNext.disabled = false;
+                            if(btnNext.dataset.originalText) btnNext.innerText = btnNext.dataset.originalText;
+                        }
+                    }
                 }
             }
         };
