@@ -414,7 +414,10 @@
 
                     if(res.ok) { 
                         this.count++; 
-                        document.getElementById('session-counter').innerText = this.count; 
+                        // FIXED: Check existence of session-counter before updating
+                        const counter = document.getElementById('session-counter');
+                        if (counter) counter.innerText = this.count;
+                        
                         this.isSubmitting = false; 
                         if (isLeaving) { 
                             alert("✅ Submitted."); 
