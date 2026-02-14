@@ -12,15 +12,17 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // =========================================
-    // 2. GET CURRENT USER
+    // 2. AUTHENTICATION CHECK (STRICT)
     // =========================================
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || { 
-        name: 'Guest', 
-        username: 'guest', 
-        email: 'guest@example.com', 
-        role: 'Visitor',
-        status: 'Online' 
-    };
+    const userRaw = sessionStorage.getItem('currentUser');
+    
+    if (!userRaw) {
+        // No user found, redirect immediately
+        window.location.href = 'login.html';
+        return; // Stop further execution
+    }
+
+    const currentUser = JSON.parse(userRaw);
 
     const APP_LANG = localStorage.getItem('appLang') || 'en';
     const T = {
@@ -44,15 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // =========================================
-    // 4. ROLE-BASED NAVIGATION LOGIC (PERMISSIONS)
+    // 4. ROLE-BASED NAVIGATION LOGIC
     // =========================================
     let navLinksHTML = '';
     let settingsHTML = '';
 
     if (currentUser.role === 'Moderator') {
         // --- MODERATOR VIEW ---
-        // VISIBLE: Only "Moderation". 
-        // HIDDEN: "Video Labelling" (removed from sidebar), Overview, Users, Settings.
         navLinksHTML = `
             <li><a href="moderation.html" id="link-mod">${ICONS.mod}<span>${T.mod}</span></a></li>
         `;
@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================
     const path = window.location.pathname;
     
-    // Admin Links Mapping
+    // Admin Links
     const links = {
         'home.html': 'link-home',
         'user-management.html': 'link-users',
@@ -142,21 +142,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle Active State
     if (currentUser.role === 'Moderator') {
-        // For Moderators:
-        // If they are on the Moderation dashboard OR inside Video Labelling, highlight "Moderation"
-        if (path.includes('moderation.html') || 
-            path.includes('content-moderation.html') || 
-            path.includes('review.html') || 
-            path.includes('video-labelling.html')) {
-            
+        if (path.includes('video-labelling.html') || path.includes('moderation.html') || path.includes('content-moderation.html') || path.includes('review.html')) {
             document.getElementById('link-mod')?.classList.add('active');
         }
     } else {
-        // For Admin
         for (const [key, id] of Object.entries(links)) {
             if (path.includes(key)) document.getElementById(id)?.classList.add('active');
         }
-        // Special case: Admin viewing video-labelling highlights 'Moderation'
         if (path.includes('video-labelling.html')) {
             document.getElementById('link-mod')?.classList.add('active');
         }
