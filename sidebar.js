@@ -51,9 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let settingsHTML = '';
 
     if (currentUser.role === 'Moderator') {
-        // --- MODERATOR VIEW (Restricted) ---
-        // Only allow Video Labelling. Settings hidden.
+        // --- MODERATOR VIEW ---
+        // Visible: Moderation, Video Labelling
+        // Hidden: Overview, Users, Audit, Notifications, Settings
         navLinksHTML = `
+            <li><a href="moderation.html" id="link-mod">${ICONS.mod}<span>${T.mod}</span></a></li>
             <li><a href="video-labelling.html" id="link-vid-mod">${ICONS.vid}<span>${T.vidLabel}</span></a></li>
         `;
         settingsHTML = ''; // No Settings for Mods
@@ -130,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================
     const path = window.location.pathname;
     
-    // Admin Links
+    // Admin Links Mapping
     const links = {
         'home.html': 'link-home',
         'user-management.html': 'link-users',
@@ -142,16 +144,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle Active State
     if (currentUser.role === 'Moderator') {
-        // For Moderator, video-labelling is the main link
+        // Moderator Active Logic
         if (path.includes('video-labelling.html')) {
             document.getElementById('link-vid-mod')?.classList.add('active');
+        } else if (path.includes('moderation.html') || path.includes('content-moderation.html') || path.includes('review.html')) {
+            document.getElementById('link-mod')?.classList.add('active');
         }
     } else {
-        // For Admin
+        // Admin Active Logic
         for (const [key, id] of Object.entries(links)) {
             if (path.includes(key)) document.getElementById(id)?.classList.add('active');
         }
-        // Special case: Admin viewing video-labelling falls under Moderation
+        // Special case for Admin: viewing video-labelling highlights 'Moderation'
         if (path.includes('video-labelling.html')) {
             document.getElementById('link-mod')?.classList.add('active');
         }
