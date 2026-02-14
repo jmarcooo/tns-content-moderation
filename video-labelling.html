@@ -58,7 +58,7 @@
         
         .content-canvas { 
             display: flex; flex-direction: column; height: 100%; 
-            overflow: hidden; /* Prevent body scroll, let children scroll */
+            overflow: hidden; 
             padding: 20px 32px; background-color: var(--bg-body); box-sizing: border-box; 
         }
         
@@ -76,13 +76,13 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
         }
         
-        /* ADAPTIVE CONTEXT BOX (Fills remaining space) */
+        /* ADAPTIVE CONTEXT BOX */
         .context-box { 
             background-color: var(--bg-canvas); 
             border: 1px solid var(--border-color); 
             border-radius: 8px; padding: 16px; 
-            flex-grow: 1; /* Key to filling space */
-            overflow-y: auto; /* Scroll internally if content is long */
+            flex-grow: 1; 
+            overflow-y: auto; 
             display: flex; flex-direction: column;
         }
         
@@ -93,7 +93,7 @@
             border: 1px solid var(--border-color); 
             border-radius: 8px; padding: 20px; 
             display: flex; flex-direction: column; gap: 16px; height: 100%; 
-            overflow-y: auto; /* Scroll if actions overflow */
+            overflow-y: auto; 
         }
 
         /* --- SIDEBAR INFO CARDS --- */
@@ -198,7 +198,7 @@
             
             <div style="display: flex; gap: 20px; align-items: center;">
                 <span style="font-size:0.85rem; color: var(--text-muted);">Handling Time: <span id="timer" class="timer-badge">00:00:00</span></span>
-                <span style="font-size:0.85rem; color: var(--text-muted);">My Count: <span id="session-counter" style="color:var(--text-main); font-weight:bold;">0</span></span>
+                <span style="font-size:0.85rem; color: var(--text-muted);">Tasks Remaining: <span id="tasks-remaining" style="color:var(--text-main); font-weight:bold;">0</span></span>
             </div>
         </div>
 
@@ -342,13 +342,37 @@
             async exportAndWipe() { if(!confirm("⚠️ Download & Delete?")) return; try { const res = await fetch('/api/video-tasks', { method: 'DELETE' }); if(res.status===404){alert("Empty.");return;} if(!res.ok)throw new Error("Failed"); const b=await res.blob(); const u=window.URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`batch_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("✅ Done!"); location.reload(); } catch(e){alert("Error");} },
 
             async fetchNextTask() {
-                document.getElementById('loader').style.display = 'flex'; document.getElementById('workbench').style.display = 'none'; document.getElementById('empty-state').style.display = 'none';
-                this.selectedLabel = null; document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
-                this.tags = []; this.renderTags();
+                document.getElementById('loader').style.display = 'flex'; 
+                document.getElementById('workbench').style.display = 'none'; 
+                document.getElementById('empty-state').style.display = 'none';
+                
+                this.selectedLabel = null; 
+                document.querySelectorAll('.btn-label').forEach(b => b.classList.remove('selected'));
+                this.tags = []; 
+                this.renderTags();
 
-                try { const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); const data = await res.json();
-                    if(data.task) { this.renderTask(data.task); this.startTimer(); } else { document.getElementById('loader').style.display = 'none'; document.getElementById('empty-state').style.display = 'flex'; this.stopTimer(); }
-                } catch(err) { document.getElementById('error-msg').innerText = err.message; document.getElementById('retry-btn').style.display = 'block'; }
+                try { 
+                    const res = await fetch(`/api/video-tasks?username=${this.currentUser.username}`); 
+                    const data = await res.json();
+                    
+                    // Update the remaining count display
+                    const remainingEl = document.getElementById('tasks-remaining');
+                    if (remainingEl) {
+                        remainingEl.innerText = data.remaining.toLocaleString();
+                    }
+
+                    if(data.task) { 
+                        this.renderTask(data.task); 
+                        this.startTimer(); 
+                    } else { 
+                        document.getElementById('loader').style.display = 'none'; 
+                        document.getElementById('empty-state').style.display = 'flex'; 
+                        this.stopTimer(); 
+                    }
+                } catch(err) { 
+                    document.getElementById('error-msg').innerText = err.message; 
+                    document.getElementById('retry-btn').style.display = 'block'; 
+                }
             },
 
             renderTask(task) {
@@ -372,7 +396,6 @@
                 if(!this.selectedLabel) { alert("Please select a category"); return; }
                 this.isSubmitting = true;
                 
-                // CHANGED: Only submit tags, no notes and no [Tags: ] wrapper
                 const finalRemarks = this.tags.join(', ');
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
