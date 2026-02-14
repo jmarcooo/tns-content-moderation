@@ -13,27 +13,29 @@
         .loading-count { opacity: 0.5; font-style: italic; }
 
         /* --- TABLE LAYOUT --- */
-        .grid-layout { display: grid; grid-template-columns: 130px 2.5fr 1fr 1fr 100px; gap: 15px; align-items: center; }
+        /* Adjusted last column to auto to fit admin buttons */
+        .grid-layout { display: grid; grid-template-columns: 130px 2.5fr 1fr 1fr auto; gap: 15px; align-items: center; }
 
-        .list-header-row { 
-            padding: 0 20px; margin-bottom: 8px; 
-        }
+        .list-header-row { padding: 0 20px; margin-bottom: 8px; }
         .list-header-row > div {
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
+            font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        .col-action { display: flex; justify-content: center; align-items: center; }
+        .col-action { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         .col-completion { font-family: "Inter", monospace; font-size: 0.9rem; color: var(--text-main); font-weight: 500; }
 
-        /* --- ADMIN BUTTONS --- */
-        .btn-header { color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; margin-left: 10px; }
-        .btn-upload { background-color: #238636; } .btn-upload:hover { background-color: #2ea043; }
-        .btn-export { background-color: #cf222e; } .btn-export:hover { background-color: #d93f48; }
-        #admin-controls { display: none; align-items: center; margin-left: auto; }
+        /* --- COMPACT ADMIN BUTTONS --- */
+        .admin-actions { display: none; align-items: center; gap: 6px; padding-left: 8px; border-left: 1px solid var(--border-color); margin-left: 8px; }
+        
+        .btn-icon-compact {
+            background: transparent; border: 1px solid var(--border-color); border-radius: 4px;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-muted); transition: all 0.2s;
+        }
+        .btn-icon-compact:hover { background-color: var(--bg-canvas); color: var(--text-main); border-color: var(--accent-blue); }
+        .btn-icon-compact.danger:hover { color: #cf222e; border-color: #cf222e; background-color: #fff5f5; }
+        .btn-icon-compact svg { width: 16px; height: 16px; opacity: 0.8; }
+        
     </style>
 </head>
 <body>
@@ -44,31 +46,11 @@
         
         <a href="moderation.html" class="back-nav">← Back to Dashboard</a>
 
-        <div class="header" style="display: flex; align-items: center; justify-content: space-between;">
-            <div>
-                <h1>Content Labelling</h1>
-            </div>
-            
-            <div style="display: flex; align-items: center;">
-                <div id="admin-controls">
-                    <button class="btn-header btn-upload" onclick="document.getElementById('csvInput').click()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px; margin:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Upload CSV
-                    </button>
-                    <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="App.uploadCSV(this)">
-                    
-                    <button class="btn-header btn-export" onclick="App.exportAndWipe()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg" style="width:16px;height:16px; margin:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Wipe & Download
-                    </button>
-                    
-                    <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 15px;"></div>
-                </div>
-
-                <div style="text-align: right;">
-                    <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
-                    <strong id="header-total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">...</strong>
-                </div>
+        <div class="header">
+            <h1>Content Labelling</h1>
+            <div style="text-align: right; margin-left: 20px;">
+                <span style="color:var(--text-muted); font-size:0.9rem;">Total Pending:</span>
+                <strong id="header-total-pending" style="font-size:1.2rem; color:var(--text-header); margin-left:5px;">...</strong>
             </div>
         </div>
 
@@ -78,7 +60,7 @@
                 <div class="col-name">QUEUE NAME</div>
                 <div class="col-pending">PENDING</div>
                 <div class="col-completion">COMPLETION RATE</div>
-                <div class="col-action">ACTION</div>
+                <div class="col-action" style="padding-right: 10px;">ACTION</div>
             </div>
 
             <div id="queue-dynamic-post" class="queue-list-item grid-layout" onclick="window.location.href='labelling-review.html'">
@@ -96,7 +78,21 @@
                     <span id="video-pending-count" class="loading-count">Loading...</span> <span class="sub-text">Items</span>
                 </div>
                 <div class="col-completion" id="video-completion-rate">--%</div>
-                <div class="col-action"><button class="btn-review">Start</button></div>
+                
+                <div class="col-action">
+                    <button class="btn-review">Start</button>
+                    
+                    <div class="admin-actions" id="admin-actions-video" onclick="event.stopPropagation()">
+                        <button class="btn-icon-compact" title="Upload CSV" onclick="document.getElementById('csvInput-video').click()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </button>
+                        <input type="file" id="csvInput-video" accept=".csv" style="display:none" onchange="App.uploadCSV(this, '/api/video-tasks')">
+
+                        <button class="btn-icon-compact danger" title="Wipe & Download" onclick="App.exportAndWipe('/api/video-tasks')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div id="queue-image" class="queue-list-item grid-layout" onclick="window.location.href='labelling-review.html'">
@@ -138,9 +134,10 @@
                         if (el) el.style.display = 'none';
                     });
                 }
-                // Show Admin Controls for Admins
+                // Show Admin Actions for Admins
                 if (user.role === 'Admin') {
-                    document.getElementById('admin-controls').style.display = 'flex';
+                    // Show actions specifically for Video queue (and others later)
+                    document.getElementById('admin-actions-video').style.display = 'flex';
                 }
             },
 
@@ -194,9 +191,13 @@
                 }
             },
 
-            // --- ADMIN FUNCTIONS ---
-            uploadCSV(input) {
+            // --- ADMIN FUNCTIONS (Targeted) ---
+            uploadCSV(input, apiUrl) {
                 const file = input.files[0]; if(!file) return;
+                
+                // Prevent bubbling immediately just in case
+                if(event) event.stopPropagation();
+
                 Papa.parse(file, { header: true, skipEmptyLines: true, complete: async function(results) {
                     const tasks = []; 
                     results.data.forEach(row => { 
@@ -216,17 +217,17 @@
                     });
                     
                     if (tasks.length === 0) { alert("❌ No valid rows found."); return; }
-                    if (!confirm(`Ready to upload ${tasks.length} tasks?`)) return;
+                    if (!confirm(`Ready to upload ${tasks.length} tasks to this queue?`)) return;
                     
                     try { 
-                        const res = await fetch('/api/video-tasks', { 
+                        const res = await fetch(apiUrl, { 
                             method: 'POST', 
                             headers: {'Content-Type': 'application/json'}, 
                             body: JSON.stringify({ tasks }) 
                         }); 
                         if(res.ok) { 
                             alert("✅ Uploaded successfully!"); 
-                            location.reload(); // Refresh to show new counts
+                            location.reload(); 
                         } else {
                             alert("Upload failed."); 
                         }
@@ -234,23 +235,25 @@
                 }, error: function(err) { alert("CSV Error"); } });
             },
 
-            async exportAndWipe() { 
-                if(!confirm("⚠️ WARNING: This will DOWNLOAD all data and then DELETE it from the database.\n\nAre you sure?")) return; 
+            async exportAndWipe(apiUrl) { 
+                if(event) event.stopPropagation();
+                if(!confirm("⚠️ WARNING: This will DOWNLOAD all data and then DELETE it from this queue.\n\nAre you sure?")) return; 
+                
                 try { 
-                    const res = await fetch('/api/video-tasks', { method: 'DELETE' }); 
-                    if(res.status===404){ alert("Database is already empty."); return; } 
+                    const res = await fetch(apiUrl, { method: 'DELETE' }); 
+                    if(res.status===404){ alert("Queue is already empty."); return; } 
                     if(!res.ok) throw new Error("Failed"); 
                     
                     const b = await res.blob(); 
                     const u = window.URL.createObjectURL(b); 
                     const a = document.createElement('a'); 
                     a.href = u; 
-                    a.download = `moderation_export_${new Date().toISOString().slice(0,10)}.csv`; 
+                    a.download = `export_${new Date().toISOString().slice(0,10)}.csv`; 
                     document.body.appendChild(a); 
                     a.click(); 
                     document.body.removeChild(a); 
                     
-                    alert("✅ Database wiped and backup downloaded."); 
+                    alert("✅ Queue wiped and backup downloaded."); 
                     location.reload(); 
                 } catch(e){ alert("Error during wipe/export."); } 
             }
