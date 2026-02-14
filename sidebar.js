@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // =========================================
-    // 1. GLOBAL THEME LOGIC (Restored)
+    // 1. GLOBAL THEME LOGIC
     // =========================================
     const savedTheme = localStorage.getItem('appTheme') || 'light';
     if (savedTheme === 'dark') document.body.classList.add('dark-mode');
@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================
     // 2. GET CURRENT USER
     // =========================================
-    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { 
+    // CHANGED: Retrieve from sessionStorage
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || { 
         name: 'Guest', 
         username: 'guest', 
         email: 'guest@example.com', 
@@ -136,7 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 menu.classList.remove('active');
                 
                 currentUser.status = newStatus;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                // CHANGED: Save to sessionStorage
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
 
                 try {
                     if (currentUser.id && currentUser.id !== 'guest') {
@@ -154,7 +156,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // 8. LOGOUT LOGIC
     document.getElementById('btnLogout').addEventListener('click', (e) => {
         e.preventDefault();
-        localStorage.removeItem('currentUser');
+        // CHANGED: Remove from sessionStorage
+        sessionStorage.removeItem('currentUser');
         window.location.href = 'login.html';
     });
 });
