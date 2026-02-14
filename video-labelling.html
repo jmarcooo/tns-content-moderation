@@ -399,8 +399,24 @@
                 const finalRemarks = this.tags.join(', ');
 
                 try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
-                    if(res.ok) { this.count++; document.getElementById('session-counter').innerText = this.count; this.isSubmitting = false; if (isLeaving) { alert("✅ Submitted."); window.location.href = 'content-labelling.html'; } else { this.fetchNextTask(); } }
-                } catch(err) { this.isSubmitting = false; alert("Error submitting"); }
+                    if(res.ok) { 
+                        this.count++; 
+                        document.getElementById('session-counter').innerText = this.count; 
+                        this.isSubmitting = false; 
+                        if (isLeaving) { 
+                            alert("✅ Submitted."); 
+                            window.location.href = 'content-labelling.html'; 
+                        } else { 
+                            this.fetchNextTask(); 
+                        } 
+                    } else {
+                        throw new Error("Submit failed");
+                    }
+                } catch(err) { 
+                    this.isSubmitting = false; 
+                    console.error("Submit Error:", err); // Added detailed logging
+                    alert("Error submitting. Check console for details."); 
+                }
             }
         };
         window.addEventListener('DOMContentLoaded', () => VideoApp.init());
