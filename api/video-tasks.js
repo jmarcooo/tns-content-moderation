@@ -39,9 +39,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { username } = req.query;
 
-      // 0. AUTO-FIX: Release stuck tasks
-      // This resets any task that is 'in_progress' but has NO assignee (ghost task)
-      // It also resets tasks that have been 'in_progress' for > 24 hours (stale)
+      // 0. AUTO-FIX: Release stuck tasks ("Ghost" tasks)
+      // Resets tasks that are 'in_progress' but have NO assignee OR are stale (>24h)
       const cleanupQuery = `
         UPDATE video_labelling_tasks
         SET status = 'pending', assigned_to = NULL, assigned_at = NULL
