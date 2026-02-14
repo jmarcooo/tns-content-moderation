@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- PUT: Submit Label (Enhanced Error Handling) ---
+    // --- PUT: Submit Label (FIXED: Restored Time Calculations) ---
     if (req.method === 'PUT') {
       try {
         const { id, label, remarks } = req.body;
@@ -81,12 +81,15 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Task ID is missing from request." });
         }
 
+        // Added handling_time and turnaround_time calculations
         const query = `
             UPDATE video_labelling_tasks 
             SET status = 'completed', 
                 label = $1, 
                 remarks = $2, 
-                updated_at = NOW()
+                updated_at = NOW(),
+                handling_time = (NOW() - assigned_at),
+                turnaround_time = (NOW() - upload_time)
             WHERE internal_id = $3
         `;
         
@@ -100,7 +103,6 @@ export default async function handler(req, res) {
         
       } catch (putError) {
         console.error("Database Update Error:", putError);
-        // Return the specific SQL error message to the frontend
         return res.status(500).json({ error: putError.message });
       }
     }
@@ -137,7 +139,7 @@ export default async function handler(req, res) {
           "created_time", "video_uid", "video_duration", "raw_media_url",
           "Moderation Label", "Moderation Remarks", "Moderated By", 
           "Task Assigned Time", "Task Completed Time", "Status",
-          "Upload Time"
+          "Upload Time", "Handling Time", "Turnaround Time"
         ];
         
         let csv = headers.join(",") + "\n";
@@ -149,7 +151,7 @@ export default async function handler(req, res) {
             row.created_time, row.video_uid, row.video_duration, row.raw_media_url,
             row.label, row.remarks, row.assigned_to, 
             row.assigned_at, row.updated_at, row.status,
-            row.upload_time
+            row.upload_time, row.handling_time, row.turnaround_time
           ].map(safe).join(",");
           csv += line + "\n";
         });
