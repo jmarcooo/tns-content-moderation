@@ -398,7 +398,20 @@
                 
                 const finalRemarks = this.tags.join(', ');
 
-                try { const res = await fetch('/api/video-tasks', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: this.currentTask.internal_id, label: this.selectedLabel, remarks: finalRemarks }) });
+                try { 
+                    const res = await fetch('/api/video-tasks', { 
+                        method: 'PUT', 
+                        headers: {'Content-Type': 'application/json'}, 
+                        body: JSON.stringify({ 
+                            id: this.currentTask.internal_id, 
+                            label: this.selectedLabel, 
+                            remarks: finalRemarks 
+                        }) 
+                    });
+
+                    // Parse JSON response regardless of status
+                    const data = await res.json();
+
                     if(res.ok) { 
                         this.count++; 
                         document.getElementById('session-counter').innerText = this.count; 
@@ -410,12 +423,14 @@
                             this.fetchNextTask(); 
                         } 
                     } else {
-                        throw new Error("Submit failed");
+                        // Throw specific error from backend
+                        throw new Error(data.error || "Submit failed");
                     }
                 } catch(err) { 
                     this.isSubmitting = false; 
-                    console.error("Submit Error:", err); // Added detailed logging
-                    alert("Error submitting. Check console for details."); 
+                    // Show specific error in alert
+                    alert("Error submitting: " + err.message); 
+                    console.error("Full Submit Error:", err);
                 }
             }
         };
