@@ -22,19 +22,19 @@
         <p id="txt-subtitle" style="color: var(--text-muted); margin-bottom: 30px;">Select a moderation tool to proceed.</p>
 
         <div class="selection-grid">
-            <a href="content-moderation.html" class="selection-card">
+            <a href="content-moderation.html" class="selection-card" id="card-content-mod">
                 <svg class="card-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
                 <div class="selection-title" id="txt-cm-title">Content Moderation</div>
                 <div class="selection-desc" id="txt-cm-desc">Shows UGC content queues for moderation and review.</div>
             </a>
 
-            <a href="content-labelling.html" class="selection-card">
+            <a href="content-labelling.html" class="selection-card" id="card-labelling">
                 <svg class="card-icon" viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
                 <div class="selection-title" id="txt-cl-title">Content Labelling</div>
                 <div class="selection-desc" id="txt-cl-desc">Labels contents based on the context for training data.</div>
             </a>
 
-            <a href="moderation-history.html" class="selection-card">
+            <a href="moderation-history.html" class="selection-card" id="card-history">
                 <svg class="card-icon" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                 <div class="selection-title" id="txt-hist-title">Moderation History</div>
                 <div class="selection-desc" id="txt-hist-desc">View past actions and audit logs for your account.</div>
@@ -44,7 +44,7 @@
 
     <script src="auth.js"></script>
     <script>
-        Auth.requireLogin();
+        const user = Auth.requireLogin();
 
         // --- TRANSLATION LOGIC ---
         const LANG = localStorage.getItem('appLang') || 'en';
@@ -74,6 +74,15 @@
         document.getElementById('txt-cl-desc').innerText = T.clDesc;
         document.getElementById('txt-hist-title').innerText = T.histTitle;
         document.getElementById('txt-hist-desc').innerText = T.histDesc;
+
+        // --- ROLE BASED ACCESS ---
+        // Hide Content Moderation & History for Moderators
+        if (user.role === 'Moderator') {
+            const cmCard = document.getElementById('card-content-mod');
+            const histCard = document.getElementById('card-history');
+            if(cmCard) cmCard.style.display = 'none';
+            if(histCard) histCard.style.display = 'none';
+        }
     </script>
 </body>
 </html>
