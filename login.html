@@ -87,7 +87,14 @@
                     
                     // CHANGED: Save to sessionStorage
                     sessionStorage.setItem('currentUser', JSON.stringify(safeUser));
-                    window.location.href = 'home.html';
+
+                    // --- ROLE BASED REDIRECT ---
+                    if (safeUser.role === 'Moderator') {
+                        window.location.href = 'moderation.html';
+                    } else {
+                        window.location.href = 'home.html';
+                    }
+
                 } else {
                     // Fail
                     errorMsg.innerText = "❌ Invalid username or password";
